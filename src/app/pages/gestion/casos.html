@@ -38,10 +38,34 @@
 
             <ng-template pTemplate="header">
                 <tr>
-                    <th pSortableColumn="caso.nombre_caso">Nombre del Caso</th>
-                    <th pSortableColumn="caso.descripcion_caso">Descripción</th>
-                    <th pSortableColumn="ultimaEvidencia.estado_evidencia">Estado</th>
-                    <th pSortableColumn="caso.activo">Activo</th>
+                    <th pSortableColumn="caso.nombre_caso">
+                        <div class="flex justify-between items-center">
+                            Nombre del Caso
+                            <p-columnFilter type="text" field="caso.nombre_caso" display="menu"></p-columnFilter>
+                        </div>
+                    </th>
+                    <th pSortableColumn="caso.descripcion_caso">
+                        <div class="flex justify-between items-center">
+                            Descripción
+                            <p-columnFilter type="text" field="caso.descripcion_caso" display="menu"></p-columnFilter>
+                        </div>
+                    </th>
+                    <th pSortableColumn="ultimaEvidencia.estado_evidencia">
+                        <div class="flex justify-between items-center">
+                            Estado
+                            <p-columnFilter field="ultimaEvidencia.estado_evidencia" matchMode="equals" display="menu" [showMatchModes]="false">
+                                <ng-template pTemplate="filter" let-value let-filter="filterCallback">
+                                    <p-select [ngModel]="value" [options]="opcionesFiltroEstado" (onChange)="filter($event.value)" placeholder="Cualquiera"></p-select>
+                                </ng-template>
+                            </p-columnFilter>
+                        </div>
+                    </th>
+                    <th pSortableColumn="caso.activo">
+                        <div class="flex justify-between items-center">
+                            Activo
+                            <p-columnFilter type="boolean" field="caso.activo" display="menu"></p-columnFilter>
+                        </div>
+                    </th>
                     <th>Acciones</th>
                 </tr>
             </ng-template>

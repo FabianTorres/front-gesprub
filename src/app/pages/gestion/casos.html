@@ -1,0 +1,156 @@
+<p-toast></p-toast>
+<div class="card">
+    <h2 class="text-2xl font-semibold mb-4">Gestión de Casos de Prueba</h2>
+
+    <div class="mb-4">
+        <label class="block font-bold mb-2">Seleccione un Componente para empezar</label>
+        <p-select [options]="componentes()"
+                  [(ngModel)]="componenteSeleccionadoId"
+                  (onChange)="onComponenteSeleccionado()"
+                  optionLabel="nombre_componente"
+                  optionValue="id_componente"
+                  placeholder="Elegir un Componente..."
+                  styleClass="w-full md:w-1/4">
+        </p-select>
+    </div>
+
+    <div *ngIf="componenteSeleccionadoId">
+        <p-toolbar styleClass="my-4">
+            <ng-template pTemplate="left">
+                <button pButton pRipple label="Nuevo Caso" icon="pi pi-plus" class="p-button-success" (click)="abrirDialogoNuevo()"></button>
+            </ng-template>
+        </p-toolbar>
+
+        <p-table #dt [value]="casos()" [rows]="10" [paginator]="true" responsiveLayout="scroll" dataKey="caso.id_caso"
+                 [globalFilterFields]="['caso.nombre_caso', 'caso.descripcion_caso', 'caso.version']"
+                 [loading]="cargandoCasos()">
+            
+            <ng-template pTemplate="caption">
+                <div class="flex justify-between items-center">
+                    <button pButton label="Limpiar Filtros" class="p-button-outlined" icon="pi pi-filter-slash" (click)="clear(dt)"></button>
+                    
+                    <p-iconfield>
+                        <p-inputicon styleClass="pi pi-search" />
+                        <input #filterInput pInputText type="text" (input)="onGlobalFilter(dt, $event)" placeholder="Buscar caso..." style="width: 300px;" />
+                    </p-iconfield>
+                </div>
+            </ng-template>
+
+            <ng-template pTemplate="header">
+                <tr>
+                    <th pSortableColumn="caso.nombre_caso">Nombre del Caso</th>
+                    <th pSortableColumn="caso.descripcion_caso">Descripción</th>
+                    <th pSortableColumn="ultimaEvidencia.estado_evidencia">Estado</th>
+                    <th pSortableColumn="caso.activo">Activo</th>
+                    <th>Acciones</th>
+                </tr>
+            </ng-template>
+            
+            <ng-template pTemplate="body" let-item>
+                <tr>
+                    <td>{{item.caso.nombre_caso}}</td>
+                    <td>{{item.caso.descripcion_caso}}</td>
+                    <td>
+                        <p-tag [value]="item.ultimaEvidencia?.estado_evidencia || 'Sin Ejecutar'" 
+                               [severity]="getSeverityForEstado(item.ultimaEvidencia?.estado_evidencia)"></p-tag>
+                    </td>
+                    <td class="text-center">
+                        <i class="pi text-xl" 
+                           [ngClass]="{
+                               'pi-check-circle text-green-500': item.caso.activo === 1, 
+                               'pi-ban text-red-500': item.caso.activo !== 1
+                           }"
+                           [pTooltip]="item.caso.activo === 1 ? 'Activo' : 'Inactivo'" 
+                           tooltipPosition="top">
+                        </i>
+                    </td>
+                    <td>
+                        <button pButton pRipple icon="pi pi-pencil" class="p-button-rounded p-button-success mr-2" (click)="editarCaso(item)"
+                                pTooltip="Editar" tooltipPosition="top"></button>
+                        <button pButton pRipple icon="pi pi-book" class="p-button-rounded p-button-help mr-2" [routerLink]="['/pages/casos', item.caso.id_caso]"
+                                pTooltip="Historial" tooltipPosition="top"></button>
+                        <button pButton pRipple icon="pi pi-play" class="p-button-rounded p-button-info" [routerLink]="['/pages/ejecucion', item.caso.id_caso]"
+                                pTooltip="Ejecutar" tooltipPosition="top"></button>
+                    </td>
+                </tr>
+            </ng-template>
+            
+            <ng-template #empty>
+                <tr>
+                    <td colspan="5" class="text-center">No se encontraron casos de prueba para este componente.</td>
+                </tr>
+            </ng-template>
+        </p-table>
+    </div>
+</div>
+
+<p-dialog [(visible)]="casoDialog" [style]="{width: '750px'}" [header]="editando ? 'Editar Caso de Prueba' : 'Nuevo Caso de Prueba'" [modal]="true" class="p-fluid">
+    <ng-template pTemplate="content">
+        <div class="flex flex-col gap-4">
+            
+            <div class="formgrid grid">
+                <div class="field col-12 md:col-6">
+                    <label class="block font-bold mb-2">Hito</label>
+                    <p-select [options]="hitos()" [(ngModel)]="hitoSeleccionado" optionLabel="nombre" optionValue="id" placeholder="Selecciona un Hito" styleClass="w-full"></p-select>
+                </div>
+                
+                <div class="field col-12 md:col-6">
+                    <label class="block font-bold mb-2">Componente Asociado</label>
+                    <p-select [options]="componentesFiltrados()" [(ngModel)]="caso.id_componente" optionLabel="nombre_componente" optionValue="id_componente" placeholder="Selecciona un componente" [disabled]="!hitoSeleccionado()" styleClass="w-full"></p-select>
+                </div>
+            </div>
+
+            <div>
+                <label for="nombre" class="block font-bold mb-2">Nombre del Caso</label>
+                <input type="text" pInputText id="nombre" [(ngModel)]="caso.nombre_caso" required class="w-full" />
+            </div>
+
+            <div class="formgrid grid">
+                <div class="field col-12 md:col-6">
+                    <label for="version" class="block font-bold mb-2">Versión</label>
+                    <input type="text" pInputText id="version" [(ngModel)]="caso.version" class="w-full"
+                           placeholder="Ej: 1.0"
+                           appVersionFormat
+                           #version="ngModel" />
+                    <small class="p-error" *ngIf="version.invalid && version.touched">
+                        Formato inválido. Debe ser número.número (ej: 1.15).
+                    </small>
+                </div>
+                <div class="field col-12 md:col-6">
+                    <label for="anio" class="block font-bold mb-2">Año</label>
+                    <p-inputNumber id="anio" [(ngModel)]="caso.anio" [useGrouping]="false" styleClass="w-full"></p-inputNumber>
+                </div>
+            </div>
+            
+            <div>
+                <label for="descripcion" class="block font-bold mb-2">Descripción</label>
+                <textarea id="descripcion" pTextarea [(ngModel)]="caso.descripcion_caso" rows="2" [autoResize]="true" class="w-full"></textarea>
+            </div>
+            
+            <div>
+                <label for="precondiciones" class="block font-bold mb-2">Precondiciones</label>
+                <textarea id="precondiciones" pTextarea [(ngModel)]="caso.precondiciones" rows="2" [autoResize]="true" class="w-full"></textarea>
+            </div>
+
+            <div>
+                <label for="pasos" class="block font-bold mb-2">Pasos a seguir</label>
+                <textarea id="pasos" pTextarea [(ngModel)]="caso.pasos" rows="4" [autoResize]="true" class="w-full"></textarea>
+            </div>
+            
+            <div>
+                <label for="resultado" class="block font-bold mb-2">Resultado Esperado</label>
+                <input type="text" pInputText id="resultado" [(ngModel)]="caso.resultado_esperado" class="w-full" />
+            </div>
+
+            <div class="flex items-center mt-2">
+                <p-inputSwitch [(ngModel)]="activoDialog" inputId="activo"></p-inputSwitch>
+                <label for="activo" class="ml-2">Activo</label>
+            </div>
+        </div>
+    </ng-template>
+
+    <ng-template pTemplate="footer">
+        <button pButton pRipple label="Cancelar" icon="pi pi-times" class="p-button-text" (click)="cerrarDialogo()"></button>
+        <button pButton pRipple label="Guardar" icon="pi pi-check" class="p-button-text" (click)="guardarCaso()"></button>
+    </ng-template>
+</p-dialog>

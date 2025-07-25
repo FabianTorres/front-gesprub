@@ -1,0 +1,66 @@
+<p-toast></p-toast>
+<div class="card" *ngIf="caso() as c">
+    <div class="flex justify-between items-start mb-4">
+        <div class="flex items-center gap-4">
+                <button pButton
+                    type="button"
+                    icon="pi pi-arrow-left"
+                    routerLink="/pages/gestion/casos"
+                    class="p-button-secondary p-button-outlined">
+                </button>
+                <div>
+                    <h2 class="m-0 text-2xl font-semibold">{{ c.nombre_caso }}</h2>
+                    <p class="text-muted-color m-0">{{ c.descripcion_caso }}</p>
+                </div>
+            </div>
+        <button pButton 
+                label="Ejecutar Nueva Prueba" 
+                icon="pi pi-play" 
+                [routerLink]="['/pages/ejecucion', c.id_caso]">
+        </button>
+    </div>
+
+    <hr class="my-4">
+
+    <h3 class="mb-4">Historial de Ejecuciones</h3>
+    <p-timeline [value]="historial()" align="alternate" styleClass="customized-timeline">
+        <ng-template pTemplate="marker" let-evento>
+            <span class="flex w-8 h-8 items-center justify-center text-white rounded-full z-10 shadow-sm"
+                  [ngClass]="{
+                      'bg-green-500': evento.estado_evidencia === 'OK',
+                      'bg-red-500': evento.estado_evidencia === 'NK'
+                  }">
+                <i [ngClass]="{
+                    'pi pi-check': evento.estado_evidencia === 'OK',
+                    'pi pi-times': evento.estado_evidencia === 'NK'
+                }"></i>
+            </span>
+        </ng-template>
+        
+        <ng-template pTemplate="content" let-evento>
+            <p-card>
+                <ng-template pTemplate="title">
+                    <div class="flex items-center gap-2">
+                        <p-tag [value]="evento.estado_evidencia" [severity]="getSeverityForEstado(evento.estado_evidencia)"></p-tag>
+                        <p-tag *ngIf="evento.criticidad" [value]="evento.criticidad" [severity]="getSeverityForCriticidad(evento.criticidad)" styleClass="font-bold"></p-tag>
+                    </div>
+                </ng-template>
+                <ng-template pTemplate="subtitle">
+                    Ejecutado el {{ evento.fecha_evidencia | date:'dd/MM/yyyy h:mm a' }} por Usuario ID: {{ evento.id_usuario_ejecutante }}
+                </ng-template>
+                <p>{{ evento.descripcion_evidencia }}</p>
+                <div class="mt-4 flex flex-col gap-2" *ngIf="evento.url_evidencia || evento.id_jira">
+                    <a *ngIf="evento.url_evidencia" href="#" class="text-primary hover:underline">
+                        <i class="pi pi-paperclip mr-2"></i>Ver Evidencia Adjunta
+                    </a>
+                    <a *ngIf="evento.id_jira" href="#" class="text-primary hover:underline">
+                        <i class="pi pi-ticket mr-2"></i>Ver Ticket en Jira: {{ evento.id_jira }}
+                    </a>
+                </div>
+            </p-card>
+        </ng-template>
+    </p-timeline>
+    <div *ngIf="historial().length === 0" class="text-center p-4">
+        Este caso de prueba aún no tiene ejecuciones registradas.
+    </div>
+</div>

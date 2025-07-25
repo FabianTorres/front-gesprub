@@ -1,0 +1,75 @@
+ <p-toast></p-toast>
+        <div class="card">
+            <h2 class="text-2xl font-semibold mb-4">Gestión de Componentes</h2>
+            <p-toolbar styleClass="mb-4">
+                <ng-template pTemplate="left">
+                    <button pButton pRipple label="Nuevo Componente" icon="pi pi-plus" class="p-button-success" (click)="abrirDialogoNuevo()"></button>
+                </ng-template>
+            </p-toolbar>
+
+            <p-table #dt [value]="componentes()" [rows]="10" [paginator]="true" responsiveLayout="scroll"
+                sortMode="multiple" [multiSortMeta]="multiSortMeta" dataKey="id_componente"
+                [globalFilterFields]="['nombre_componente','hito_componente']">
+                <ng-template pTemplate="header">
+                    <tr>
+                        <th pSortableColumn="hito_componente" style="width:15%">Hito <p-sortIcon field="hito_componente"></p-sortIcon></th>
+                        <th pSortableColumn="nombre_componente">Nombre <p-sortIcon field="nombre_componente"></p-sortIcon></th>
+                        <th pSortableColumn="fecha_limite">Fecha Límite <p-sortIcon field="fecha_limite"></p-sortIcon></th>
+                        <th pSortableColumn="activo">Activo <p-sortIcon field="activo"></p-sortIcon></th>
+                        <th style="width:10%">Acciones</th>
+                    </tr>
+                </ng-template>
+                <ng-template pTemplate="body" let-componente>
+                    <tr>
+                        <td>{{componente.hito_componente}}</td>
+                        <td>{{componente.nombre_componente}}</td>
+                        <td>{{componente.fecha_limite | date: 'dd/MM/yyyy'}}</td>
+                        <td>
+                            <p-inputSwitch [ngModel]="componente.activo === 1" [readonly]="true"></p-inputSwitch>
+                        </td>
+                        <td>
+                            <button pButton pRipple icon="pi pi-pencil" class="p-button-rounded p-button-success" (click)="editarComponente(componente)"></button>
+                        </td>
+                    </tr>
+                </ng-template>
+                 <ng-template #empty>
+                    <tr>
+                        <td colspan="5" class="text-center">No se encontraron componentes.</td>
+                    </tr>
+                </ng-template>
+            </p-table>
+        </div>
+
+        <p-dialog [(visible)]="componenteDialog" [style]="{width: '450px'}" [header]="editando ? 'Editar Componente' : 'Nuevo Componente'" [modal]="true" class="p-fluid">
+            <ng-template pTemplate="content">
+                <div class="flex flex-col gap-4">
+                    
+                    <div>
+                        <label for="nombre" class="block font-bold mb-2">Nombre</label>
+                        <input type="text" pInputText id="nombre" [(ngModel)]="componente.nombre_componente" required autofocus class="w-full" />
+                        <small class="p-error" *ngIf="submitted && !componente.nombre_componente">El nombre es requerido.</small>
+                    </div>
+
+                    <div>
+                        <label for="hito" class="block font-bold mb-2">Hito</label>
+                        <p-inputNumber id="hito" [(ngModel)]="componente.hito_componente" styleClass="w-full"></p-inputNumber>
+                    </div>
+
+                    <div>
+                        <label for="fecha" class="block font-bold mb-2">Fecha Límite</label>
+                        <p-datePicker id="fecha" [(ngModel)]="fechaLimiteDialog" dateFormat="dd/mm/yy" [appendTo]="'body'" styleClass="w-full"></p-datePicker>
+                    </div>
+
+                    <div class="flex items-center mt-2">
+                        <p-inputSwitch [(ngModel)]="activoDialog" inputId="activo"></p-inputSwitch>
+                        <label for="activo" class="ml-2">Activo</label>
+                    </div>
+
+                </div>
+            </ng-template>
+            
+            <ng-template pTemplate="footer">
+                <button pButton pRipple label="Cancelar" icon="pi pi-times" class="p-button-text" (click)="cerrarDialogo()"></button>
+                <button pButton pRipple label="Guardar" icon="pi pi-check" class="p-button-text" (click)="guardarComponente()"></button>
+            </ng-template>
+        </p-dialog>

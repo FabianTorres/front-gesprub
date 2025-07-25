@@ -47,7 +47,22 @@ export class AutenticacionService {
 
   // Método para verificar si el usuario está autenticado
   isLoggedIn(): boolean {
-    return !!this.getToken(); // Devuelve true si el token existe, false si no
+    const token = this.getToken();
+    if (!token) {
+      return false;
+    }
+    return !this.isTokenExpired(token);
+  }
+
+  private isTokenExpired(token: string): boolean {
+    try {
+      const expiry = (JSON.parse(atob(token.split('.')[1]))).exp;
+      // Compara la fecha de expiración (en segundos) con la fecha actual (en segundos).
+      return (Math.floor((new Date).getTime() / 1000)) >= expiry;
+    } catch (e) {
+      // Si hay un error al decodificar, tratamos el token como inválido.
+      return true;
+    }
   }
 
 

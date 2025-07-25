@@ -3,3 +3,9 @@
 @use './assets/layout/layout.scss';
 @use 'primeicons/primeicons.css';
 @use './assets/demo/demo.scss';
+
+
+// Oculta los números de prioridad del ordenamiento múltiple en las tablas de PrimeNG
+.p-sortable-column-badge {
+    display: none !important;
+}

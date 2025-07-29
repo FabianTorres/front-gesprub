@@ -9,3 +9,14 @@
 .p-sortable-column-badge {
     display: none !important;
 }
+
+// Se define un ancho máximo para el tooltip personalizado
+.custom-tooltip-wide .p-tooltip-text {
+  width: max-content;
+  min-width: 300px; /* Opcional: un ancho mínimo para que no sea muy angosto */
+  max-width: 600px; /* Opcional: un ancho máximo para que no sea excesivo */
+}
+
+// .p-tooltip-text {
+//   width: max-content;
+// }

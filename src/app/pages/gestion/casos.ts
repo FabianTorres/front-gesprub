@@ -18,12 +18,16 @@ import { ToastModule } from 'primeng/toast';
 import { SelectModule } from 'primeng/select';
 import { InputNumberModule } from 'primeng/inputnumber';
 import { TooltipModule } from 'primeng/tooltip';
+import { FieldsetModule } from 'primeng/fieldset';
 import { Caso } from '../../models/caso';
 import { CasoService } from '../../services/caso.service';
 import { Componente } from '../../models/componente';
 import { ComponenteService } from '../../services/componente.service';
 import { VersionFormatDirective } from '../../directives/version-format.directive';
 import { CasoConEvidencia } from '../../models/casoevidencia';
+import { TruncatePipe } from '../../pipes/truncate.pipe';
+import { environment } from '../../../environment/environment';
+import { ProyectoService } from '../../services/proyecto.service';
 
 // Se define una interfaz local para la estructura de los Hitos.
 interface Hito {
@@ -34,8 +38,8 @@ interface Hito {
 @Component({
     standalone: true,
     imports: [
-        IconFieldModule, InputIconModule, TooltipModule, CommonModule, FormsModule, TableModule, ButtonModule, ToolbarModule, DialogModule,
-        RouterModule, TagModule, InputTextModule, TextareaModule, SelectModule, InputSwitchModule, ConfirmDialogModule, ToastModule, InputNumberModule, VersionFormatDirective
+        IconFieldModule, FieldsetModule, InputIconModule, TooltipModule, CommonModule, FormsModule, TableModule, ButtonModule, ToolbarModule, DialogModule,
+        RouterModule, TruncatePipe , TagModule, InputTextModule, TextareaModule, SelectModule, InputSwitchModule, ConfirmDialogModule, ToastModule, InputNumberModule, VersionFormatDirective
     ],
     providers: [MessageService, ConfirmationService, DatePipe],
     templateUrl: './casos.html'
@@ -65,6 +69,13 @@ export class CasosPage implements OnInit {
     hitoSeleccionado = signal<number | null>(null);
     // Almacena las opciones para el filtro de estado en la tabla.
     opcionesFiltroEstado: any[];
+
+    // Almacena las opciones para el filtro de activo en la tabla.
+    opcionesFiltroActivo: any[];
+    //Propiedad para controlar el estado del panel
+    detallesAvanzadosColapsados: boolean = true;
+
+    private proyectoService = inject(ProyectoService);
 
     // Referencia a la tabla de PrimeNG en el HTML para poder controlarla.
     @ViewChild('dt') dt!: Table;
@@ -99,17 +110,42 @@ export class CasosPage implements OnInit {
             }
         });
 
+        effect(() => {
+            const proyectoActual = this.proyectoService.proyectoSeleccionado();
+            this.componenteSeleccionadoId = null;
+            this.casos.set([]);
+            if (proyectoActual) {
+                this.cargarComponentes(proyectoActual.id_proyecto);
+            } else {
+                this.componentes.set([]);
+            }
+        });
+
         // Se inicializan las opciones para el menú de filtro de la columna 'Estado'.
         this.opcionesFiltroEstado = [
             { label: 'OK', value: 'OK' },
             { label: 'NK', value: 'NK' },
             { label: 'Sin Ejecutar', value: null }
         ];
+
+        // Se inicializan las nuevas opciones
+        this.opcionesFiltroActivo = [
+            { label: 'Activo', value: 1 },
+            { label: 'Inactivo', value: 0 }
+        ];
     }
     
     // Método del ciclo de vida de Angular que se ejecuta al iniciar el componente.
     ngOnInit() {
-        this.cargarComponentes();
+        //this.cargarComponentes();
+
+        //Se carga ultimo componente guardado
+        // const ultimoComponenteId = localStorage.getItem('ultimoComponenteSeleccionado');
+        // if (ultimoComponenteId) {
+        //     this.componenteSeleccionadoId = +ultimoComponenteId; // Se convierte a número
+        //     this.onComponenteSeleccionado(); // Se cargan los casos automáticamente
+        // }
+
     }
 
     // Se activa al seleccionar un componente, cargando los casos correspondientes.
@@ -117,6 +153,15 @@ export class CasosPage implements OnInit {
         if (this.dt) {
             this.dt.clear();
         }
+
+        const proyectoActual = this.proyectoService.proyectoSeleccionado();
+
+        if (this.componenteSeleccionadoId && proyectoActual) {
+            const key = `ultimoComponente_${proyectoActual.id_proyecto}`;
+            localStorage.setItem(key, this.componenteSeleccionadoId.toString());
+        }
+
+
         this.casos.set([]);
         if (this.componenteSeleccionadoId) {
             this.cargandoCasos.set(true);
@@ -133,11 +178,17 @@ export class CasosPage implements OnInit {
     }
 
     // Carga la lista completa de componentes desde el servicio.
-    cargarComponentes() {
-        this.componenteService.getComponentes().subscribe(data => {
+    cargarComponentes(proyectoId: number) {
+        this.componenteService.getComponentesPorProyecto(proyectoId).subscribe(data => {
             this.componentes.set(data);
-            const hitosUnicos = [...new Map(data.map(c => [c.hito_componente, c.hito_componente])).values()];
-            this.hitos.set(hitosUnicos.map(h => ({ id: h, nombre: `Hito ${h}` })));
+            
+            // CAMBIO: Se intenta restaurar el último componente guardado para ESTE proyecto.
+            const key = `ultimoComponente_${proyectoId}`;
+            const ultimoComponenteId = localStorage.getItem(key);
+            if (ultimoComponenteId) {
+                this.componenteSeleccionadoId = +ultimoComponenteId;
+                this.onComponenteSeleccionado(); // Se cargan los casos automáticamente.
+            }
         });
     }
     
@@ -148,10 +199,20 @@ export class CasosPage implements OnInit {
 
     // Prepara las variables para abrir el diálogo en modo 'Nuevo'.
     abrirDialogoNuevo() {
-        this.caso = {};
+        
+        const componenteActual = this.componentes().find(c => c.id_componente === this.componenteSeleccionadoId);
+
+        this.caso = {
+            // Se pre-rellena el año desde la configuración.
+            anio: environment.anioTributario,
+            // Se pre-rellena el ID del componente.
+            id_componente: componenteActual?.id_componente
+        };
         this.editando = false;
         this.activoDialog = true;
-        this.hitoSeleccionado.set(null);
+        this.hitoSeleccionado.set(componenteActual?.hito_componente || null);
+        
+        this.detallesAvanzadosColapsados = true;
         this.casoDialog = true;
     }
 

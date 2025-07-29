@@ -3,7 +3,7 @@
     <h2 class="text-2xl font-semibold mb-4">Gestión de Casos de Prueba</h2>
 
     <div class="mb-4">
-        <label class="block font-bold mb-2">Seleccione un Componente para empezar</label>
+        <label class="block font-bold mb-2">Seleccione un Componente</label>
         <p-select [options]="componentes()"
                   [(ngModel)]="componenteSeleccionadoId"
                   (onChange)="onComponenteSeleccionado()"
@@ -63,7 +63,11 @@
                     <th pSortableColumn="caso.activo">
                         <div class="flex justify-between items-center">
                             Activo
-                            <p-columnFilter type="boolean" field="caso.activo" display="menu"></p-columnFilter>
+                            <p-columnFilter field="caso.activo" matchMode="equals" display="menu" [showMatchModes]="false">
+                                <ng-template pTemplate="filter" let-value let-filter="filterCallback">
+                                    <p-select [ngModel]="value" [options]="opcionesFiltroActivo" (onChange)="filter($event.value)" placeholder="Cualquiera"></p-select>
+                                </ng-template>
+                            </p-columnFilter>
                         </div>
                     </th>
                     <th>Acciones</th>
@@ -73,7 +77,10 @@
             <ng-template pTemplate="body" let-item>
                 <tr>
                     <td>{{item.caso.nombre_caso}}</td>
-                    <td>{{item.caso.descripcion_caso}}</td>
+                    <td [pTooltip]="item.caso.descripcion_caso" 
+                        tooltipPosition="bottom" tooltipStyleClass="custom-tooltip-wide">
+                        {{item.caso.descripcion_caso | truncate:60}}
+                    </td>
                     <td>
                         <p-tag [value]="item.ultimaEvidencia?.estado_evidencia || 'Sin Ejecutar'" 
                                [severity]="getSeverityForEstado(item.ultimaEvidencia?.estado_evidencia)"></p-tag>
@@ -112,16 +119,14 @@
     <ng-template pTemplate="content">
         <div class="flex flex-col gap-4">
             
-            <div class="formgrid grid">
-                <div class="field col-12 md:col-6">
-                    <label class="block font-bold mb-2">Hito</label>
-                    <p-select [options]="hitos()" [(ngModel)]="hitoSeleccionado" optionLabel="nombre" optionValue="id" placeholder="Selecciona un Hito" styleClass="w-full"></p-select>
-                </div>
-                
-                <div class="field col-12 md:col-6">
-                    <label class="block font-bold mb-2">Componente Asociado</label>
-                    <p-select [options]="componentesFiltrados()" [(ngModel)]="caso.id_componente" optionLabel="nombre_componente" optionValue="id_componente" placeholder="Selecciona un componente" [disabled]="!hitoSeleccionado()" styleClass="w-full"></p-select>
-                </div>
+            <div>
+                <label class="block font-bold mb-2">Hito</label>
+                <p-select [options]="hitos()" [(ngModel)]="hitoSeleccionado" optionLabel="nombre" optionValue="id" placeholder="Selecciona un Hito" styleClass="w-full"></p-select>
+            </div>
+            
+            <div>
+                <label class="block font-bold mb-2">Componente Asociado</label>
+                <p-select [options]="componentesFiltrados()" [(ngModel)]="caso.id_componente" optionLabel="nombre_componente" optionValue="id_componente" placeholder="Selecciona un componente" [disabled]="!hitoSeleccionado()" styleClass="w-full"></p-select>
             </div>
 
             <div>
@@ -129,42 +134,46 @@
                 <input type="text" pInputText id="nombre" [(ngModel)]="caso.nombre_caso" required class="w-full" />
             </div>
 
-            <div class="formgrid grid">
-                <div class="field col-12 md:col-6">
+            <div>
                     <label for="version" class="block font-bold mb-2">Versión</label>
                     <input type="text" pInputText id="version" [(ngModel)]="caso.version" class="w-full"
-                           placeholder="Ej: 1.0"
-                           appVersionFormat
-                           #version="ngModel" />
+                        placeholder="Ej: 1.0"
+                        appVersionFormat
+                        #version="ngModel" />
                     <small class="p-error" *ngIf="version.invalid && version.touched">
                         Formato inválido. Debe ser número.número (ej: 1.15).
                     </small>
                 </div>
-                <div class="field col-12 md:col-6">
+                <div>
                     <label for="anio" class="block font-bold mb-2">Año</label>
                     <p-inputNumber id="anio" [(ngModel)]="caso.anio" [useGrouping]="false" styleClass="w-full"></p-inputNumber>
                 </div>
-            </div>
             
             <div>
                 <label for="descripcion" class="block font-bold mb-2">Descripción</label>
-                <textarea id="descripcion" pTextarea [(ngModel)]="caso.descripcion_caso" rows="2" [autoResize]="true" class="w-full"></textarea>
-            </div>
-            
-            <div>
-                <label for="precondiciones" class="block font-bold mb-2">Precondiciones</label>
-                <textarea id="precondiciones" pTextarea [(ngModel)]="caso.precondiciones" rows="2" [autoResize]="true" class="w-full"></textarea>
+                <textarea id="descripcion" pTextarea [(ngModel)]="caso.descripcion_caso" rows="3" [autoResize]="true" class="w-full"></textarea>
             </div>
 
-            <div>
-                <label for="pasos" class="block font-bold mb-2">Pasos a seguir</label>
-                <textarea id="pasos" pTextarea [(ngModel)]="caso.pasos" rows="4" [autoResize]="true" class="w-full"></textarea>
-            </div>
+            <p-fieldset legend="Detalles Adicionales" [toggleable]="true" [(collapsed)]="detallesAvanzadosColapsados">
+                <div class="flex flex-col gap-4">
             
-            <div>
-                <label for="resultado" class="block font-bold mb-2">Resultado Esperado</label>
-                <input type="text" pInputText id="resultado" [(ngModel)]="caso.resultado_esperado" class="w-full" />
-            </div>
+                    <div>
+                        <label for="precondiciones" class="block font-bold mb-2">Precondiciones</label>
+                        <textarea id="precondiciones" pTextarea [(ngModel)]="caso.precondiciones" rows="2" [autoResize]="true" class="w-full"></textarea>
+                    </div>
+
+                    <div>
+                        <label for="pasos" class="block font-bold mb-2">Pasos a seguir</label>
+                        <textarea id="pasos" pTextarea [(ngModel)]="caso.pasos" rows="4" [autoResize]="true" class="w-full"></textarea>
+                    </div>
+                    
+                    <div>
+                        <label for="resultado" class="block font-bold mb-2">Resultado Esperado</label>
+                        <input type="text" pInputText id="resultado" [(ngModel)]="caso.resultado_esperado" class="w-full" />
+                    </div>
+
+             </div>
+            </p-fieldset>
 
             <div class="flex items-center mt-2">
                 <p-inputSwitch [(ngModel)]="activoDialog" inputId="activo"></p-inputSwitch>

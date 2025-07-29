@@ -27,4 +27,8 @@ export class ComponenteService {
     deleteComponente(id: number): Observable<void> {
         return this.http.delete<void>(`${this.apiUrl}/${id}`);
     }
+
+    getComponentesPorProyecto(proyectoId: number): Observable<Componente[]> {
+        return this.http.get<Componente[]>(this.apiUrl, { params: { proyectoId } });
+    }
 }

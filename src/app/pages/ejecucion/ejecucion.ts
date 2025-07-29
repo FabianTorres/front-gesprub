@@ -14,15 +14,18 @@ import { TextareaModule } from 'primeng/textarea';
 import { SelectButtonModule } from 'primeng/selectbutton';
 import { FileUploadModule } from 'primeng/fileupload';
 import { ToastModule } from 'primeng/toast';
+import { DividerModule } from 'primeng/divider';
+import { FieldsetModule } from 'primeng/fieldset';
 import { Caso } from '../../models/caso';
 import { CasoService } from '../../services/caso.service';
 import { Evidencia } from '../../models/evidencia';
 import { EvidenciaService } from '../../services/evidencia.service';
+import { AutenticacionService } from '../../services/autenticacion.service';
 
 @Component({
     standalone: true,
     imports: [
-        CommonModule, FormsModule, RouterModule, ButtonModule, ButtonGroupModule, CardModule, InputTextModule,
+        CommonModule, FieldsetModule,DividerModule , FormsModule, RouterModule, ButtonModule, ButtonGroupModule, CardModule, InputTextModule,
         TextareaModule, SelectModule, SelectButtonModule, FileUploadModule, ToastModule
     ],
     providers: [MessageService, DatePipe],
@@ -33,18 +36,6 @@ export class EjecucionPage implements OnInit {
     nuevaEvidencia: Partial<Evidencia> = {};
     jiraInput: string | null = null;
 
-    // Opciones para el botón de estado
-    //opcionesDeEstado: any[] = [
-    //    { label: 'OK', value: 'OK', icon: 'pi pi-check-circle' },
-    //    { label: 'NK', value: 'NK', icon: 'pi pi-times-circle' }
-    //];
-
-    // opcionesDeCriticidad: any[] = [
-    //     { label: 'Leve', value: 'Leve' },
-    //     { label: 'Medio', value: 'Medio' },
-    //     { label: 'Grave', value: 'Grave' },
-    //     { label: 'Crítico', value: 'Crítico' }
-    // ];
 
     private route = inject(ActivatedRoute);
     private router = inject(Router);
@@ -52,6 +43,7 @@ export class EjecucionPage implements OnInit {
     private evidenciaService = inject(EvidenciaService);
     private messageService = inject(MessageService);
     private location = inject(Location);
+    private authService = inject(AutenticacionService);
 
     ngOnInit() {
         
@@ -66,6 +58,14 @@ export class EjecucionPage implements OnInit {
     }
 
     guardarEvidencia() {
+        const usuarioLogueado = this.authService.usuarioActual();
+
+       
+        if (!usuarioLogueado || !usuarioLogueado.idUsuario) {
+            this.messageService.add({severity: 'error', summary: 'Error', detail: 'No se pudo identificar al usuario. Por favor, inicie sesión de nuevo.'});
+            return;
+        }
+
         if (!this.nuevaEvidencia.estado_evidencia || !this.nuevaEvidencia.descripcion_evidencia) {
             this.messageService.add({ severity: 'warn', summary: 'Atención', detail: 'El estado y la descripción son requeridos.' });
             return;
@@ -87,13 +87,14 @@ export class EjecucionPage implements OnInit {
             this.nuevaEvidencia.id_jira = null;
         }
 
-        // Asignamos el usuario ejecutante (valor temporal)
-        this.nuevaEvidencia.id_usuario_ejecutante = 1;
+
+        this.nuevaEvidencia.id_usuario_ejecutante = usuarioLogueado.idUsuario;
+        
 
         this.evidenciaService.createEvidencia(this.nuevaEvidencia as Evidencia).subscribe({
             next: () => {
                 this.messageService.add({ severity: 'success', summary: 'Éxito', detail: 'Evidencia guardada correctamente.' });
-                // Esperamos un momento y volvemos a la lista de casos
+                 
                 setTimeout(() => this.router.navigate(['/pages/casos', this.nuevaEvidencia.id_caso]), 1500);
             },
             error: (err) => this.messageService.add({ severity: 'error', summary: 'Error', detail: 'No se pudo guardar la evidencia.' })

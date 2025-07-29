@@ -1,114 +1,119 @@
 <p-toast></p-toast>
-<div class="grid p-fluid">
-    <div class="col-12 md:col-6">
-        <p-card>
-            
-            <ng-template pTemplate="header">
-                
-                <div class="p-4 flex items-center gap-4" >
-                    <button pButton
+<div class="grid p-fluid gap-2">
+   <div class="col-12 md:col-7">
+    <p-card>
+        <ng-template pTemplate="header">
+            <div class="p-4 flex items-center gap-4">
+                <button pButton
                         type="button"
                         icon="pi pi-arrow-left"
-                        [routerLink]="['/pages/casos', caso()?.id_caso]"
-                        class="p-button-secondary p-button-outlined">
-                    </button>
-                    <h2 class="text-xl font-semibold m-0">Detalles del Caso de Prueba</h2>
-                </div>
-            </ng-template>
-            <div *ngIf="caso() as c; else loading">
-                <div class="flex flex-col gap-4">
-                    <div class="field">
-                        <label class="font-bold">Nombre:</label>
-                        <p class="mt-1">{{ c.nombre_caso }}</p>
-                    </div>
-                    <div class="field">
-                        <label class="font-bold">Descripción:</label>
-                        <p class="mt-1">{{ c.descripcion_caso }}</p>
-                    </div>
-                    <div class="field">
-                        <label class="font-bold">Resultado Esperado:</label>
-                        <p class="mt-1">{{ c.resultado_esperado }}</p>
-                    </div>
-                </div>
+                        (click)="volverAtras()"
+                        class="p-button-secondary p-button-outlined p-button-rounded">
+                </button>
+                <h1 class="text-xl font-bold m-0">Detalles del Caso de Prueba</h1>
             </div>
-            <ng-template #loading>
-                <p>Cargando datos del caso...</p>
-            </ng-template>
-        </p-card>
-    </div>
-
-    <div class="col-12 md:col-6">
-        <p-card header="Registrar Evidencia">
-            <div class="flex flex-col gap-4">
+        </ng-template>
+        <div *ngIf="caso() as c; else loading">
+            
+            <div class="flex flex-col gap-5">
+                
                 <div>
-                    <label class="block font-bold mb-2">Resultado de la Prueba</label>
-                    <div class="flex gap-2">
-                            <button pButton type="button" label="OK" icon="pi pi-check-circle" 
-                                    (click)="nuevaEvidencia.estado_evidencia = 'OK'" 
-                                    severity="success" [ngClass]="{'p-button-outlined': nuevaEvidencia.estado_evidencia !== 'OK'}"></button>
-                            <button pButton type="button" label="NK" icon="pi pi-times-circle" 
-                                    (click)="nuevaEvidencia.estado_evidencia = 'NK'" 
-                                    severity="danger" [ngClass]="{'p-button-outlined': nuevaEvidencia.estado_evidencia !== 'NK'}"></button>
-                        </div>
-                </div>
-
-                <div *ngIf="nuevaEvidencia.estado_evidencia === 'NK'">
-                    <label for="criticidad" class="block font-bold mb-2">Criticidad del Fallo</label>
-                    <div class="flex flex-wrap gap-2">
-                        <button pButton type="button" label="Leve" 
-                                (click)="nuevaEvidencia.criticidad = 'Leve'"
-                                severity="info" [ngClass]="{'p-button-outlined': nuevaEvidencia.criticidad !== 'Leve'}"></button>
-                        <button pButton type="button" label="Medio" 
-                                (click)="nuevaEvidencia.criticidad = 'Medio'"
-                                severity="warn" [ngClass]="{'p-button-outlined': nuevaEvidencia.criticidad !== 'Medio'}"></button>
-                        <button pButton type="button" label="Grave" 
-                                (click)="nuevaEvidencia.criticidad = 'Grave'"
-                                severity="danger" [ngClass]="{'p-button-outlined': nuevaEvidencia.criticidad !== 'Grave'}"></button>
-                        <button pButton type="button" label="Crítico" 
-                                (click)="nuevaEvidencia.criticidad = 'Crítico'"
-                                severity="contrast" [ngClass]="{'p-button-outlined': nuevaEvidencia.criticidad !== 'Crítico'}"></button>
-                    </div>
-                </div>
-
-                <div>
-                    <label for="descripcion" class="block font-bold mb-2">Descripción de Evidencia</label>
-                    <textarea id="descripcion" pTextarea [(ngModel)]="nuevaEvidencia.descripcion_evidencia" rows="5" placeholder="Describe lo que sucedió..." class="w-full"></textarea>
-                </div>
-
-                <div>
-                    <label class="block font-bold mb-2">Adjuntar Archivo</label>
-                    <p-fileUpload name="evidenciaFile" 
-                        (onSelect)="onUpload($event)" 
-                        [multiple]="false" 
-                        accept="image/*,video/*,.log,.txt" 
-                        maxFileSize="10000000"
-                        chooseLabel="Elegir"
-                        uploadLabel="Subir"
-                        cancelLabel="Cancelar">
-                    <ng-template pTemplate="content">
-                        </ng-template>
-                </p-fileUpload>
+                    <span class="font-semibold block text-surface-600 dark:text-surface-300 text-2xl">Nombre del Caso</span>
+                    <p class="mt-1 m-0 text-surface-900 dark:text-surface-0">{{ c.nombre_caso }}</p>
                 </div>
                 
-                <div *ngIf="nuevaEvidencia.estado_evidencia === 'NK'">
-                    <label for="jira" class="block font-bold mb-2">Jira</label>
-                    <input type="text" pInputText id="jira" [(ngModel)]="jiraInput" 
-                        maxlength="14" placeholder="Ingresar formato: CERTRTAXX-XXXX" class="w-1/2"/>
+                <div>
+                    <span class="font-semibold block text-surface-600 dark:text-surface-300 text-2xl">Descripción</span>
+                    <p class="mt-1 m-0 text-surface-900 dark:text-surface-0">{{ c.descripcion_caso }}</p>
                 </div>
 
-                <div class="flex justify-end mt-4 gap-2">
-                    <button pButton type="button" label="Volver al Historial" icon="pi pi-book" 
-                            class="p-button-secondary" 
-                            [routerLink]="['/pages/casos', caso()?.id_caso]"></button>
+                <div>
+                    <span class="font-semibold block text-surface-600 dark:text-surface-300 text-2xl">Resultado Esperado</span>
+                    <p class="mt-1 m-0 text-surface-900 dark:text-surface-0 white-space-pre-wrap">{{ c.resultado_esperado }}</p>
+                </div>
 
-                    <button pButton type="button" label="Volver a la Lista" icon="pi pi-list" 
-                            class="p-button-secondary" 
-                            routerLink="/pages/gestion/casos"></button>
+            </div>
+        </div>
+        <ng-template #loading>
+            <p>Cargando datos del caso...</p>
+        </ng-template>
+    </p-card>
+</div>
 
-                    <button pButton type="button" label="Guardar Evidencia" icon="pi pi-save" 
-                            (click)="guardarEvidencia()"></button>
+ <div class="col-12 md:col-1 flex items-center justify-center">
+        <p-divider layout="vertical" class="!hidden md:!flex"></p-divider>
+        <p-divider layout="horizontal" class="!flex md:!hidden" align="center"></p-divider>
+    </div>
+
+    <div class="col-12 md:col-4">
+    <p-card>
+        <ng-template pTemplate="header">
+            <div class="p-4">
+                <h2 class="text-2xl font-semibold m-0">Registrar Evidencia</h2>
+            </div>
+        </ng-template>
+        <div class="flex flex-col gap-4">
+            <div>
+                <label class="block font-bold mb-2 text-xl">Resultado de la Prueba</label>
+                <div class="flex gap-2">
+                    <button pButton type="button" label="OK" icon="pi pi-check-circle" 
+                            (click)="nuevaEvidencia.estado_evidencia = 'OK'" 
+                            severity="success" [ngClass]="{'p-button-outlined': nuevaEvidencia.estado_evidencia !== 'OK'}"></button>
+                    <button pButton type="button" label="NK" icon="pi pi-times-circle" 
+                            (click)="nuevaEvidencia.estado_evidencia = 'NK'" 
+                            severity="danger" [ngClass]="{'p-button-outlined': nuevaEvidencia.estado_evidencia !== 'NK'}"></button>
                 </div>
             </div>
-        </p-card>
-    </div>
+
+            <div *ngIf="nuevaEvidencia.estado_evidencia === 'NK'">
+                <label for="criticidad" class="block font-bold mb-2 text-xl">Criticidad del Fallo</label>
+                <div class="flex flex-wrap gap-2">
+                    <button pButton type="button" label="Leve" 
+                            (click)="nuevaEvidencia.criticidad = 'Leve'"
+                            severity="info" [ngClass]="{'p-button-outlined': nuevaEvidencia.criticidad !== 'Leve'}"></button>
+                    <button pButton type="button" label="Medio" 
+                            (click)="nuevaEvidencia.criticidad = 'Medio'"
+                            severity="warn" [ngClass]="{'p-button-outlined': nuevaEvidencia.criticidad !== 'Medio'}"></button>
+                    <button pButton type="button" label="Grave" 
+                            (click)="nuevaEvidencia.criticidad = 'Grave'"
+                            severity="danger" [ngClass]="{'p-button-outlined': nuevaEvidencia.criticidad !== 'Grave'}"></button>
+                    <button pButton type="button" label="Crítico" 
+                            (click)="nuevaEvidencia.criticidad = 'Crítico'"
+                            severity="contrast" [ngClass]="{'p-button-outlined': nuevaEvidencia.criticidad !== 'Crítico'}"></button>
+                </div>
+            </div>
+
+            <div>
+                <label for="descripcion" class="block font-bold mb-2 text-xl">Descripción de Evidencia</label>
+                <textarea id="descripcion" pTextarea [(ngModel)]="nuevaEvidencia.descripcion_evidencia" rows="5" placeholder="Describe lo que sucedió..." class="w-full"></textarea>
+            </div>
+
+            <div>
+                <label class="block font-bold mb-2 text-xl">Adjuntar Archivo</label>
+                <p-fileUpload name="evidenciaFile" (onSelect)="onUpload($event)" [multiple]="false" 
+                              accept="image/*,video/*,.log,.txt" maxFileSize="10000000"
+                              chooseLabel="Elegir" uploadLabel="Subir" cancelLabel="Cancelar">
+                    <ng-template pTemplate="content"></ng-template>
+                </p-fileUpload>
+            </div>
+            
+            <div *ngIf="nuevaEvidencia.estado_evidencia === 'NK'">
+                <label for="jira" class="block font-bold mb-2 text-xl">Jira</label>
+                <input type="text" pInputText id="jira" [(ngModel)]="jiraInput" 
+                       maxlength="20" placeholder="Ej: CERTRTA25-1381" class="w-full"/>
+            </div>
+
+            <div class="flex justify-end mt-4 gap-2">
+                <button pButton type="button" label="Volver al Historial" icon="pi pi-book" 
+                        class="p-button-secondary" 
+                        [routerLink]="['/pages/casos', caso()?.id_caso]"></button>
+                <button pButton type="button" label="Volver a la Lista" icon="pi pi-list" 
+                        class="p-button-secondary" 
+                        routerLink="/pages/gestion/casos"></button>
+                <button pButton type="button" label="Guardar Evidencia" icon="pi pi-save" 
+                        (click)="guardarEvidencia()"></button>
+            </div>
+        </div>
+    </p-card>
+</div>
 </div>

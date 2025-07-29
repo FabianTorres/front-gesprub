@@ -59,7 +59,7 @@ export class HistorialPage implements OnInit {
             case 'Leve':
                 return 'info';
             case 'Medio':
-                return 'warning';
+                return 'warn';
             case 'Grave':
                 return 'danger';
             case 'Crítico':

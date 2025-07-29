@@ -1,9 +1,11 @@
-import { Injectable , inject} from '@angular/core';
+import { Injectable, inject, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Router } from '@angular/router';
 import { environment } from '../../environment/environment';
 import { LoginCredentials, LoginResponse } from '../models/autenticacion';
-import { Observable, tap } from 'rxjs';
+import { Observable, tap, switchMap } from 'rxjs';
+import { Usuario } from '../models/usuario';
+import { UsuarioService } from './usuario.service';
 
 @Injectable({
   providedIn: 'root'
@@ -11,59 +13,78 @@ import { Observable, tap } from 'rxjs';
 export class AutenticacionService {
   private http = inject(HttpClient);
   private router = inject(Router);
-  private apiUrl = `${environment.apiUrl}/autenticacion`; 
+  private usuarioService = inject(UsuarioService);
+  private apiUrl = `${environment.apiUrl}/autenticacion`;
 
+  usuarioActual = signal<Usuario | null>(null);
 
-  constructor() { }
+  constructor() {
+    this.cargarSesionGuardada();
+  }
 
-
-    // Método principal de login
-  login(credentials: LoginCredentials): Observable<LoginResponse> {
+  login(credentials: LoginCredentials): Observable<Usuario> {
     return this.http.post<LoginResponse>(`${this.apiUrl}/login`, credentials).pipe(
-      tap(response => {
-        // Cuando el login es exitoso, se guarda el token
+      // Se encadena una segunda operación con switchMap
+      switchMap(response => {
         this.guardarToken(response.token);
-        // Y redirigimos al dashboard
+        const nombreUsuario = this.getNombreUsuarioDesdeToken(response.token);
+        // Se llama al servicio de usuario para obtener los detalles completos
+        return this.usuarioService.getUsuarioPorNombre(nombreUsuario!);
+      }),
+      // El resultado final (el objeto Usuario) se maneja aquí
+      tap(usuarioCompleto => {
+        this.guardarUsuario(usuarioCompleto);
+        this.usuarioActual.set(usuarioCompleto);
         this.router.navigate(['/']);
       })
     );
   }
 
-  // Método para cerrar sesión
   logout(): void {
     localStorage.removeItem('authToken');
-    this.router.navigate(['/login']);
+    localStorage.removeItem('currentUser');
+    this.usuarioActual.set(null);
+    this.router.navigate(['/auth/login']);
   }
 
-  // Método privado para guardar el token en el almacenamiento local del navegador
   private guardarToken(token: string): void {
     localStorage.setItem('authToken', token);
   }
+  
+  private guardarUsuario(usuario: Usuario): void {
+    localStorage.setItem('currentUser', JSON.stringify(usuario));
+  }
 
-  // Método público para obtener el token
   getToken(): string | null {
     return localStorage.getItem('authToken');
   }
 
-  // Método para verificar si el usuario está autenticado
-  isLoggedIn(): boolean {
+  private cargarSesionGuardada(): void {
     const token = this.getToken();
-    if (!token) {
-      return false;
+    const usuarioGuardado = localStorage.getItem('currentUser');
+    if (token && usuarioGuardado && !this.isTokenExpired(token)) {
+      this.usuarioActual.set(JSON.parse(usuarioGuardado));
     }
-    return !this.isTokenExpired(token);
+  }
+  
+  isLoggedIn(): boolean {
+    return !!this.usuarioActual();
+  }
+  
+  private getNombreUsuarioDesdeToken(token: string): string | null {
+    try {
+      return JSON.parse(atob(token.split('.')[1])).sub;
+    } catch (e) {
+      return null;
+    }
   }
 
   private isTokenExpired(token: string): boolean {
     try {
-      const expiry = (JSON.parse(atob(token.split('.')[1]))).exp;
-      // Compara la fecha de expiración (en segundos) con la fecha actual (en segundos).
+      const expiry = JSON.parse(atob(token.split('.')[1])).exp;
       return (Math.floor((new Date).getTime() / 1000)) >= expiry;
     } catch (e) {
-      // Si hay un error al decodificar, tratamos el token como inválido.
       return true;
     }
   }
-
-
 }

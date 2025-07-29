@@ -60,7 +60,7 @@ export class ComponentesPage implements OnInit {
     private datePipe = inject(DatePipe);
 
     private router = inject(Router);
-    private proyectoService = inject(ProyectoService);
+    private proyectoService = inject(ProyectoService); 
 
     hitos = signal<any[]>([]);
     opcionesFiltroActivo: any[];
@@ -127,9 +127,18 @@ export class ComponentesPage implements OnInit {
             return;
         }
 
+        // Se obtiene el proyecto activo desde el servicio.
+        const proyectoActual = this.proyectoService.proyectoSeleccionado();
+        if (!proyectoActual) {
+            this.messageService.add({severity: 'error', summary: 'Error', detail: 'No hay un proyecto seleccionado.'});
+            return;
+        }
+
         // Preparamos el objeto para enviar
         this.componente.activo = this.activoDialog ? 1 : 0;
         this.componente.fecha_limite = this.datePipe.transform(this.fechaLimiteDialog, 'yyyy-MM-dd') || '';
+        this.componente.proyecto = proyectoActual;
+
 
         const peticion = this.editando
             ? this.componenteService.updateComponente(this.componente.id_componente!, this.componente as Componente)
@@ -150,10 +159,16 @@ export class ComponentesPage implements OnInit {
 
     irACasos(componente: Componente) {
         if (componente.id_componente) {
-            // Guardamos el ID en localStorage, como en la página de casos
-            localStorage.setItem('ultimoComponenteSeleccionado', componente.id_componente.toString());
-            // Navegamos a la página de casos
-            this.router.navigate(['/pages/gestion/casos']);
+            const proyectoActual = this.proyectoService.proyectoSeleccionado();
+            // CAMBIO: Se asegura de que haya un proyecto activo antes de guardar
+            if (proyectoActual) {
+                // Se construye la clave específica para el proyecto
+                const key = `ultimoComponente_${proyectoActual.id_proyecto}`;
+                localStorage.setItem(key, componente.id_componente.toString());
+                this.router.navigate(['/pages/gestion/casos']);
+            } else {
+                this.messageService.add({severity: 'warn', summary: 'Acción no disponible', detail: 'Por favor, seleccione un proyecto activo primero.'});
+            }
         }
     }
 

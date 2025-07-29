@@ -3,7 +3,7 @@
     "version": 1,
     "newProjectRoot": "projects",
     "projects": {
-        "sakai-ng": {
+        "gesprub": {
             "projectType": "application",
             "schematics": {
                 "@schematics/angular:component": {
@@ -17,7 +17,7 @@
                 "build": {
                     "builder": "@angular-devkit/build-angular:application",
                     "options": {
-                        "outputPath": "dist/sakai-ng",
+                        "outputPath": "dist",
                         "index": "src/index.html",
                         "browser": "src/main.ts",
                         "polyfills": [
@@ -50,7 +50,13 @@
                                     "maximumError": "4kb"
                                 }
                             ],
-                            "outputHashing": "all"
+                            "outputHashing": "all",
+                            "fileReplacements": [
+                                {
+                                    "replace": "src/environment/environment.ts",
+                                    "with": "src/environment/environment.prod.ts"
+                                }
+                            ]
                         },
                         "development": {
                             "optimization": false,
@@ -64,10 +70,10 @@
                     "builder": "@angular-devkit/build-angular:dev-server",
                     "configurations": {
                         "production": {
-                            "buildTarget": "sakai-ng:build:production"
+                            "buildTarget": "gesprub:build:production"
                         },
                         "development": {
-                            "buildTarget": "sakai-ng:build:development"
+                            "buildTarget": "gesprub:build:development"
                         }
                     },
                     "defaultConfiguration": "development"

@@ -14,6 +14,7 @@ export default [
      { path: 'gestion/casos', loadComponent: () => import('./gestion/casos').then(m => m.CasosPage) },
      { path: 'ejecucion/:id', loadComponent: () => import('./ejecucion/ejecucion').then(m => m.EjecucionPage) },
      { path: 'casos/:id', loadComponent: () => import('./casos/historial/historial').then(m => m.HistorialPage) },
+     { path: 'admin/usuarios', loadComponent: () => import('./admin/usuarios').then(m => m.UsuariosPage) },
 
 
     { path: '**', redirectTo: '/notfound' }

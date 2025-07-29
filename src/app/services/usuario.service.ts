@@ -10,9 +10,22 @@ import { Usuario } from '../models/usuario';
 export class UsuarioService {
 
   private http = inject(HttpClient);
-  private apiUrl = `${environment.apiUrl}`; // URL base de la API
+  private apiUrl = `${environment.apiUrl}/usuario`;
 
   constructor() { }
+
+  getUsuarios(): Observable<Usuario[]> {
+    return this.http.get<Usuario[]>(this.apiUrl);
+  }
+
+  // Se asegura que este método exista para que el AuthService lo pueda llamar.
+  getUsuarioPorNombre(nombreUsuario: string): Observable<Usuario> {
+    return this.http.get<Usuario>(`${this.apiUrl}/nombreusuario/${nombreUsuario}`);
+  }
+
+  updateUsuario(id: number, datosActualizados: Partial<Usuario>): Observable<Usuario> {
+    return this.http.put<Usuario>(`${this.apiUrl}/${id}`, datosActualizados);
+  }
 
 
   //Servicio de registrar usuario

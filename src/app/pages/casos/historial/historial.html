@@ -1,22 +1,23 @@
 <p-toast></p-toast>
 <div class="card" *ngIf="caso() as c">
-    <div class="flex justify-between items-start mb-4">
-        <div class="flex items-center gap-4" style="max-width: 85%;">
+    <div class="flex justify-between items-center mb-4 gap-4">
+        <div class="flex items-center gap-4 flex-1 min-w-0">
                 <button pButton
                     type="button"
                     icon="pi pi-arrow-left"
                     routerLink="/pages/gestion/casos"
-                    class="p-button-secondary p-button-outlined">
+                    class="p-button-secondary p-button-outlined flex-shrink-0">
                 </button>
-                <div style="max-width: 80%;">
+                <div class="min-w-0">
                     <h2 class="m-0 text-2xl font-semibold" >{{ c.nombre_caso }}</h2>
-                    <p class="text-muted-color m-0" >{{ c.descripcion_caso }}</p>
+                    <p class="text-muted-color m-0 " >{{ c.descripcion_caso }}</p>
                 </div>
         </div>
         <button pButton 
                 label="Ejecutar Nueva Prueba" 
                 icon="pi pi-play" 
-                [routerLink]="['/pages/ejecucion', c.id_caso]">
+                [routerLink]="['/pages/ejecucion', c.id_caso]"
+                class="flex-shrink-0">
         </button>
     </div>
 

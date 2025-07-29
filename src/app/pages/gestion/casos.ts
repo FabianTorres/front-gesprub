@@ -28,6 +28,8 @@ import { CasoConEvidencia } from '../../models/casoevidencia';
 import { TruncatePipe } from '../../pipes/truncate.pipe';
 import { environment } from '../../../environment/environment';
 import { ProyectoService } from '../../services/proyecto.service';
+import { AutenticacionService } from '../../services/autenticacion.service';
+import { Proyecto } from '../../models/proyecto';
 
 // Se define una interfaz local para la estructura de los Hitos.
 interface Hito {
@@ -87,6 +89,7 @@ export class CasosPage implements OnInit {
     private componenteService = inject(ComponenteService);
     private messageService = inject(MessageService);
     private datePipe = inject(DatePipe);
+    private authService = inject(AutenticacionService);
 
     constructor() {
         // Se crea un 'effect' que reacciona a los cambios en la señal 'hitoSeleccionado'.
@@ -110,16 +113,21 @@ export class CasosPage implements OnInit {
             }
         });
 
+        // CAMBIO: Se reemplaza el .subscribe() por un effect que reacciona al cambio de proyecto
         effect(() => {
             const proyectoActual = this.proyectoService.proyectoSeleccionado();
+            // Cada vez que el proyecto global cambia, se limpian las selecciones
             this.componenteSeleccionadoId = null;
             this.casos.set([]);
+            
             if (proyectoActual) {
                 this.cargarComponentes(proyectoActual.id_proyecto);
             } else {
+                // Si no hay proyecto, se vacía la lista de componentes
                 this.componentes.set([]);
             }
         });
+
 
         // Se inicializan las opciones para el menú de filtro de la columna 'Estado'.
         this.opcionesFiltroEstado = [
@@ -137,14 +145,7 @@ export class CasosPage implements OnInit {
     
     // Método del ciclo de vida de Angular que se ejecuta al iniciar el componente.
     ngOnInit() {
-        //this.cargarComponentes();
 
-        //Se carga ultimo componente guardado
-        // const ultimoComponenteId = localStorage.getItem('ultimoComponenteSeleccionado');
-        // if (ultimoComponenteId) {
-        //     this.componenteSeleccionadoId = +ultimoComponenteId; // Se convierte a número
-        //     this.onComponenteSeleccionado(); // Se cargan los casos automáticamente
-        // }
 
     }
 
@@ -181,6 +182,7 @@ export class CasosPage implements OnInit {
     cargarComponentes(proyectoId: number) {
         this.componenteService.getComponentesPorProyecto(proyectoId).subscribe(data => {
             this.componentes.set(data);
+            this.cargarHitos(data);
             
             // CAMBIO: Se intenta restaurar el último componente guardado para ESTE proyecto.
             const key = `ultimoComponente_${proyectoId}`;
@@ -199,21 +201,18 @@ export class CasosPage implements OnInit {
 
     // Prepara las variables para abrir el diálogo en modo 'Nuevo'.
     abrirDialogoNuevo() {
-        
-        const componenteActual = this.componentes().find(c => c.id_componente === this.componenteSeleccionadoId);
-
+       const componenteActual = this.componentes().find(c => c.id_componente === this.componenteSeleccionadoId);
         this.caso = {
-            // Se pre-rellena el año desde la configuración.
-            anio: environment.anioTributario,
-            // Se pre-rellena el ID del componente.
+            anio: environment.anioTributario, 
             id_componente: componenteActual?.id_componente
         };
         this.editando = false;
         this.activoDialog = true;
         this.hitoSeleccionado.set(componenteActual?.hito_componente || null);
-        
         this.detallesAvanzadosColapsados = true;
         this.casoDialog = true;
+        console.log("Esto es this.componenteSeleccionadoId",this.componenteSeleccionadoId)
+        console.log("Esto es this.hitoSeleccionado",this.hitoSeleccionado)
     }
 
     // Prepara las variables para abrir el diálogo en modo 'Editar' con los datos del caso seleccionado.
@@ -227,7 +226,7 @@ export class CasosPage implements OnInit {
         this.editando = true;
         this.activoDialog = caso.activo === 1;
         const hitoId = this.componentes().find(c => c.id_componente === caso.id_componente)?.hito_componente || null;
-        this.hitoSeleccionado.set(hitoId); 
+        this.hitoSeleccionado.set(hitoId); //
         this.casoDialog = true;
     }
     
@@ -238,9 +237,19 @@ export class CasosPage implements OnInit {
 
     // Gestiona el guardado de un caso, ya sea para crear uno nuevo o actualizar uno existente.
     guardarCaso() {
+
+        // Se obtiene el usuario actual desde el servicio de autenticación
+        const usuarioLogueado = this.authService.usuarioActual();
+
+        // Se comprueba si hay un usuario logueado antes de continuar
+        if (!usuarioLogueado || !usuarioLogueado.idUsuario) {
+            this.messageService.add({severity: 'error', summary: 'Error', detail: 'No se pudo identificar al usuario. Por favor, inicie sesión de nuevo.'});
+            return;
+        }
+
         this.caso.activo = this.activoDialog ? 1 : 0;
-        this.caso.id_usuario_creador = 1;
-        this.caso.jp_responsable = 1;
+        this.caso.id_usuario_creador = usuarioLogueado.idUsuario;
+        this.caso.jp_responsable = usuarioLogueado.idUsuario;
 
         const peticion = this.editando
             ? this.casoService.updateCaso(this.caso.id_caso!, this.caso as Caso)
@@ -280,5 +289,11 @@ export class CasosPage implements OnInit {
         if (this.filterInput) {
             this.filterInput.nativeElement.value = '';
         }
+    }
+
+
+    cargarHitos(componentes: Componente[]) {
+        const hitosUnicos = [...new Map(componentes.map(c => [c.hito_componente, c.hito_componente])).values()];
+        this.hitos.set(hitosUnicos.map(h => ({ id: h, nombre: `Hito ${h}` })));
     }
 }

@@ -1,5 +1,5 @@
 {
-    "name": "sakai-ng",
+    "name": "gesprub",
     "version": "19.0.1",
     "scripts": {
         "ng": "ng",

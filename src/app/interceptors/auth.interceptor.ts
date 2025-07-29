@@ -24,7 +24,7 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
   return next(authReq).pipe(
     catchError((error: HttpErrorResponse) => {
       // Si el error es 401 (No Autorizado), cerramos la sesión.
-      if (error.status === 401 || error.status === 403) {
+      if (error.status === 401 /*|| error.status === 403*/) {
         authService.logout();
       }
       // Re-lanzamos el error para que otros manejadores puedan usarlo si es necesario.

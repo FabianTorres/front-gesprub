@@ -97,10 +97,12 @@ export class AppMenu implements OnInit {
                     {
                         label: 'Usuarios',
                         icon: 'pi pi-fw pi-users',
-                        // routerLink: ['/pages/admin/usuarios'] // Lo dejaremos comentado por ahora
+                        routerLink: ['/pages/admin/usuarios'] 
                     }
                 ]
             }
+
+            
         ];
     }
 

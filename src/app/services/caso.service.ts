@@ -7,6 +7,7 @@ import { environment } from '../../environment/environment';
 import { Caso } from '../models/caso';
 import { CasoConEvidencia } from '../models/casoevidencia';
 import { Evidencia } from '../models/evidencia';
+import { HistorialCaso } from '../models/historial-caso';
 
 @Injectable({ providedIn: 'root' })
 export class CasoService {
@@ -21,8 +22,14 @@ export class CasoService {
         return this.http.get<Caso>(`${this.apiUrl}/${id}`);
     }
 
-    getEvidenciasByCasoId(id: number): Observable<Evidencia[]> {
-        return this.http.get<Evidencia[]>(`${this.apiUrl}/${id}/evidencias`);
+    //Obtiene todas las evidencias de un solo caso
+    // getEvidenciasByCasoId(id: number): Observable<Evidencia[]> {
+    //     return this.http.get<Evidencia[]>(`${this.apiUrl}/${id}/evidencias`);
+    // }
+
+    //Nuevo metodo que obtiene las evidencias de un solo caso
+    getHistorialPorCasoId(id: number): Observable<HistorialCaso> {
+        return this.http.get<HistorialCaso>(`${this.apiUrl}/${id}/historial`);
     }
 
     createCaso(caso: Caso): Observable<Caso> {
@@ -33,8 +40,8 @@ export class CasoService {
         return this.http.put<Caso>(`${this.apiUrl}/${id}`, caso);
     }
 
-    getCasosPorComponente(idComponente: number): Observable<CasoConEvidencia[]> {
+    getCasosPorComponente(id_componente: number): Observable<CasoConEvidencia[]> {
         // Asumimos que tu endpoint puede recibir un parámetro así: /api/caso/evidencia?componenteId=1
-        return this.http.get<CasoConEvidencia[]>(`${this.apiUrl}/evidenciacomp`, { params: { componenteId: idComponente } });
+        return this.http.get<CasoConEvidencia[]>(`${this.apiUrl}/evidenciacomp`, { params: { componenteId: id_componente } });
     }
 }

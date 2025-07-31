@@ -211,12 +211,16 @@ export class CasosPage implements OnInit {
         this.hitoSeleccionado.set(componenteActual?.hito_componente || null);
         this.detallesAvanzadosColapsados = true;
         this.casoDialog = true;
-        console.log("Esto es this.componenteSeleccionadoId",this.componenteSeleccionadoId)
-        console.log("Esto es this.hitoSeleccionado",this.hitoSeleccionado)
+
+        
+        console.log("Abrir dialogo: ",this.hitoSeleccionado)
+        
+        
     }
 
     // Prepara las variables para abrir el diálogo en modo 'Editar' con los datos del caso seleccionado.
     editarCaso(casoConEvidencia: CasoConEvidencia) {
+        
         const caso = casoConEvidencia.caso;
         if (!caso) {
             this.messageService.add({severity: 'error', summary: 'Error', detail: 'No se pudieron cargar los datos del caso.'});
@@ -226,7 +230,9 @@ export class CasosPage implements OnInit {
         this.editando = true;
         this.activoDialog = caso.activo === 1;
         const hitoId = this.componentes().find(c => c.id_componente === caso.id_componente)?.hito_componente || null;
-        this.hitoSeleccionado.set(hitoId); //
+        this.hitoSeleccionado.set(hitoId); 
+        
+        
         this.casoDialog = true;
     }
     

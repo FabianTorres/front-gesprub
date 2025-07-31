@@ -11,6 +11,7 @@ import { ToastModule } from 'primeng/toast';
 import { Caso } from '../../../models/caso';
 import { Evidencia } from '../../../models/evidencia';
 import { CasoService } from '../../../services/caso.service';
+import { HistorialCaso } from '../../../models/historial-caso';
 
 @Component({
     standalone: true,
@@ -29,6 +30,7 @@ import { CasoService } from '../../../services/caso.service';
 export class HistorialPage implements OnInit {
     caso = signal<Caso | null>(null);
     historial = signal<Evidencia[]>([]);
+    datosHistorial = signal<HistorialCaso | null>(null);
 
     private route = inject(ActivatedRoute);
     private casoService = inject(CasoService);
@@ -37,9 +39,12 @@ export class HistorialPage implements OnInit {
     ngOnInit() {
         const casoId = this.route.snapshot.paramMap.get('id');
         if (casoId) {
-            // Asumiremos que crearemos estos nuevos métodos en el servicio
-            this.casoService.getCasoById(+casoId).subscribe(data => this.caso.set(data));
-            this.casoService.getEvidenciasByCasoId(+casoId).subscribe(data => this.historial.set(data));
+            
+            //this.casoService.getCasoById(+casoId).subscribe(data => this.caso.set(data));
+            this.casoService.getHistorialPorCasoId(+casoId).subscribe(data => {
+                this.datosHistorial.set(data);
+                console.log(data)
+            });
         }
     }
 

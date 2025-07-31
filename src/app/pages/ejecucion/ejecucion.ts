@@ -88,9 +88,11 @@ export class EjecucionPage implements OnInit {
         }
 
 
-        this.nuevaEvidencia.id_usuario_ejecutante = usuarioLogueado.idUsuario;
-        
 
+
+        this.nuevaEvidencia.usuarioEjecutante = usuarioLogueado;
+        
+        
         this.evidenciaService.createEvidencia(this.nuevaEvidencia as Evidencia).subscribe({
             next: () => {
                 this.messageService.add({ severity: 'success', summary: 'Éxito', detail: 'Evidencia guardada correctamente.' });

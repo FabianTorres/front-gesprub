@@ -16,5 +16,9 @@ export class EvidenciaService {
         return this.http.post<Evidencia>(this.apiUrl, evidencia);
     }
 
+    getEvidencias(): Observable<Evidencia[]> {
+            return this.http.get<Evidencia[]>(this.apiUrl);
+    }
+
     // Más adelante podríamos añadir métodos para ver o editar evidencias
 }

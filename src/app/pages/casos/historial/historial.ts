@@ -38,14 +38,37 @@ export class HistorialPage implements OnInit {
 
     ngOnInit() {
         const casoId = this.route.snapshot.paramMap.get('id');
-        if (casoId) {
-            
-            //this.casoService.getCasoById(+casoId).subscribe(data => this.caso.set(data));
-            this.casoService.getHistorialPorCasoId(+casoId).subscribe(data => {
-                this.datosHistorial.set(data);
-                console.log(data)
-            });
-        }
+            if (casoId) {
+                this.casoService.getHistorialPorCasoId(+casoId).subscribe(data => {
+
+                    // --- INICIO DE LA MODIFICACIÓN ---
+
+                    // 1. Verificamos que los datos y el array 'historial' existan
+                    if (data && data.historial) {
+
+                        // 2. Usamos .map() para crear un nuevo array con la propiedad 'posicion'
+                        const historialModificado = data.historial.map((evento, index) => {
+                            return {
+                                ...evento, // Copia todas las propiedades originales del evento
+                                posicion: index % 2 !== 0 ? 'left' : 'right' // Añade la propiedad 'posicion'
+                            };
+                        });
+
+                        // 3. Actualizamos la signal 'datosHistorial' con los datos ya transformados
+                        this.datosHistorial.set({
+                            ...data,
+                            historial: historialModificado
+                        });
+                        
+                    } else {
+                        // Si no hay datos, simplemente los establecemos como están
+                        this.datosHistorial.set(data);
+                    }
+                    // --- FIN DE LA MODIFICACIÓN ---
+
+                    console.log(this.datosHistorial()); // Ahora el log mostrará la nueva propiedad
+                });
+            }
     }
 
     getSeverityForEstado(estado: string | null | undefined): string {
@@ -77,4 +100,6 @@ export class HistorialPage implements OnInit {
     volverAtras(): void {
         this.location.back();
     }
+
+   
 }

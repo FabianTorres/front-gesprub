@@ -25,6 +25,7 @@
 
     <h3 class="mb-4">Historial de Ejecuciones</h3>
     <p-timeline [value]="c.historial" align="alternate" styleClass="customized-timeline">
+        <!-- Aqui parte la linea del medio del timeline (con sus iconos) -->
         <ng-template pTemplate="marker" let-evento>
             <span class="flex w-8 h-8 items-center justify-center text-white rounded-full z-10 shadow-sm"
                   [ngClass]="{
@@ -38,31 +39,46 @@
             </span>
         </ng-template>
         
-        <ng-template pTemplate="content" let-evento let-i="index">
-            <p-card [ngClass]="{ 'text-right': i % 2 === 0 }">
+        <!-- Aqui parte el contenido del timeline -->
+        <ng-template pTemplate="content" let-evento>
+
+            
+           <p-card [ngClass]="{ 'timeline-card-left': evento.posicion === 'left' }">
+
                 <ng-template pTemplate="title">
-                    <div class="flex items-center gap-2" [ngClass]="{ 'justify-end': i % 2 === 0 }">
-                        <p-tag [value]="evento.estado_evidencia" [severity]="getSeverityForEstado(evento.estado_evidencia)"></p-tag>
-                        <p-tag *ngIf="evento.criticidad" [value]="evento.criticidad" [severity]="getSeverityForCriticidad(evento.criticidad)" styleClass="font-bold"></p-tag>
-                    </div>
+                <div class="flex items-center gap-2" [ngClass]="{ 'justify-end': evento.posicion === 'left' }">
+                    <p-tag [value]="evento.estado_evidencia" [severity]="getSeverityForEstado(evento.estado_evidencia)"></p-tag>
+                    <p-tag *ngIf="evento.criticidad" [value]="evento.criticidad" [severity]="getSeverityForCriticidad(evento.criticidad)" styleClass="font-bold"></p-tag>
+                </div>
                 </ng-template>
+
                 <ng-template pTemplate="subtitle">
-             
-                        Ejecutado el {{ evento.fecha_evidencia | date:'dd/MM/yyyy h:mm a' }} por Usuario : {{ evento.nombreUsuarioEjecutante }}
-                   
-                    
+                <div [ngClass]="{ 'text-right': evento.posicion === 'left' }">
+                    Ejecutado el {{ evento.fecha_evidencia | date:'dd/MM/yyyy h:mm a' }} por Usuario : {{ evento.nombreUsuarioEjecutante }}
+                </div>
                 </ng-template>
+
+                <div [ngClass]="{ 'text-right': evento.posicion === 'left' }">
                 <p>{{ evento.descripcion_evidencia }}</p>
-                <div class="mt-4 flex flex-col gap-2" *ngIf="evento.url_evidencia || evento.id_jira">
+                
+                <div class="mt-4 flex flex-col gap-2" 
+                    [ngClass]="{ 'items-end': evento.posicion === 'left' }" 
+                    *ngIf="evento.url_evidencia || evento.id_jira">
+                    
                     <a *ngIf="evento.url_evidencia" href="#" class="text-primary hover:underline">
-                        <i class="pi pi-paperclip mr-2"></i>Ver Evidencia Adjunta
+                    <i class="pi pi-paperclip mr-2"></i>Ver Evidencia Adjunta
                     </a>
                     <a *ngIf="evento.id_jira" href="#" class="text-primary hover:underline">
-                        <i class="pi pi-ticket mr-2"></i>Ver Incidencia en Jira: {{ evento.id_jira }}
+                    <i class="pi pi-ticket mr-2"></i>Ver Incidencia en Jira: {{ evento.id_jira }}
                     </a>
                 </div>
+                </div>
+                
             </p-card>
+
+            
         </ng-template>
+
     </p-timeline>
     <div *ngIf="c.historial.length === 0" class="text-center p-4">
         Este caso de prueba aún no tiene ejecuciones registradas.

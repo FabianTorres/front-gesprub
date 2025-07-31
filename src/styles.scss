@@ -17,3 +17,15 @@
   max-width: 600px; /* Opcional: un ancho máximo para que no sea excesivo */
 }
 
+
+/* Estilos para mejorar la visualización de las tarjetas del historial */
+.p-timeline .p-card {
+    border: 1.5px solid var(--surface-border);
+    box-shadow: 7px 7px 6px rgba(0, 0, 0, 0.05);
+}
+
+/* Estilos específicos para cuando el tema oscuro está activo */
+.app-dark .p-timeline .p-card {
+    /* Se usa una sombra gris y sutil para que se note en fondos oscuros */
+    box-shadow: 7px 7px 6px rgba(255, 255, 255, 0.212);
+}

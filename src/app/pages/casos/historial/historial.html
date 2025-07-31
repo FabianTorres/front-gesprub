@@ -54,7 +54,9 @@
 
                 <ng-template pTemplate="subtitle">
                 <div [ngClass]="{ 'text-right': evento.posicion === 'left' }">
-                    Ejecutado el {{ evento.fecha_evidencia | date:'dd/MM/yyyy h:mm a' }} por Usuario : {{ evento.nombreUsuarioEjecutante }}
+                    <div class="text-sm">Ejecutado el {{ evento.fecha_evidencia | date:'dd/MM/yyyy h:mm a' }}</div>
+                    <div class="text-sm font-semibold mt-1">Certificador: {{ evento.nombreUsuarioEjecutante }}</div>
+
                 </div>
                 </ng-template>
 

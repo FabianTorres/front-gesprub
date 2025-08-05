@@ -44,4 +44,8 @@ export class CasoService {
         // Asumimos que tu endpoint puede recibir un parámetro así: /api/caso/evidencia?componenteId=1
         return this.http.get<CasoConEvidencia[]>(`${this.apiUrl}/evidenciacomp`, { params: { componenteId: id_componente } });
     }
+
+    getFormularios(): Observable<number[]> {
+        return this.http.get<number[]>(`${this.apiUrl}/formularios`);
+    }
 }

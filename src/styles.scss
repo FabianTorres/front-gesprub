@@ -29,3 +29,7 @@
     /* Se usa una sombra gris y sutil para que se note en fondos oscuros */
     box-shadow: 7px 7px 6px rgba(255, 255, 255, 0.212);
 }
+
+.p-autocomplete.w-full .p-autocomplete-input {
+  width: 100%;
+}

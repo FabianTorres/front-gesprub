@@ -14,6 +14,7 @@ import { InputTextModule } from 'primeng/inputtext';
 import { TextareaModule } from 'primeng/textarea';
 import { InputSwitchModule } from 'primeng/inputswitch';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
+import { AutoCompleteModule, AutoCompleteCompleteEvent } from 'primeng/autocomplete';
 import { ToastModule } from 'primeng/toast';
 import { SelectModule } from 'primeng/select';
 import { InputNumberModule } from 'primeng/inputnumber';
@@ -40,7 +41,7 @@ interface Hito {
 @Component({
     standalone: true,
     imports: [
-        IconFieldModule, FieldsetModule, InputIconModule, TooltipModule, CommonModule, FormsModule, TableModule, ButtonModule, ToolbarModule, DialogModule,
+        IconFieldModule, AutoCompleteModule,  FieldsetModule, InputIconModule, TooltipModule, CommonModule, FormsModule, TableModule, ButtonModule, ToolbarModule, DialogModule,
         RouterModule, TruncatePipe , TagModule, InputTextModule, TextareaModule, SelectModule, InputSwitchModule, ConfirmDialogModule, ToastModule, InputNumberModule, VersionFormatDirective
     ],
     providers: [MessageService, ConfirmationService, DatePipe],
@@ -71,6 +72,9 @@ export class CasosPage implements OnInit {
     hitoSeleccionado = signal<number | null>(null);
     // Almacena las opciones para el filtro de estado en la tabla.
     opcionesFiltroEstado: any[];
+
+    todosLosFormularios = signal<number[]>([]);
+    sugerenciasFormulario = signal<number[]>([]);
 
     // Almacena las opciones para el filtro de activo en la tabla.
     opcionesFiltroActivo: any[];
@@ -146,7 +150,17 @@ export class CasosPage implements OnInit {
     // Método del ciclo de vida de Angular que se ejecuta al iniciar el componente.
     ngOnInit() {
 
+        this.cargarFormularios();
+    }
 
+    cargarFormularios() {
+        this.casoService.getFormularios().subscribe(data => this.todosLosFormularios.set(data));
+    }
+
+    filtrarFormulario(event: AutoCompleteCompleteEvent) {
+        const query = event.query;
+        const filtrados = this.todosLosFormularios().filter(num => num.toString().includes(query));
+        this.sugerenciasFormulario.set(filtrados);
     }
 
     // Se activa al seleccionar un componente, cargando los casos correspondientes.

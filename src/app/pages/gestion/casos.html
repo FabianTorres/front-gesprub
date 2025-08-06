@@ -38,6 +38,11 @@
 
             <ng-template pTemplate="header">
                 <tr>
+                    <th pSortableColumn="caso.id_estado_modificacion" style="width:10%">
+                        <div class="flex justify-between items-center">
+                            Estado Mod.
+                            </div>
+                    </th>
                     <th pSortableColumn="caso.nombre_caso">
                         <div class="flex justify-between items-center">
                             Nombre del Caso
@@ -82,6 +87,10 @@
             
             <ng-template pTemplate="body" let-item>
                 <tr>
+                    <td>
+                        <p-tag [value]="findEstadoModificacionNombre(item.caso.id_estado_modificacion)" 
+                                [severity]="getSeverityForModificacion(findEstadoModificacionNombre(item.caso.id_estado_modificacion))"></p-tag>
+                    </td>
                     <td>{{item.caso.nombre_caso}}</td>
                     <td [pTooltip]="item.caso.descripcion_caso" 
                         tooltipPosition="bottom" tooltipStyleClass="custom-tooltip-wide">
@@ -134,6 +143,17 @@
             <div>
                 <label class="block font-bold mb-2">Componente Asociado</label>
                 <p-select [options]="componentesFiltrados()" [(ngModel)]="caso.id_componente" optionLabel="nombre_componente" optionValue="id_componente" placeholder="Selecciona un componente" [disabled]="!hitoSeleccionado()" styleClass="w-full"></p-select>
+            </div>
+
+            <div>
+                <label for="estado_modificacion" class="block font-bold mb-2">Estado Modificación</label>
+                <p-select [options]="estadosModificacion()" 
+                        [(ngModel)]="caso.id_estado_modificacion"
+                        optionLabel="nombre" 
+                        optionValue="id_estado_modificacion" 
+                        placeholder="Seleccionar estado"
+                        styleClass="w-full">
+                </p-select>
             </div>
 
             <div>

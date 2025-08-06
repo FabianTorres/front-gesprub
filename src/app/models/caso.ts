@@ -6,6 +6,7 @@ export interface Caso {
   num_formulario: number;
   id_componente: number;
   id_usuario_creador: number;
+  id_estado_modificacion: number;
   precondiciones: string;
   pasos: string;
   resultado_esperado: string;

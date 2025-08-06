@@ -31,6 +31,8 @@ import { environment } from '../../../environment/environment';
 import { ProyectoService } from '../../services/proyecto.service';
 import { AutenticacionService } from '../../services/autenticacion.service';
 import { Proyecto } from '../../models/proyecto';
+import { EstadoModificacion } from '../../models/estado-modificacion';
+import { EstadoModificacionService } from '../../services/estado-modificacion.service';
 
 // Se define una interfaz local para la estructura de los Hitos.
 interface Hito {
@@ -72,6 +74,9 @@ export class CasosPage implements OnInit {
     hitoSeleccionado = signal<number | null>(null);
     // Almacena las opciones para el filtro de estado en la tabla.
     opcionesFiltroEstado: any[];
+
+    estadosModificacion = signal<EstadoModificacion[]>([]);
+    private estadoModificacionService = inject(EstadoModificacionService);
 
     todosLosFormularios = signal<number[]>([]);
     sugerenciasFormulario = signal<number[]>([]);
@@ -170,6 +175,21 @@ export class CasosPage implements OnInit {
         
 
         this.cargarFormularios();
+        this.cargarEstadosModificacion();
+    }
+
+    cargarEstadosModificacion() {
+        this.estadoModificacionService.getEstados().subscribe(data => {
+            this.estadosModificacion.set(data);
+        });
+
+    
+    }
+
+    // Añade esta función para encontrar el nombre del estado por su ID
+    findEstadoModificacionNombre(id: number): string {
+        const estado = this.estadosModificacion().find(e => e.id_estado_modificacion === id);
+        return estado ? estado.nombre : 'N/A';
     }
 
     cargarFormularios() {
@@ -244,9 +264,6 @@ export class CasosPage implements OnInit {
         this.hitoSeleccionado.set(componenteActual?.hito_componente || null);
         this.detallesAvanzadosColapsados = true;
         this.casoDialog = true;
-
-        
-        console.log("Abrir dialogo: ",this.hitoSeleccionado)
         
         
     }
@@ -312,6 +329,19 @@ export class CasosPage implements OnInit {
                 return 'success';
             case 'NK':
                 return 'danger';
+            default:
+                return 'secondary';
+        }
+    }
+
+    getSeverityForModificacion(estado: string | null | undefined): string {
+        switch (estado) {
+            case 'Modificado':
+                return 'warn'; // Naranja
+            case 'Nuevo':
+                return 'info';    // Azul
+            case 'Sin cambios':
+                return 'success'; // Verde
             default:
                 return 'secondary';
         }

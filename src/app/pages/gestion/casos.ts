@@ -76,10 +76,16 @@ export class CasosPage implements OnInit {
     todosLosFormularios = signal<number[]>([]);
     sugerenciasFormulario = signal<number[]>([]);
 
+    
+
+
     // Almacena las opciones para el filtro de activo en la tabla.
     opcionesFiltroActivo: any[];
     //Propiedad para controlar el estado del panel
     detallesAvanzadosColapsados: boolean = true;
+
+    // Señal para controlar la visibilidad del campo formulario
+    mostrarCampoFormulario = signal<boolean>(false);
 
     private proyectoService = inject(ProyectoService);
 
@@ -132,6 +138,18 @@ export class CasosPage implements OnInit {
             }
         });
 
+        effect(() => {
+            const proyectoActual = this.proyectoService.proyectoSeleccionado();
+            if (proyectoActual) {
+                // Se revisa si el nombre del proyecto está en la lista de configuración
+                const debeMostrar = environment.proyectosDeDDJJ.includes(proyectoActual.nombre_proyecto);
+                this.mostrarCampoFormulario.set(debeMostrar);
+            } else {
+                // Si no hay proyecto, no se muestra
+                this.mostrarCampoFormulario.set(false);
+            }
+        });
+
 
         // Se inicializan las opciones para el menú de filtro de la columna 'Estado'.
         this.opcionesFiltroEstado = [
@@ -149,6 +167,7 @@ export class CasosPage implements OnInit {
     
     // Método del ciclo de vida de Angular que se ejecuta al iniciar el componente.
     ngOnInit() {
+        
 
         this.cargarFormularios();
     }

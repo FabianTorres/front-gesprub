@@ -50,7 +50,7 @@
                             <p-columnFilter type="text" field="caso.descripcion_caso" display="menu"></p-columnFilter>
                         </div>
                     </th>
-                    <th pSortableColumn="caso.num_formulario" style="width:15%">
+                    <th *ngIf="mostrarCampoFormulario()" pSortableColumn="caso.num_formulario" style="width:15%">
                         <div class="flex justify-between items-center">
                             Form.
                             <p-columnFilter type="text" field="caso.num_formulario" display="menu"></p-columnFilter>
@@ -87,7 +87,7 @@
                         tooltipPosition="bottom" tooltipStyleClass="custom-tooltip-wide">
                         {{item.caso.descripcion_caso | truncate:60}}
                     </td>
-                    <td class="text-center">{{item.caso.num_formulario}}</td>
+                    <td *ngIf="mostrarCampoFormulario()" class="text-center">{{item.caso.num_formulario}}</td>
                     <td>
                         <p-tag [value]="item.ultimaEvidencia?.estado_evidencia || 'Sin Ejecutar'" 
                                [severity]="getSeverityForEstado(item.ultimaEvidencia?.estado_evidencia)"></p-tag>
@@ -160,7 +160,7 @@
                 <label for="descripcion" class="block font-bold mb-2">Descripción</label>
                 <textarea id="descripcion" pTextarea [(ngModel)]="caso.descripcion_caso" rows="3" [autoResize]="true" class="w-full"></textarea>
             </div>
-            <div>
+            <div *ngIf="mostrarCampoFormulario()">
                 <label for="num_formulario" class="block font-bold mb-2">Formulario</label>
                 <p-autocomplete [(ngModel)]="caso.num_formulario"
                                 [suggestions]="sugerenciasFormulario()"

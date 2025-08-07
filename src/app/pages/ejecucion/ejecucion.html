@@ -19,12 +19,21 @@
                 
                 <div>
                     <span class="font-semibold block text-surface-600 dark:text-surface-300 text-2xl">Nombre del Caso</span>
-                    <p class="mt-1 m-0 text-surface-900 dark:text-surface-0">{{ c.nombre_caso }}</p>
+                    <p class="mt-1 m-0 text-surface-900 dark:text-surface-0">{{ c.nombre_caso }}
+                            <p-tag [value]="findEstadoModificacionNombre(c.id_estado_modificacion)" 
+                                [severity]="getSeverityForModificacion(findEstadoModificacionNombre(c.id_estado_modificacion))"
+                                class="mt-1"></p-tag>
+                    </p>
                 </div>
                 
                 <div>
                     <span class="font-semibold block text-surface-600 dark:text-surface-300 text-2xl">Descripción</span>
                     <p class="mt-1 m-0 text-surface-900 dark:text-surface-0">{{ c.descripcion_caso }}</p>
+                </div>
+
+                <div *ngIf="mostrarCampoFormulario()">
+                    <span class="font-semibold block text-surface-600 dark:text-surface-300 text-2xl">Formulario</span>
+                    <p class="mt-1 m-0 text-surface-900 dark:text-surface-0">{{ c.num_formulario }}</p>
                 </div>
 
                 <div>

@@ -9,8 +9,14 @@
                     class="p-button-secondary p-button-outlined flex-shrink-0">
                 </button>
                 <div class="min-w-0">
-                    <h2 class="m-0 text-2xl font-semibold" >{{ c.nombre_caso }}</h2>
+                    <h2 class="m-0 text-2xl font-semibold" >{{ c.nombre_caso }}
+                        <p-tag [value]="findEstadoModificacionNombre(c.id_estado_modificacion)" 
+                            [severity]="getSeverityForModificacion(findEstadoModificacionNombre(c.id_estado_modificacion))">
+                        </p-tag>
+
+                    </h2>
                     <p class="text-muted-color m-0 " >{{ c.descripcion_caso }}</p>
+                    <p *ngIf="mostrarCampoFormulario()" class="text-muted-color m-0 mt-1">Formulario: <strong>{{ c.num_formulario }}</strong></p>
                 </div>
         </div>
         <button pButton 

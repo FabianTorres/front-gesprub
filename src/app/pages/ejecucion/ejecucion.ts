@@ -1,6 +1,6 @@
 // src/app/pages/ejecucion/ejecucion.ts
 
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, OnInit, effect, inject, signal } from '@angular/core';
 import { CommonModule, DatePipe, Location  } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
@@ -21,11 +21,16 @@ import { CasoService } from '../../services/caso.service';
 import { Evidencia } from '../../models/evidencia';
 import { EvidenciaService } from '../../services/evidencia.service';
 import { AutenticacionService } from '../../services/autenticacion.service';
+import { EstadoModificacion } from '../../models/estado-modificacion';
+import { EstadoModificacionService } from '../../services/estado-modificacion.service';
+import { TagModule } from 'primeng/tag';
+import { environment } from '../../../environment/environment';
+import { ProyectoService } from '../../services/proyecto.service';
 
 @Component({
     standalone: true,
     imports: [
-        CommonModule, FieldsetModule,DividerModule , FormsModule, RouterModule, ButtonModule, ButtonGroupModule, CardModule, InputTextModule,
+        CommonModule,TagModule, FieldsetModule,DividerModule , FormsModule, RouterModule, ButtonModule, ButtonGroupModule, CardModule, InputTextModule,
         TextareaModule, SelectModule, SelectButtonModule, FileUploadModule, ToastModule
     ],
     providers: [MessageService, DatePipe],
@@ -44,6 +49,26 @@ export class EjecucionPage implements OnInit {
     private messageService = inject(MessageService);
     private location = inject(Location);
     private authService = inject(AutenticacionService);
+    // Señal para la lista de estados
+    estadosModificacion = signal<EstadoModificacion[]>([]);
+
+    // Se inyecta el nuevo servicio estado modificacion
+    private estadoModificacionService = inject(EstadoModificacionService);
+
+    mostrarCampoFormulario = signal<boolean>(false);
+    private proyectoService = inject(ProyectoService);
+
+    constructor() {
+    effect(() => {
+        const proyectoActual = this.proyectoService.proyectoSeleccionado();
+        if (proyectoActual) {
+            const debeMostrar = environment.proyectosDeDDJJ.includes(proyectoActual.nombre_proyecto);
+            this.mostrarCampoFormulario.set(debeMostrar);
+        } else {
+            this.mostrarCampoFormulario.set(false);
+        }
+    });
+}
 
     ngOnInit() {
         
@@ -54,6 +79,26 @@ export class EjecucionPage implements OnInit {
                 this.caso.set(data);
             });
             this.nuevaEvidencia.id_caso = +casoId;
+        }
+        this.cargarEstadosModificacion();
+    }
+
+    cargarEstadosModificacion() {
+        this.estadoModificacionService.getEstados().subscribe(data => this.estadosModificacion.set(data));
+    }
+
+    findEstadoModificacionNombre(id: number | undefined): string {
+        if (id === undefined) return 'N/A';
+        const estado = this.estadosModificacion().find(e => e.id_estado_modificacion === id);
+        return estado ? estado.nombre : 'N/A';
+    }
+
+    getSeverityForModificacion(estado: string | null | undefined): string {
+        switch (estado) {
+            case 'Modificado': return 'warn';
+            case 'Nuevo': return 'info';
+            case 'Sin cambios': return 'secondary';
+            default: return 'secondary';
         }
     }
 

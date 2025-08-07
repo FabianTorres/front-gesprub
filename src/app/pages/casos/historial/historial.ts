@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, OnInit, effect, inject, signal } from '@angular/core';
 import { CommonModule, DatePipe, Location  } from '@angular/common';
 import { ActivatedRoute, RouterModule } from '@angular/router';
 import { MessageService } from 'primeng/api';
@@ -12,6 +12,10 @@ import { Caso } from '../../../models/caso';
 import { Evidencia } from '../../../models/evidencia';
 import { CasoService } from '../../../services/caso.service';
 import { HistorialCaso } from '../../../models/historial-caso';
+import { EstadoModificacion } from '../../../models/estado-modificacion';
+import { EstadoModificacionService } from '../../../services/estado-modificacion.service';
+import { environment } from '../../../../environment/environment';
+import { ProyectoService } from '../../../services/proyecto.service';
 
 @Component({
     standalone: true,
@@ -35,13 +39,31 @@ export class HistorialPage implements OnInit {
     private route = inject(ActivatedRoute);
     private casoService = inject(CasoService);
     private location = inject(Location); 
+    // Señal para la lista de estados
+    estadosModificacion = signal<EstadoModificacion[]>([]);
 
+    mostrarCampoFormulario = signal<boolean>(false);
+    private proyectoService = inject(ProyectoService);
+
+    // Se inyecta el nuevo servicio estado modificacion
+    private estadoModificacionService = inject(EstadoModificacionService);
+
+
+    constructor() {
+        effect(() => {
+            const proyectoActual = this.proyectoService.proyectoSeleccionado();
+            if (proyectoActual) {
+                const debeMostrar = environment.proyectosDeDDJJ.includes(proyectoActual.nombre_proyecto);
+                this.mostrarCampoFormulario.set(debeMostrar);
+            } else {
+                this.mostrarCampoFormulario.set(false);
+            }
+        });
+    }
     ngOnInit() {
         const casoId = this.route.snapshot.paramMap.get('id');
             if (casoId) {
                 this.casoService.getHistorialPorCasoId(+casoId).subscribe(data => {
-
-                    // --- INICIO DE LA MODIFICACIÓN ---
 
                     // 1. Verificamos que los datos y el array 'historial' existan
                     if (data && data.historial) {
@@ -69,6 +91,30 @@ export class HistorialPage implements OnInit {
                     console.log(this.datosHistorial()); // Ahora el log mostrará la nueva propiedad
                 });
             }
+
+            this.cargarEstadosModificacion();
+    }
+
+    // Método para cargar los estados
+    cargarEstadosModificacion() {
+        this.estadoModificacionService.getEstados().subscribe(data => this.estadosModificacion.set(data));
+    }
+    
+    // Método para encontrar el nombre del estado por su ID
+    findEstadoModificacionNombre(id: number | undefined): string {
+        if (id === undefined) return 'N/A';
+        const estado = this.estadosModificacion().find(e => e.id_estado_modificacion === id);
+        return estado ? estado.nombre : 'N/A';
+    }
+
+    // Método para obtener el color del tag de estado
+    getSeverityForModificacion(estado: string | null | undefined): string {
+        switch (estado) {
+            case 'Modificado': return 'warn';
+            case 'Nuevo': return 'info';
+            case 'Sin cambios': return 'secondary';
+            default: return 'secondary';
+        }
     }
 
     getSeverityForEstado(estado: string | null | undefined): string {

@@ -89,6 +89,8 @@ export class CasosPage implements OnInit {
     //Propiedad para controlar el estado del panel
     detallesAvanzadosColapsados: boolean = true;
 
+    opcionesFiltroModificacion: any[];
+
     // Señal para controlar la visibilidad del campo formulario
     mostrarCampoFormulario = signal<boolean>(false);
 
@@ -168,6 +170,12 @@ export class CasosPage implements OnInit {
             { label: 'Activo', value: 1 },
             { label: 'Inactivo', value: 0 }
         ];
+
+        this.opcionesFiltroModificacion = [
+            { label: 'Nuevo', value: 1 },
+            { label: 'Modificado', value: 2 },
+            { label: 'Sin cambios', value: 3 }
+        ];
     }
     
     // Método del ciclo de vida de Angular que se ejecuta al iniciar el componente.
@@ -221,11 +229,27 @@ export class CasosPage implements OnInit {
             this.cargandoCasos.set(true);
             this.casoService.getCasosPorComponente(this.componenteSeleccionadoId)
                 .subscribe(data => {
-                    const casosLimpios = data.map(item => ({
-                        ...item,
-                        caso: { ...item.caso, version: item.caso.version || '' }
-                    }));
-                    this.casos.set(casosLimpios);
+                    // const casosLimpios = data.map(item => ({
+                        
+                    //     ...item,
+                    //     caso: { ...item.caso, version: item.caso.version || '' }
+                    // }));
+
+                    const casosEnriquecidos = data.map(item => {
+                    // Se busca el nombre del estado usando la función que ya tenemos.
+                    const nombreEstado = this.findEstadoModificacionNombre(item.caso.id_estado_modificacion);
+                    
+                    // Se crea una nueva versión del objeto 'caso' que incluye el nombre.
+                    const casoActualizado = { 
+                        ...item.caso, 
+                        nombre_estado_modificacion: nombreEstado,
+                        version: item.caso.version || ''
+                    };
+
+                    // Se devuelve el objeto completo con el 'caso' ya actualizado.
+                        return { ...item, caso: casoActualizado };
+                    });
+                    this.casos.set(casosEnriquecidos);
                     this.cargandoCasos.set(false);
                 });
         }
@@ -341,7 +365,7 @@ export class CasosPage implements OnInit {
             case 'Nuevo':
                 return 'info';    // Azul
             case 'Sin cambios':
-                return 'success'; // Verde
+                return 'secondary'; // Verde
             default:
                 return 'secondary';
         }

@@ -132,8 +132,7 @@ export class EjecucionPage implements OnInit {
             this.nuevaEvidencia.criticidad = null;
         }
 
-        const evidenciaParaEnviar: Partial<Evidencia> = { ...this.nuevaEvidencia };
-        evidenciaParaEnviar.usuarioEjecutante = usuarioLogueado;
+        
 
         if (this.jiraInput) {
             const parts = this.jiraInput.split('-');
@@ -142,6 +141,8 @@ export class EjecucionPage implements OnInit {
         } else {
             this.nuevaEvidencia.id_jira = null;
         }
+        const evidenciaParaEnviar: Partial<Evidencia> = { ...this.nuevaEvidencia };
+        evidenciaParaEnviar.usuarioEjecutante = usuarioLogueado;
         
         //this.nuevaEvidencia.usuarioEjecutante = usuarioLogueado; //RESTAURAR SI FALLA
         

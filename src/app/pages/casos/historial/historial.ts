@@ -88,7 +88,6 @@ export class HistorialPage implements OnInit {
                     }
                     // --- FIN DE LA MODIFICACIÓN ---
 
-                    console.log(this.datosHistorial()); // Ahora el log mostrará la nueva propiedad
                 });
             }
 

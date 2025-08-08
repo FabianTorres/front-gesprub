@@ -7,4 +7,7 @@ y este proyecto adhiere al [Versionado Semántico](https://semver.org/lang/es/).
 
 ### Added
 -   Estructura inicial del proyecto Gesprub con Angular 19, PrimeNG 19 y Tailwind
--   Funcionalidades iniciales para `Componente`, `Casos` y `Ejecucion` y `Histirial`.
+-   Funcionalidades iniciales para `Componente`, `Casos`, `Ejecucion` y `Historial`.
+
+### Fixed
+-   Se corrigió un error que impedía que al ejecutar una evidencia se guardara con el numero de jira

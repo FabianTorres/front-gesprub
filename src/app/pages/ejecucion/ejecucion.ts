@@ -26,11 +26,14 @@ import { EstadoModificacionService } from '../../services/estado-modificacion.se
 import { TagModule } from 'primeng/tag';
 import { environment } from '../../../environment/environment';
 import { ProyectoService } from '../../services/proyecto.service';
+import { VersionFormatDirective } from '../../directives/version-format.directive';
+import { switchMap } from 'rxjs/operators';
+import { Observable } from 'rxjs';
 
 @Component({
     standalone: true,
     imports: [
-        CommonModule,TagModule, FieldsetModule,DividerModule , FormsModule, RouterModule, ButtonModule, ButtonGroupModule, CardModule, InputTextModule,
+        CommonModule, VersionFormatDirective , TagModule, FieldsetModule,DividerModule , FormsModule, RouterModule, ButtonModule, ButtonGroupModule, CardModule, InputTextModule,
         TextareaModule, SelectModule, SelectButtonModule, FileUploadModule, ToastModule
     ],
     providers: [MessageService, DatePipe],
@@ -111,8 +114,8 @@ export class EjecucionPage implements OnInit {
             return;
         }
 
-        if (!this.nuevaEvidencia.estado_evidencia || !this.nuevaEvidencia.descripcion_evidencia) {
-            this.messageService.add({ severity: 'warn', summary: 'Atención', detail: 'El estado y la descripción son requeridos.' });
+        if ((this.nuevaEvidencia.estado_evidencia === 'NK' || this.nuevaEvidencia.estado_evidencia === 'N/A') && !this.nuevaEvidencia.descripcion_evidencia) {
+            this.messageService.add({ severity: 'warn', summary: 'Atención', detail: 'Si el resultado es NK o N/A, entonces la descripción es requerida.' });
             return;
         }
         if (this.nuevaEvidencia.estado_evidencia === 'NK' && !this.nuevaEvidencia.criticidad) {
@@ -120,9 +123,17 @@ export class EjecucionPage implements OnInit {
             return;
         }
 
+        if (!this.nuevaEvidencia.version_ejecucion) {
+            this.messageService.add({ severity: 'warn', summary: 'Atención', detail: 'Debe escribir la versión de ejecución de la prueba.' });
+            return;
+        }
+
         if (this.nuevaEvidencia.estado_evidencia !== 'NK') {
             this.nuevaEvidencia.criticidad = null;
         }
+
+        const evidenciaParaEnviar: Partial<Evidencia> = { ...this.nuevaEvidencia };
+        evidenciaParaEnviar.usuarioEjecutante = usuarioLogueado;
 
         if (this.jiraInput) {
             const parts = this.jiraInput.split('-');
@@ -131,20 +142,43 @@ export class EjecucionPage implements OnInit {
         } else {
             this.nuevaEvidencia.id_jira = null;
         }
-
-
-
-
-        this.nuevaEvidencia.usuarioEjecutante = usuarioLogueado;
         
+        //this.nuevaEvidencia.usuarioEjecutante = usuarioLogueado; //RESTAURAR SI FALLA
         
-        this.evidenciaService.createEvidencia(this.nuevaEvidencia as Evidencia).subscribe({
-            next: () => {
-                this.messageService.add({ severity: 'success', summary: 'Éxito', detail: 'Evidencia guardada correctamente.' });
+        //RESTAURAR SI FALLA
+        // this.evidenciaService.createEvidencia(this.nuevaEvidencia as Evidencia).subscribe({
+        //     next: () => {
+        //         this.messageService.add({ severity: 'success', summary: 'Éxito', detail: 'Evidencia guardada correctamente.' });
                  
+        //         setTimeout(() => this.router.navigate(['/pages/casos', this.nuevaEvidencia.id_caso]), 1500);
+        //     },
+        //     error: (err) => this.messageService.add({ severity: 'error', summary: 'Error', detail: 'No se pudo guardar la evidencia.' })
+        // });
+
+        // 1. Se crea la evidencia
+        this.evidenciaService.createEvidencia(evidenciaParaEnviar as Evidencia).pipe(
+            // 2. Si la creación es exitosa, se encadena la actualización del caso
+            switchMap(evidenciaCreada => {
+                const casoId = evidenciaCreada.id_caso;
+                const nuevaVersion = evidenciaCreada.version_ejecucion;
+                
+                // Solo se actualiza si hay una nueva versión para registrar
+                if (casoId && nuevaVersion) {
+                    
+                
+                    return this.casoService.updateCasoVersion(casoId, nuevaVersion);
+                } else {
+                    // Si no hay versión, se continúa el flujo sin actualizar
+                    return new Observable(observer => observer.next(null)); 
+                }
+                
+            })
+        ).subscribe({
+            next: () => {
+                this.messageService.add({ severity: 'success', summary: 'Éxito', detail: 'Evidencia y versión del caso guardadas correctamente.' });
                 setTimeout(() => this.router.navigate(['/pages/casos', this.nuevaEvidencia.id_caso]), 1500);
             },
-            error: (err) => this.messageService.add({ severity: 'error', summary: 'Error', detail: 'No se pudo guardar la evidencia.' })
+            error: (err) => this.messageService.add({ severity: 'error', summary: 'Error', detail: 'No se pudo guardar la evidencia o actualizar el caso.' })
         });
     }
 

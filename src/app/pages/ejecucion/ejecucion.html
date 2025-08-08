@@ -63,7 +63,7 @@
         </ng-template>
         <div class="flex flex-col gap-4">
             <div>
-                <label class="block font-bold mb-2 text-xl">Resultado de la Prueba</label>
+                <label class="block font-bold mb-2 text-xl">Resultado de la Prueba <span class="text-red-500">*</span></label>
                 <div class="flex gap-2">
                     <button pButton type="button" label="OK" icon="pi pi-check-circle" 
                             (click)="nuevaEvidencia.estado_evidencia = 'OK'" 
@@ -71,6 +71,14 @@
                     <button pButton type="button" label="NK" icon="pi pi-times-circle" 
                             (click)="nuevaEvidencia.estado_evidencia = 'NK'" 
                             severity="danger" [ngClass]="{'p-button-outlined': nuevaEvidencia.estado_evidencia !== 'NK'}"></button>
+                    <button pButton type="button" label="N/A" icon="pi pi-stop-circle" 
+                            (click)="nuevaEvidencia.estado_evidencia = 'N/A'" 
+                            severity="secondary" 
+                            [ngClass]="{
+                                    'p-button-outlined': nuevaEvidencia.estado_evidencia !== 'N/A', 
+                                    'btn-na-selected': nuevaEvidencia.estado_evidencia === 'N/A'
+                                }">
+                </button>    
                 </div>
             </div>
 
@@ -93,8 +101,32 @@
             </div>
 
             <div>
-                <label for="descripcion" class="block font-bold mb-2 text-xl">Descripción de Evidencia</label>
-                <textarea id="descripcion" pTextarea [(ngModel)]="nuevaEvidencia.descripcion_evidencia" rows="5" placeholder="Describe lo que sucedió..." class="w-full"></textarea>
+                <label for="descripcion" class="block font-bold mb-2 text-xl">Descripción de Evidencia
+                    <span *ngIf="nuevaEvidencia.estado_evidencia === 'NK' || nuevaEvidencia.estado_evidencia === 'N/A'" class="text-red-500">*</span>
+                </label>
+                <textarea id="descripcion" pTextarea [(ngModel)]="nuevaEvidencia.descripcion_evidencia" 
+                    rows="5" placeholder="Describe lo que sucedió..." class="w-full"
+                    [required]="nuevaEvidencia.estado_evidencia === 'NK' || nuevaEvidencia.estado_evidencia === 'N/A'"
+                    #descripcion="ngModel">
+                </textarea>
+                <small class="p-error text-red-500" 
+                    *ngIf="descripcion.invalid && descripcion.touched && (nuevaEvidencia.estado_evidencia === 'NK' || nuevaEvidencia.estado_evidencia === 'N/A')">
+                    La descripción es requerida para los estados NK y N/A.
+                </small>
+            </div>
+
+            <div>
+                <label for="version_ejecucion" class="block font-bold mb-2 text-xl">Versión Ejecución <span class="text-red-500">*</span></label>
+                <input type="text" pInputText id="version_ejecucion" 
+                        [(ngModel)]="nuevaEvidencia.version_ejecucion" 
+                        placeholder="Ingresar versión..." class="w-full"
+                        required
+                        appVersionFormat
+                        #versionEjecucion="ngModel" />
+
+                    <small class="p-error text-red-500" *ngIf="versionEjecucion.invalid && versionEjecucion.touched">
+                        Campo requerido. El formato debe ser número.número (ej: 1.15).
+                    </small>
             </div>
 
             <div>

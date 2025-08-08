@@ -33,3 +33,20 @@
 .p-autocomplete.w-full .p-autocomplete-input {
   width: 100%;
 }
+
+/* Estilo personalizado para el botón N/A seleccionado, para que se note */
+.btn-na-selected.p-button-secondary {
+  background-color: var(--surface-300) !important;
+  color: var(--surface-800) !important;
+  border-color: var(--surface-400) !important;
+  //border-radius: 55%;
+  //border-bottom: 10px;
+  //border-style:groove;
+}
+
+/* Estilo para el modo oscuro */
+.app-dark .btn-na-selected.p-button-secondary {
+    background-color: var(--surface-700) !important;
+    color: var(--surface-0) !important;
+    border-color: var(--surface-700) !important;
+}

@@ -75,6 +75,10 @@ export class CasosPage implements OnInit {
     // Almacena las opciones para el filtro de estado en la tabla.
     opcionesFiltroEstado: any[];
 
+    // Señal para las opciones del filtro de versión
+    opcionesFiltroVersion = signal<any[]>([]);
+
+
     estadosModificacion = signal<EstadoModificacion[]>([]);
     private estadoModificacionService = inject(EstadoModificacionService);
 
@@ -155,6 +159,15 @@ export class CasosPage implements OnInit {
                 // Si no hay proyecto, no se muestra
                 this.mostrarCampoFormulario.set(false);
             }
+        });
+
+        // Effect que extrae las versiones únicas de los casos cargados
+        effect(() => {
+            const casosActuales = this.casos();
+            const versionesUnicas = [...new Set(casosActuales.map(item => item.caso.version).filter(Boolean))];
+            this.opcionesFiltroVersion.set(
+                versionesUnicas.map(version => ({ label: version, value: version }))
+            );
         });
 
 
@@ -300,6 +313,11 @@ export class CasosPage implements OnInit {
             this.messageService.add({severity: 'error', summary: 'Error', detail: 'No se pudieron cargar los datos del caso.'});
             return;
         }
+
+        if (!caso.version) {
+            this.messageService.add({severity: 'warn', summary: 'Atención', detail: 'Debe escribir la versión de ejecución de la prueba.'});
+            return;
+        }
         this.caso = { ...caso };
         this.editando = true;
         this.activoDialog = caso.activo === 1;
@@ -327,9 +345,16 @@ export class CasosPage implements OnInit {
             return;
         }
 
+        
+
         this.caso.activo = this.activoDialog ? 1 : 0;
         this.caso.id_usuario_creador = usuarioLogueado.idUsuario;
         this.caso.jp_responsable = usuarioLogueado.idUsuario;
+
+        if (!this.caso.version) {
+            this.messageService.add({severity: 'warn', summary: 'Atención', detail: 'Debe escribir la versión de ejecución de la prueba.'});
+            return;
+        }
 
         const peticion = this.editando
             ? this.casoService.updateCaso(this.caso.id_caso!, this.caso as Caso)
@@ -353,6 +378,8 @@ export class CasosPage implements OnInit {
                 return 'success';
             case 'NK':
                 return 'danger';
+            case 'N/A':
+                return 'secondary';
             default:
                 return 'secondary';
         }

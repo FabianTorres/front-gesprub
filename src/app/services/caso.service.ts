@@ -22,11 +22,6 @@ export class CasoService {
         return this.http.get<Caso>(`${this.apiUrl}/${id}`);
     }
 
-    //Obtiene todas las evidencias de un solo caso
-    // getEvidenciasByCasoId(id: number): Observable<Evidencia[]> {
-    //     return this.http.get<Evidencia[]>(`${this.apiUrl}/${id}/evidencias`);
-    // }
-
     //Nuevo metodo que obtiene las evidencias de un solo caso
     getHistorialPorCasoId(id: number): Observable<HistorialCaso> {
         return this.http.get<HistorialCaso>(`${this.apiUrl}/${id}/historial`);
@@ -40,8 +35,13 @@ export class CasoService {
         return this.http.put<Caso>(`${this.apiUrl}/${id}`, caso);
     }
 
+    updateCasoVersion(id: number, nuevaVersion: string): Observable<any> {
+        const body = { version: nuevaVersion };
+        return this.http.patch(`${this.apiUrl}/${id}/version`, body);
+    }
+
     getCasosPorComponente(id_componente: number): Observable<CasoConEvidencia[]> {
-        // Asumimos que tu endpoint puede recibir un parámetro así: /api/caso/evidencia?componenteId=1
+        
         return this.http.get<CasoConEvidencia[]>(`${this.apiUrl}/evidenciacomp`, { params: { componenteId: id_componente } });
     }
 

@@ -123,6 +123,8 @@ export class HistorialPage implements OnInit {
                 return 'success';
             case 'NK':
                 return 'danger';
+            case 'N/A':
+                return 'secondary';
             default:
                 return 'info';
         }

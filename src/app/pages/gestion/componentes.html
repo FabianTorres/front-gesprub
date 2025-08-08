@@ -3,13 +3,13 @@
             <h2 class="text-2xl font-semibold mb-4">Gestión de Componentes</h2>
             <p-toolbar styleClass="mb-4">
                 <ng-template pTemplate="left">
-                    <button pButton pRipple label="Nuevo Componente" icon="pi pi-plus" class="p-button-success" (click)="abrirDialogoNuevo()"></button>
+                    <button pButton pRipple label="Nuevo Componente" icon="pi pi-plus" (click)="abrirDialogoNuevo()"></button>
                 </ng-template>
             </p-toolbar>
 
             <p-table #dt [value]="componentes()" [rows]="10" [paginator]="true" responsiveLayout="scroll"
                 sortMode="multiple" [multiSortMeta]="multiSortMeta" dataKey="id_componente"
-                [globalFilterFields]="['nombre_componente','hito_componente']">
+                [globalFilterFields]="['nombre_componente','hito_componente']" class="p-datatable-gridlines">
 
             <ng-template pTemplate="caption">
                         <div class="flex justify-between items-center">
@@ -72,11 +72,11 @@
                             </i>
                         </td>
                         <td>
-                            <button pButton pRipple icon="pi pi-pencil" class="p-button-rounded p-button-success mr-2" 
+                            <button pButton pRipple icon="pi pi-pencil" class="p-button-rounded mr-2" 
                                     (click)="editarComponente(componente)"
                                     pTooltip="Editar" tooltipPosition="top"></button>
                             
-                            <button pButton pRipple icon="pi pi-list" class="p-button-rounded p-button-info" 
+                            <button pButton pRipple icon="pi pi-list" class="p-button-rounded" 
                                     (click)="irACasos(componente)"
                                     pTooltip="Ir a Casos" tooltipPosition="top"></button>
                         </td>

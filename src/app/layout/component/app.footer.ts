@@ -1,4 +1,5 @@
 import { Component } from '@angular/core';
+import { version } from '../../../environment/version';
 
 @Component({
     standalone: true,
@@ -6,6 +7,11 @@ import { Component } from '@angular/core';
     template: `<div class="layout-footer">
         RAC Consultores
         <a href="https://solucionacomp.cl" target="_blank" rel="noopener noreferrer" class="text-primary font-bold hover:underline">https://solucionacomp.cl/</a>
-    </div>`
+        </div>
+        <div class="layout-footer">
+            <p>Gesprub v.{{ appVersion }}</p>
+        </div>`
 })
-export class AppFooter {}
+export class AppFooter {
+    public appVersion = version;
+}

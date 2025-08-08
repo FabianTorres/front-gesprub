@@ -36,11 +36,13 @@
             <span class="flex w-8 h-8 items-center justify-center text-white rounded-full z-10 shadow-sm"
                   [ngClass]="{
                       'bg-green-500': evento.estado_evidencia === 'OK',
-                      'bg-red-500': evento.estado_evidencia === 'NK'
+                      'bg-red-500': evento.estado_evidencia === 'NK',
+                      'bg-gray-500': evento.estado_evidencia === 'N/A'
                   }">
                 <i [ngClass]="{
                     'pi pi-check': evento.estado_evidencia === 'OK',
-                    'pi pi-times': evento.estado_evidencia === 'NK'
+                    'pi pi-times': evento.estado_evidencia === 'NK',
+                    'pi pi-stop': evento.estado_evidencia === 'N/A'
                 }"></i>
             </span>
         </ng-template>
@@ -61,8 +63,10 @@
                 <ng-template pTemplate="subtitle">
                 <div [ngClass]="{ 'text-right': evento.posicion === 'left' }">
                     <div class="text-sm">Ejecutado el {{ evento.fecha_evidencia | date:'dd/MM/yyyy h:mm a' }}</div>
-                    <div class="text-sm font-semibold mt-1">Certificador: {{ evento.nombreUsuarioEjecutante }}</div>
-
+                    <div class="text-sm font-semibold mt-1">Certificador: {{ evento.nombreUsuarioEjecutante }}
+                        <span *ngIf="evento.version_ejecucion"> | Versión de ejecución: {{ evento.version_ejecucion }}</span>
+                    </div>
+                        
                 </div>
                 </ng-template>
 

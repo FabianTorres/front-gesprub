@@ -17,13 +17,19 @@
     <div *ngIf="componenteSeleccionadoId">
         <p-toolbar styleClass="my-4">
             <ng-template pTemplate="left">
-                <button pButton pRipple label="Nuevo Caso" icon="pi pi-plus" class="p-button-success" (click)="abrirDialogoNuevo()"></button>
+                <button pButton 
+                        pRipple 
+                        label="Nuevo Caso" 
+                        icon="pi pi-plus" 
+                        
+                        (click)="abrirDialogoNuevo()">
+                </button>
             </ng-template>
         </p-toolbar>
 
         <p-table #dt [value]="casos()" [rows]="10" [paginator]="true" responsiveLayout="scroll" dataKey="caso.id_caso"
                  [globalFilterFields]="['caso.nombre_estado_modificacion','caso.nombre_caso', 'caso.descripcion_caso', 'caso.version', 'caso.num_formulario']"
-                 [loading]="cargandoCasos()">
+                 [loading]="cargandoCasos()" class="p-datatable-gridlines">
             
             <ng-template pTemplate="caption">
                 <div class="flex justify-between items-center">
@@ -66,6 +72,16 @@
                             <p-columnFilter type="text" field="caso.num_formulario" display="menu"></p-columnFilter>
                         </div>
                     </th>
+                    <th pSortableColumn="caso.version" style="width:5%">
+                        <div class="flex justify-between items-center">
+                            Ver.
+                            <p-columnFilter field="caso.version" matchMode="equals" display="menu" [showMatchModes]="false">
+                                <ng-template pTemplate="filter" let-value let-filter="filterCallback">
+                                    <p-select [ngModel]="value" [options]="opcionesFiltroVersion()" (onChange)="filter($event.value)" placeholder="Cualquiera"></p-select>
+                                </ng-template>
+                            </p-columnFilter>
+                        </div>
+                    </th>
                     <th pSortableColumn="ultimaEvidencia.estado_evidencia">
                         <div class="flex justify-between items-center">
                             Estado
@@ -100,6 +116,7 @@
                         tooltipPosition="bottom" tooltipStyleClass="custom-tooltip-wide">
                         {{item.caso.descripcion_caso | truncate:60}}
                     </td>
+                    <td class="text-center">{{item.caso.version}}</td>
                     <td *ngIf="mostrarCampoFormulario()" class="text-center">{{item.caso.num_formulario}}</td>
                     <td>
                         <p-tag [value]="item.ultimaEvidencia?.estado_evidencia || 'Sin Ejecutar'" 
@@ -116,12 +133,14 @@
                         </i>
                     </td>
                     <td>
-                        <button pButton pRipple icon="pi pi-pencil" class="p-button-rounded p-button-success mr-2" (click)="editarCaso(item)"
-                                pTooltip="Editar" tooltipPosition="top"></button>
-                        <button pButton pRipple icon="pi pi-book" class="p-button-rounded p-button-help mr-2" [routerLink]="['/pages/casos', item.caso.id_caso]"
-                                pTooltip="Historial" tooltipPosition="top"></button>
-                        <button pButton pRipple icon="pi pi-play" class="p-button-rounded p-button-info" [routerLink]="['/pages/ejecucion', item.caso.id_caso]"
-                                pTooltip="Ejecutar" tooltipPosition="top"></button>
+                        <div class="flex flex-nowrap"> 
+                            <button pButton pRipple icon="pi pi-pencil" class="p-button-rounded mr-2" (click)="editarCaso(item)"
+                                    pTooltip="Editar" tooltipPosition="top"></button>
+                            <button pButton pRipple icon="pi pi-book" class="p-button-rounded mr-2" [routerLink]="['/pages/casos', item.caso.id_caso]"
+                                    pTooltip="Historial" tooltipPosition="top"></button>
+                            <button pButton pRipple icon="pi pi-play" class="p-button-rounded" [routerLink]="['/pages/ejecucion', item.caso.id_caso]"
+                                    pTooltip="Ejecutar" tooltipPosition="top"></button>
+                        </div>
                     </td>
                 </tr>
             </ng-template>

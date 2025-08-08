@@ -5,7 +5,8 @@ import { Usuario } from "./usuario";
 export interface Evidencia {
   id_evidencia?: number;
   descripcion_evidencia: string;
-  estado_evidencia: 'OK' | 'NK';
+  estado_evidencia: 'OK' | 'NK' | 'N/A';
+  version_ejecucion: string;
   criticidad?: 'Leve' | 'Medio' | 'Grave' | 'Crítico' | null;
   fecha_evidencia?: string;
   url_evidencia?: string;

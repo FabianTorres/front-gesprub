@@ -77,6 +77,8 @@ export class CasosPage implements OnInit {
 
     // Señal para las opciones del filtro de versión
     opcionesFiltroVersion = signal<any[]>([]);
+    // Propiedad para controlar el switch de la fuente
+    esFuenteExterna: boolean = false;
 
 
     estadosModificacion = signal<EstadoModificacion[]>([]);
@@ -134,7 +136,7 @@ export class CasosPage implements OnInit {
             }
         });
 
-        // CAMBIO: Se reemplaza el .subscribe() por un effect que reacciona al cambio de proyecto
+        // Se reemplaza el .subscribe() por un effect que reacciona al cambio de proyecto
         effect(() => {
             const proyectoActual = this.proyectoService.proyectoSeleccionado();
             // Cada vez que el proyecto global cambia, se limpian las selecciones
@@ -299,6 +301,7 @@ export class CasosPage implements OnInit {
         this.editando = false;
         this.activoDialog = true;
         this.hitoSeleccionado.set(componenteActual?.hito_componente || null);
+        this.esFuenteExterna = false;
         this.detallesAvanzadosColapsados = true;
         this.casoDialog = true;
         
@@ -307,7 +310,19 @@ export class CasosPage implements OnInit {
 
     // Prepara las variables para abrir el diálogo en modo 'Editar' con los datos del caso seleccionado.
     editarCaso(casoConEvidencia: CasoConEvidencia) {
+
+        const proyectoActual = this.proyectoService.proyectoSeleccionado();
+        const debeMostrar = null;
+            if (proyectoActual) {
+                // Se revisa si el nombre del proyecto está en la lista de configuración
+                const debeMostrar = environment.proyectosDeDDJJ.includes(proyectoActual.nombre_proyecto);
+                
+            } else {
+                // Si no hay proyecto, no se muestra
+                
+            }
         
+            //validaciones a la entrada de datos
         const caso = casoConEvidencia.caso;
         if (!caso) {
             this.messageService.add({severity: 'error', summary: 'Error', detail: 'No se pudieron cargar los datos del caso.'});
@@ -318,20 +333,28 @@ export class CasosPage implements OnInit {
             this.messageService.add({severity: 'warn', summary: 'Atención', detail: 'Debe escribir la versión de ejecución de la prueba.'});
             return;
         }
+
+        if (!caso.descripcion_caso) {
+            this.messageService.add({severity: 'warn', summary: 'Atención', detail: 'Debe escribir una descripción para la prueba.'});
+            return;
+        }
+        if (!caso.id_estado_modificacion) {
+            this.messageService.add({severity: 'warn', summary: 'Atención', detail: 'Debe seleccionar un estado de modificación para la prueba.'});
+            return;
+        }
+
         this.caso = { ...caso };
         this.editando = true;
         this.activoDialog = caso.activo === 1;
+        this.esFuenteExterna = !!caso.fuente; 
         const hitoId = this.componentes().find(c => c.id_componente === caso.id_componente)?.hito_componente || null;
         this.hitoSeleccionado.set(hitoId); 
         
         
         this.casoDialog = true;
     }
+
     
-    // Cierra el diálogo emergente.
-    cerrarDialogo() {
-        this.casoDialog = false;
-    }
 
     // Gestiona el guardado de un caso, ya sea para crear uno nuevo o actualizar uno existente.
     guardarCaso() {
@@ -339,14 +362,12 @@ export class CasosPage implements OnInit {
         // Se obtiene el usuario actual desde el servicio de autenticación
         const usuarioLogueado = this.authService.usuarioActual();
 
+        //Validaciones
         // Se comprueba si hay un usuario logueado antes de continuar
         if (!usuarioLogueado || !usuarioLogueado.idUsuario) {
             this.messageService.add({severity: 'error', summary: 'Error', detail: 'No se pudo identificar al usuario. Por favor, inicie sesión de nuevo.'});
             return;
         }
-
-        
-
         this.caso.activo = this.activoDialog ? 1 : 0;
         this.caso.id_usuario_creador = usuarioLogueado.idUsuario;
         this.caso.jp_responsable = usuarioLogueado.idUsuario;
@@ -355,6 +376,32 @@ export class CasosPage implements OnInit {
             this.messageService.add({severity: 'warn', summary: 'Atención', detail: 'Debe escribir la versión de ejecución de la prueba.'});
             return;
         }
+
+        if (!this.caso.descripcion_caso) {
+            this.messageService.add({severity: 'warn', summary: 'Atención', detail: 'Debe escribir una descripción para la prueba.'});
+            return;
+        }
+
+        if (!this.caso.id_estado_modificacion) {
+            this.messageService.add({severity: 'warn', summary: 'Atención', detail: 'Debe seleccionar un estado de modificación para la prueba.'});
+            return;
+        }
+
+        const proyectoActual = this.proyectoService.proyectoSeleccionado();
+        const debeMostrar = null;
+            if (proyectoActual) {
+                // Se revisa si el nombre del proyecto está en la lista de configuración
+                const debeMostrar = environment.proyectosDeDDJJ.includes(proyectoActual.nombre_proyecto);
+                    if (!this.caso.num_formulario && !this.caso.fuente && debeMostrar) {
+                        this.messageService.add({severity: 'warn', summary: 'Atención', detail: 'Debe seleccionar alguna fuente de información.'});
+                        return;
+                    }
+            } else {
+                // Si no hay proyecto, no se muestra
+                
+            }
+
+        
 
         const peticion = this.editando
             ? this.casoService.updateCaso(this.caso.id_caso!, this.caso as Caso)
@@ -369,6 +416,22 @@ export class CasosPage implements OnInit {
         });
         
         this.cerrarDialogo();
+    }
+
+    //Se ejecuta cuando el usuario cambia el switch
+    onTipoFuenteChange() {
+        if (this.esFuenteExterna) {
+            // Si cambia a Fuente, se limpia el campo de formulario
+            if (this.caso) this.caso.num_formulario = undefined;
+        } else {
+            // Si cambia a Formulario, se limpia el campo de fuente
+            if (this.caso) this.caso.fuente = undefined;
+        }
+    }
+    
+    // Cierra el diálogo emergente.
+    cerrarDialogo() {
+        this.casoDialog = false;
     }
 
     // Determina el color del tag de estado basado en su valor.

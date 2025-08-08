@@ -28,7 +28,7 @@
         </p-toolbar>
 
         <p-table #dt [value]="casos()" [rows]="10" [paginator]="true" responsiveLayout="scroll" dataKey="caso.id_caso"
-                 [globalFilterFields]="['caso.nombre_estado_modificacion','caso.nombre_caso', 'caso.descripcion_caso', 'caso.version', 'caso.num_formulario']"
+                 [globalFilterFields]="['caso.nombre_estado_modificacion','caso.nombre_caso', 'caso.descripcion_caso', 'caso.version', 'caso.num_formulario','caso.fuente']"
                  [loading]="cargandoCasos()" class="p-datatable-gridlines">
             
             <ng-template pTemplate="caption">
@@ -68,8 +68,8 @@
                     </th>
                     <th *ngIf="mostrarCampoFormulario()" pSortableColumn="caso.num_formulario" style="width:15%">
                         <div class="flex justify-between items-center">
-                            Form.
-                            <p-columnFilter type="text" field="caso.num_formulario" display="menu"></p-columnFilter>
+                            Fuente
+                            <p-columnFilter type="text" field="caso.fuente" display="menu"></p-columnFilter>
                         </div>
                     </th>
                     <th pSortableColumn="caso.version" style="width:5%">
@@ -116,8 +116,11 @@
                         tooltipPosition="bottom" tooltipStyleClass="custom-tooltip-wide">
                         {{item.caso.descripcion_caso | truncate:60}}
                     </td>
+                   
+                    <td *ngIf="mostrarCampoFormulario()" class="text-center">
+                         {{ item.caso.fuente || item.caso.num_formulario }}
+                    </td>
                     <td class="text-center">{{item.caso.version}}</td>
-                    <td *ngIf="mostrarCampoFormulario()" class="text-center">{{item.caso.num_formulario}}</td>
                     <td>
                         <p-tag [value]="item.ultimaEvidencia?.estado_evidencia || 'Sin Ejecutar'" 
                                [severity]="getSeverityForEstado(item.ultimaEvidencia?.estado_evidencia)"></p-tag>
@@ -204,15 +207,26 @@
                 <textarea id="descripcion" pTextarea [(ngModel)]="caso.descripcion_caso" rows="3" [autoResize]="true" class="w-full"></textarea>
             </div>
             <div *ngIf="mostrarCampoFormulario()">
-                <label for="num_formulario" class="block font-bold mb-2">Formulario</label>
-                <p-autocomplete [(ngModel)]="caso.num_formulario"
-                                [suggestions]="sugerenciasFormulario()"
-                                (completeMethod)="filtrarFormulario($event)"
-                                placeholder="Buscar o ingresar formulario..."
-                                emptyMessage="No se encontró el formulario."
-                                styleClass="w-full"
-                                maxlength="4">
-                </p-autocomplete>
+                <div class="flex items-center my-4">
+                    <p-inputSwitch [(ngModel)]="esFuenteExterna" (onChange)="onTipoFuenteChange()"></p-inputSwitch>
+                    <label class="ml-2 font-semibold">Usar otra fuente (ej: Nómina)</label>
+                </div>
+                <div *ngIf="!esFuenteExterna">
+                        <label for="num_formulario" class="block font-bold mb-2">Formulario</label>
+                        <p-autocomplete [(ngModel)]="caso.num_formulario"
+                                        [suggestions]="sugerenciasFormulario()"
+                                        (completeMethod)="filtrarFormulario($event)"
+                                        placeholder="Buscar o ingresar formulario..."
+                                        emptyMessage="No se encontró el formulario."
+                                        styleClass="w-full"
+                                        maxlength="4">
+                        </p-autocomplete>
+                </div>
+                <div *ngIf="esFuenteExterna">
+                    <label for="fuente" class="block font-bold mb-2">Fuente</label>
+                    <input type="text" pInputText id="fuente" [(ngModel)]="caso.fuente" class="w-full"
+                            placeholder="Ingresar fuente..." />
+                </div>
             </div>
 
             <p-fieldset legend="Detalles Adicionales" [toggleable]="true" [(collapsed)]="detallesAvanzadosColapsados">

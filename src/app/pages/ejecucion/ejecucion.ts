@@ -12,7 +12,7 @@ import { CardModule } from 'primeng/card';
 import { InputTextModule } from 'primeng/inputtext';
 import { TextareaModule } from 'primeng/textarea';
 import { SelectButtonModule } from 'primeng/selectbutton';
-import { FileUploadModule } from 'primeng/fileupload';
+import { FileUploadModule, FileUploadHandlerEvent } from 'primeng/fileupload';
 import { ToastModule } from 'primeng/toast';
 import { DividerModule } from 'primeng/divider';
 import { FieldsetModule } from 'primeng/fieldset';
@@ -27,8 +27,8 @@ import { TagModule } from 'primeng/tag';
 import { environment } from '../../../environment/environment';
 import { ProyectoService } from '../../services/proyecto.service';
 import { VersionFormatDirective } from '../../directives/version-format.directive';
-import { switchMap } from 'rxjs/operators';
-import { Observable } from 'rxjs';
+import { map, switchMap } from 'rxjs/operators';
+import { Observable, catchError, forkJoin, of } from 'rxjs';
 
 @Component({
     standalone: true,
@@ -43,6 +43,7 @@ export class EjecucionPage implements OnInit {
     caso = signal<Caso | null>(null);
     nuevaEvidencia: Partial<Evidencia> = {};
     jiraInput: string | null = null;
+    archivosParaSubir = signal<File[]>([]); 
 
 
     private route = inject(ActivatedRoute);
@@ -144,7 +145,7 @@ export class EjecucionPage implements OnInit {
         const evidenciaParaEnviar: Partial<Evidencia> = { ...this.nuevaEvidencia };
         evidenciaParaEnviar.usuarioEjecutante = usuarioLogueado;
         
-        //this.nuevaEvidencia.usuarioEjecutante = usuarioLogueado; //RESTAURAR SI FALLA
+        this.nuevaEvidencia.usuarioEjecutante = usuarioLogueado; 
         
         //RESTAURAR SI FALLA
         // this.evidenciaService.createEvidencia(this.nuevaEvidencia as Evidencia).subscribe({
@@ -157,40 +158,80 @@ export class EjecucionPage implements OnInit {
         // });
 
         // 1. Se crea la evidencia
-        this.evidenciaService.createEvidencia(evidenciaParaEnviar as Evidencia).pipe(
-            // 2. Si la creación es exitosa, se encadena la actualización del caso
+        this.evidenciaService.createEvidencia(this.nuevaEvidencia as Evidencia).pipe(
+            switchMap(evidenciaCreada => {
+                const idEvidencia = evidenciaCreada.id_evidencia;
+
+                // Si se creó la evidencia y hay archivos seleccionados
+                if (idEvidencia && this.archivosParaSubir().length > 0) {
+                    
+                    // Creamos un array de observables, uno por cada archivo a registrar
+                    const registroObservables = this.archivosParaSubir().map(file => {
+                        // Creamos el objeto JSON que espera el backend
+                        const archivoData = {
+                            nombre_archivo: file.name,
+                            // Usamos una URL temporal/en duro como solicitaste
+                            url_archivo: `/uploads/temp/${file.name}`
+                        };
+
+                        // Llamamos al método actualizado del servicio
+                        return this.evidenciaService.uploadArchivo(idEvidencia, archivoData).pipe(
+                            catchError(err => {
+                                console.error('Error registrando archivo:', file.name, err);
+                                // Devolvemos `of(null)` para que forkJoin no se cancele si un archivo falla
+                                return of(null);
+                            })
+                        );
+                    });
+
+                    // forkJoin espera a que todos los archivos se hayan registrado
+                    return forkJoin(registroObservables).pipe(
+                        // Mapeamos de vuelta a la evidencia creada para continuar el flujo
+                        map(() => evidenciaCreada)
+                    );
+                }
+
+                // Si no hay archivos, simplemente continuamos con la evidencia creada
+                return of(evidenciaCreada);
+            }),
+            // Ahora actualizamos la versión del caso
             switchMap(evidenciaCreada => {
                 const casoId = evidenciaCreada.id_caso;
                 const nuevaVersion = evidenciaCreada.version_ejecucion;
-                
-                // Solo se actualiza si hay una nueva versión para registrar
                 if (casoId && nuevaVersion) {
-                    
-                
                     return this.casoService.updateCasoVersion(casoId, nuevaVersion);
-                } else {
-                    // Si no hay versión, se continúa el flujo sin actualizar
-                    return new Observable(observer => observer.next(null)); 
                 }
-                
+                return of(null);
             })
         ).subscribe({
             next: () => {
-                this.messageService.add({ severity: 'success', summary: 'Éxito', detail: 'Evidencia y versión del caso guardadas correctamente.' });
+                this.messageService.add({ severity: 'success', summary: 'Éxito', detail: 'Evidencia y archivos guardados correctamente.' });
                 setTimeout(() => this.router.navigate(['/pages/casos', this.nuevaEvidencia.id_caso]), 1500);
             },
-            error: (err) => this.messageService.add({ severity: 'error', summary: 'Error', detail: 'No se pudo guardar la evidencia o actualizar el caso.' })
+            error: (err) => this.messageService.add({ severity: 'error', summary: 'Error', detail: 'No se pudo guardar la evidencia.' })
         });
     }
 
-    onUpload(event: any) {
-        // Aquí manejarías la subida del archivo. Por ahora, solo mostraremos un mensaje.
-        // En una implementación real, aquí se llamaría a un servicio que sube el archivo y devuelve la URL.
-        const file = event.files[0];
-        this.nuevaEvidencia.url_evidencia = `path/to/uploaded/${file.name}`; // URL simulada
-        this.messageService.add({ severity: 'info', summary: 'Archivo Subido', detail: file.name });
-    }
+    // onUpload(event: any) {
+    //     // Aquí manejarías la subida del archivo. Por ahora, solo mostraremos un mensaje.
+    //     // En una implementación real, aquí se llamaría a un servicio que sube el archivo y devuelve la URL.
+    //     const file = event.files[0];
+    //     this.nuevaEvidencia.url_evidencia = `path/to/uploaded/${file.name}`; // URL simulada
+    //     this.messageService.add({ severity: 'info', summary: 'Archivo Subido', detail: file.name });
+    // }
     volverAtras(): void {
         this.location.back();
+    }
+
+    onSelectFiles(event: { files: File[] }) {
+        this.archivosParaSubir.set([...this.archivosParaSubir(), ...event.files]);
+    }
+
+    onRemoveFile(event: { file: File }) {
+        this.archivosParaSubir.set(this.archivosParaSubir().filter(f => f !== event.file));
+    }
+
+    onClearFiles() {
+        this.archivosParaSubir.set([]);
     }
 }

@@ -5,6 +5,7 @@ import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../environment/environment';
 import { Evidencia } from '../models/evidencia';
+import { ArchivoEvidencia } from '../models/archivo-evidencia';
 
 @Injectable({ providedIn: 'root' })
 export class EvidenciaService {
@@ -20,5 +21,11 @@ export class EvidenciaService {
             return this.http.get<Evidencia[]>(this.apiUrl);
     }
 
-    // Más adelante podríamos añadir métodos para ver o editar evidencias
+    uploadArchivo(idEvidencia: number, archivoData: { nombre_archivo: string; url_archivo: string }): Observable<ArchivoEvidencia> {
+        return this.http.post<ArchivoEvidencia>(`${this.apiUrl}/${idEvidencia}/archivos`, archivoData);
+    }
+
+    getArchivosPorEvidencia(idEvidencia: number): Observable<ArchivoEvidencia[]> {
+        return this.http.get<ArchivoEvidencia[]>(`${this.apiUrl}/${idEvidencia}/archivos`);
+    }
 }

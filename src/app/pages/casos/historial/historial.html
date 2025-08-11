@@ -75,11 +75,16 @@
                 
                 <div class="mt-4 flex flex-col gap-2" 
                     [ngClass]="{ 'items-end': evento.posicion === 'left' }" 
-                    *ngIf="evento.url_evidencia || evento.id_jira">
+                    *ngIf="(evento.archivos && evento.archivos.length > 0) || evento.id_jira">
                     
-                    <a *ngIf="evento.url_evidencia" href="#" class="text-primary hover:underline">
-                    <i class="pi pi-paperclip mr-2"></i>Ver Evidencia Adjunta
-                    </a>
+                    <div *ngIf="evento.archivos && evento.archivos.length > 0" class="font-semibold text-sm mb-1">Archivos Adjuntos:</div>
+                    <a *ngFor="let archivo of evento.archivos" 
+                        [href]="'http://localhost:8090' + archivo.url_archivo" target="_blank" 
+                        class="text-primary hover:underline text-sm flex items-center gap-2"
+                        [ngClass]="{ 'flex-row-reverse': evento.posicion === 'left' }">
+                            <i class="pi pi-paperclip"></i>
+                            <span>{{ archivo.nombre_archivo }}</span>
+                        </a>
                     <a *ngIf="evento.id_jira" href="#" class="text-primary hover:underline">
                     <i class="pi pi-ticket mr-2"></i>Ver Incidencia en Jira: {{ evento.id_jira }}
                     </a>

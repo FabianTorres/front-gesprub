@@ -16,6 +16,8 @@ import { EstadoModificacion } from '../../../models/estado-modificacion';
 import { EstadoModificacionService } from '../../../services/estado-modificacion.service';
 import { environment } from '../../../../environment/environment';
 import { ProyectoService } from '../../../services/proyecto.service';
+import { forkJoin, map, of, switchMap } from 'rxjs';
+import { EvidenciaService } from '../../../services/evidencia.service';
 
 @Component({
     standalone: true,
@@ -35,6 +37,7 @@ export class HistorialPage implements OnInit {
     caso = signal<Caso | null>(null);
     historial = signal<Evidencia[]>([]);
     datosHistorial = signal<HistorialCaso | null>(null);
+    private evidenciaService = inject(EvidenciaService);
 
     private route = inject(ActivatedRoute);
     private casoService = inject(CasoService);
@@ -63,8 +66,23 @@ export class HistorialPage implements OnInit {
     ngOnInit() {
         const casoId = this.route.snapshot.paramMap.get('id');
             if (casoId) {
-                this.casoService.getHistorialPorCasoId(+casoId).subscribe(data => {
-
+                this.casoService.getHistorialPorCasoId(+casoId).pipe(
+                switchMap(data => {
+                    if (data && data.historial && data.historial.length > 0) {
+                        // Para cada evidencia, creamos un observable que busca sus archivos
+                        const observables = data.historial.map(evidencia =>
+                            this.evidenciaService.getArchivosPorEvidencia(evidencia.id_evidencia!).pipe(
+                                map(archivos => ({ ...evidencia, archivos })) // Combinamos la evidencia con sus archivos
+                            )
+                        );
+                        // Usamos forkJoin para esperar todas las respuestas
+                        return forkJoin(observables).pipe(
+                            map(historialConArchivos => ({ ...data, historial: historialConArchivos }))
+                        );
+                    }
+                    return of(data); // Si no hay historial, devolvemos los datos como están
+                })
+            ).subscribe(data => {
                     // 1. Verificamos que los datos y el array 'historial' existan
                     if (data && data.historial) {
 

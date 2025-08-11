@@ -130,11 +130,28 @@
             </div>
 
             <div>
-                <label class="block font-bold mb-2 text-xl">Adjuntar Archivo</label>
-                <p-fileUpload name="evidenciaFile" (onSelect)="onUpload($event)" [multiple]="false" 
-                              accept="image/*,video/*,.log,.txt" maxFileSize="10000000"
-                              chooseLabel="Elegir" uploadLabel="Subir" cancelLabel="Cancelar">
-                    <ng-template pTemplate="content"></ng-template>
+                <label class="block font-bold mb-2 text-xl">Adjuntar Archivos</label>
+                <p-fileUpload name="evidenciaFiles[]" 
+                            (onSelect)="onSelectFiles($event)"
+                            (onRemove)="onRemoveFile($event)"
+                            (onClear)="onClearFiles()"
+                            [multiple]="true" 
+                            accept="image/*,video/*,.pdf,.doc,.docx,.xls,.xlsx,.csv,.txt,.log" 
+                            maxFileSize="10000000"
+                            chooseLabel="Elegir Archivos"
+                            [showUploadButton]="false" 
+                            [showCancelButton]="false">
+                    <ng-template pTemplate="content">
+                        <ul *ngIf="archivosParaSubir().length" class="list-none p-0 m-0">
+                            <li *ngFor="let file of archivosParaSubir()" class="flex items-center flex-wrap p-2 my-1 bg-surface-100 dark:bg-surface-800 rounded-border">
+                                <div class="flex items-center gap-2 flex-1">
+                                    <i class="pi pi-file"></i>
+                                    <span class="font-semibold">{{ file.name }}</span>
+                                    <span>({{ (file.size / 1024) | number:'1.0-0' }} KB)</span>
+                                </div>
+                            </li>
+                        </ul>
+                    </ng-template>
                 </p-fileUpload>
             </div>
             

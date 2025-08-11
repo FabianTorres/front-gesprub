@@ -311,6 +311,7 @@ export class CasosPage implements OnInit {
     // Prepara las variables para abrir el diálogo en modo 'Editar' con los datos del caso seleccionado.
     editarCaso(casoConEvidencia: CasoConEvidencia) {
 
+
         const proyectoActual = this.proyectoService.proyectoSeleccionado();
         const debeMostrar = null;
             if (proyectoActual) {
@@ -342,6 +343,13 @@ export class CasosPage implements OnInit {
             this.messageService.add({severity: 'warn', summary: 'Atención', detail: 'Debe seleccionar un estado de modificación para la prueba.'});
             return;
         }
+
+        if (!caso.id_componente) {
+            this.messageService.add({severity: 'warn', summary: 'Atención', detail: 'Debe seleccionar un componente para la prueba.'});
+            return;
+        }
+
+        console.log(caso)
 
         this.caso = { ...caso };
         this.editando = true;
@@ -384,6 +392,11 @@ export class CasosPage implements OnInit {
 
         if (!this.caso.id_estado_modificacion) {
             this.messageService.add({severity: 'warn', summary: 'Atención', detail: 'Debe seleccionar un estado de modificación para la prueba.'});
+            return;
+        }
+
+        if (!this.caso.id_componente) {
+            this.messageService.add({severity: 'warn', summary: 'Atención', detail: 'Debe seleccionar un componente para la prueba.'});
             return;
         }
 

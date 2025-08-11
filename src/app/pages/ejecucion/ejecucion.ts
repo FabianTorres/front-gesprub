@@ -1,8 +1,8 @@
 // src/app/pages/ejecucion/ejecucion.ts
 
-import { Component, OnInit, effect, inject, signal } from '@angular/core';
+import { Component, OnInit, ViewChild, effect, inject, signal } from '@angular/core';
 import { CommonModule, DatePipe, Location  } from '@angular/common';
-import { FormsModule } from '@angular/forms';
+import { FormsModule, NgModel } from '@angular/forms';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { SelectModule } from 'primeng/select';
 import { MessageService } from 'primeng/api';
@@ -28,12 +28,13 @@ import { environment } from '../../../environment/environment';
 import { ProyectoService } from '../../services/proyecto.service';
 import { VersionFormatDirective } from '../../directives/version-format.directive';
 import { map, switchMap } from 'rxjs/operators';
-import { Observable, catchError, forkJoin, of } from 'rxjs';
+import { catchError, forkJoin, of } from 'rxjs';
+import { RutValidatorDirective } from '../../directives/rut-validator.directive';
 
 @Component({
     standalone: true,
     imports: [
-        CommonModule, VersionFormatDirective , TagModule, FieldsetModule,DividerModule , FormsModule, RouterModule, ButtonModule, ButtonGroupModule, CardModule, InputTextModule,
+        CommonModule, RutValidatorDirective , VersionFormatDirective , TagModule, FieldsetModule,DividerModule , FormsModule, RouterModule, ButtonModule, ButtonGroupModule, CardModule, InputTextModule,
         TextareaModule, SelectModule, SelectButtonModule, FileUploadModule, ToastModule
     ],
     providers: [MessageService, DatePipe],
@@ -44,6 +45,8 @@ export class EjecucionPage implements OnInit {
     nuevaEvidencia: Partial<Evidencia> = {};
     jiraInput: string | null = null;
     archivosParaSubir = signal<File[]>([]); 
+
+    @ViewChild('rutInput') rutInputControl!: NgModel;
 
 
     private route = inject(ActivatedRoute);
@@ -128,9 +131,48 @@ export class EjecucionPage implements OnInit {
             this.messageService.add({ severity: 'warn', summary: 'Atención', detail: 'Debe escribir la versión de ejecución de la prueba.' });
             return;
         }
+        const versionRegex = /^\d+\.\d+$/; 
+        if (!versionRegex.test(this.nuevaEvidencia.version_ejecucion)) {
+            this.messageService.add({ 
+                severity: 'warn', 
+                summary: 'Formato Incorrecto', 
+                detail: 'La versión debe tener el formato número.número (ej: 1.0).' 
+            });
+            return; // Detenemos el guardado
+        }
 
         if (this.nuevaEvidencia.estado_evidencia !== 'NK') {
             this.nuevaEvidencia.criticidad = null;
+        }
+
+        // Comprobamos si el control del RUT existe y si es inválido.
+        if (this.rutInputControl && this.rutInputControl.invalid) {
+            this.messageService.add({ 
+                severity: 'warn', 
+                summary: 'Atención', 
+                detail: 'El RUT ingresado no es válido. Por favor, corríjalo.' 
+            });
+            return; // Detenemos la ejecución aquí
+        }
+
+        // Validar que OK o NK tengan al menos un archivo.
+        if ((this.nuevaEvidencia.estado_evidencia === 'OK' || this.nuevaEvidencia.estado_evidencia === 'NK') && this.archivosParaSubir().length === 0) {
+            this.messageService.add({ 
+                severity: 'warn', 
+                summary: 'Atención', 
+                detail: 'Debe adjuntar al menos un archivo de evidencia para los estados OK y NK.' 
+            });
+            return; // Detenemos el guardado
+        }
+
+        // Validar que NK tenga un Jira asociado.
+        if (this.nuevaEvidencia.estado_evidencia === 'NK' && (!this.jiraInput || this.jiraInput.trim() === '')) {
+            this.messageService.add({ 
+                severity: 'warn', 
+                summary: 'Atención', 
+                detail: 'El campo Jira es obligatorio cuando el resultado es NK.' 
+            });
+            return; // Detenemos el guardado
         }
 
         
@@ -233,5 +275,58 @@ export class EjecucionPage implements OnInit {
 
     onClearFiles() {
         this.archivosParaSubir.set([]);
+    }
+
+    onRutInput(event: Event): void {
+        const input = event.target as HTMLInputElement;
+        let valor = input.value;
+
+        // 1. Limpiamos el valor de todo lo que no sea número o la letra 'k'
+        let rutLimpio = valor.replace(/[^0-9kK]/gi, '');
+
+        // Si no hay nada, no hacemos nada
+        if (rutLimpio.length === 0) {
+            this.nuevaEvidencia.rut = '';
+            return;
+        }
+
+        // 2. Separamos el cuerpo del dígito verificador
+        let cuerpo = rutLimpio.slice(0, -1);
+        let dv = rutLimpio.slice(-1);
+
+        // 3. Formateamos el RUT con el guion
+        let rutFormateado = cuerpo + '-' + dv;
+        
+        // 4. Actualizamos el modelo y el valor del input
+        // Es importante hacerlo de esta manera para evitar problemas con el cursor
+        this.nuevaEvidencia.rut = rutFormateado;
+        input.value = rutFormateado;
+    }
+
+    onVersionInput(event: Event): void {
+        const input = event.target as HTMLInputElement;
+        let valor = input.value;
+    
+        // 1. Reemplazamos la coma por un punto.
+        valor = valor.replace(/,/g, '.');
+    
+        // 2. Eliminamos cualquier caracter que no sea un dígito o un punto.
+        valor = valor.replace(/[^0-9\.]/g, '');
+    
+        // 3. Nos aseguramos de que haya un solo punto como máximo.
+        const partes = valor.split('.');
+        if (partes.length > 2) {
+            valor = partes[0] + '.' + partes.slice(1).join('');
+        }
+    
+        // 4. Evitamos ceros a la izquierda en la parte principal (ej: 01.5 -> 1.5)
+        if (partes[0] && partes[0].length > 1 && partes[0].startsWith('0')) {
+            partes[0] = parseInt(partes[0], 10).toString();
+            valor = partes.join('.');
+        }
+
+        // 5. Actualizamos el modelo y el valor del input.
+        this.nuevaEvidencia.version_ejecucion = valor;
+        input.value = valor;
     }
 }

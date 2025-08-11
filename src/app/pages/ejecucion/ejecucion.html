@@ -122,11 +122,28 @@
                         placeholder="Ingresar versión..." class="w-full"
                         required
                         appVersionFormat
-                        #versionEjecucion="ngModel" />
+                        #versionEjecucion="ngModel" 
+                        (input)="onVersionInput($event)"/>
 
                     <small class="p-error text-red-500" *ngIf="versionEjecucion.invalid && versionEjecucion.touched">
                         Campo requerido. El formato debe ser número.número (ej: 1.15).
                     </small>
+            </div>
+
+            <div>
+                <label for="rut" class="block font-bold mb-2 text-xl">RUT</label>
+                <input type="text" pInputText id="rut" 
+                       [(ngModel)]="nuevaEvidencia.rut" 
+                       placeholder="Ej: 12345678-9" 
+                       class="w-full"
+                       appRutValidator     
+                       #rutInput="ngModel"
+                       (input)="onRutInput($event)"/>
+                
+                <small class="p-error text-red-500" 
+                       *ngIf="rutInput.invalid && rutInput.touched">
+                    El RUT ingresado no es válido.
+                </small>
             </div>
 
             <div>

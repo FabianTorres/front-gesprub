@@ -62,9 +62,17 @@
 
                 <ng-template pTemplate="subtitle">
                 <div [ngClass]="{ 'text-right': evento.posicion === 'left' }">
-                    <div class="text-sm">Ejecutado el {{ evento.fecha_evidencia | date:'dd/MM/yyyy h:mm a' }}</div>
-                    <div class="text-sm font-semibold mt-1">Certificador: {{ evento.nombreUsuarioEjecutante }}
-                        <span *ngIf="evento.version_ejecucion"> | Versión de ejecución: {{ evento.version_ejecucion }}</span>
+                    <div class="text-sm">
+                        <i class="pi pi-calendar"></i> Ejecutado el {{ evento.fecha_evidencia | date:'dd/MM/yyyy h:mm a' }}
+                    </div>
+                    <div class="text-sm font-semibold mt-1">
+                        <i class="pi pi-user"></i> Certificador: {{ evento.nombreUsuarioEjecutante }}
+                        <span *ngIf="evento.version_ejecucion"> | <i class="pi pi-book"></i> Versión de ejecución: {{ evento.version_ejecucion }}</span>
+                        
+                    </div>
+                    <div class="text-sm font-semibold mt-1">
+                       
+                        <span *ngIf="evento.rut" class="font-normal"> <i class="pi pi-id-card"></i> RUT: <strong>{{ evento.rut }}</strong></span>
                     </div>
                         
                 </div>
@@ -77,7 +85,7 @@
                     [ngClass]="{ 'items-end': evento.posicion === 'left' }" 
                     *ngIf="(evento.archivos && evento.archivos.length > 0) || evento.id_jira">
                     
-                    <div *ngIf="evento.archivos && evento.archivos.length > 0" class="font-semibold text-sm mb-1">Archivos Adjuntos:</div>
+                    <div *ngIf="evento.archivos && evento.archivos.length > 0" class="font-semibold text-sm mb-1"></div>
                     <a *ngFor="let archivo of evento.archivos" 
                         [href]="'http://localhost:8090' + archivo.url_archivo" target="_blank" 
                         class="text-primary hover:underline text-sm flex items-center gap-2"

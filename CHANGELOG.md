@@ -7,6 +7,10 @@ y este proyecto adhiere al [Versionado Semántico](https://semver.org/lang/es/).
 
 ### Added
 -   Se agregó la funcionalidad de añadir mas de un archivo por evidencia.
+-   Se añadio el campo rut en evidencia, con validacion modulo 11
+
+### Changed
+-   Se cambiaron y mejoraron validaciones de campos en ejecucion (Rut, version y otros)
 
 ## [0.1.0] - 2025-08-08
 

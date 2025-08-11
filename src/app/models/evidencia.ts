@@ -16,4 +16,5 @@ export interface Evidencia {
   usuarioEjecutante?: Usuario;
   id_caso: number;
   archivos?: ArchivoEvidencia[];
+  rut?: string;
 }

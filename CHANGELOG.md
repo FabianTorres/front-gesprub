@@ -8,6 +8,8 @@ y este proyecto adhiere al [Versionado Semántico](https://semver.org/lang/es/).
 
 ### Added
 -   Se refactorizó el codigo para lea los estados dinámicamente. Paginas afectadas: `Casos`, `Ejecucion` y `Historial`
+### Changed
+-   Se mejoraron componentes menores de usuarios
 
 
 ## [0.1.1] - 2025-08-11

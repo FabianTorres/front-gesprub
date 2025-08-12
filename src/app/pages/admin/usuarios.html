@@ -1,62 +1,77 @@
-<p-toast></p-toast>
-<div class="card">
-    <h2 class="text-2xl font-semibold mb-4">Gestión de Usuarios</h2>
-    
-    <p-table [value]="usuarios()" [rows]="10" [paginator]="true" responsiveLayout="scroll" dataKey="idUsuario">
-        <ng-template pTemplate="header" class="p-datatable-gridlines">
-            <tr>
-                <th pSortableColumn="nombreUsuario">Nombre de Usuario</th>
-                <th pSortableColumn="correo">Correo</th>
-                <th pSortableColumn="rolUsuario">Rol</th>
-                <th pSortableColumn="activo">Activo</th>
-                <th>Acciones</th>
-            </tr>
-        </ng-template>
-        <ng-template pTemplate="body" let-usuario>
-            <tr>
-                <td>{{usuario.nombreUsuario}}</td>
-                <td>{{usuario.correo}}</td>
-                <td>
-                    <p-tag [value]="usuario.rolUsuario" [severity]="getSeverityForRol(usuario.rolUsuario)"></p-tag>
-                </td>
-                <td class="text-center">
-                    <i class="pi text-xl" [ngClass]="{
-                        'pi-check-circle text-green-500': usuario.activo === 1, 
-                        'pi-ban text-red-500': usuario.activo !== 1
-                    }"></i>
-                </td>
-                <td>
-                    <button pButton pRipple icon="pi pi-pencil" class="p-button-rounded" (click)="editarUsuario(usuario)" pTooltip="Editar Usuario"></button>
-                </td>
-            </tr>
-        </ng-template>
-    </p-table>
-</div>
+    <p-toast></p-toast>
+    <div class="card">
+        <h2 class="text-2xl font-semibold mb-4">Gestión de Usuarios</h2>
+        
+        <p-table [value]="usuarios()" [rows]="10" [paginator]="true" responsiveLayout="scroll" dataKey="idUsuario">
+            <ng-template pTemplate="header" class="p-datatable-gridlines">
+                <tr>
+                    <th pSortableColumn="nombreUsuario">Nombre de Usuario</th>
+                    <th pSortableColumn="correo">Correo</th>
+                    <th pSortableColumn="rolUsuario">Rol</th>
+                    <th pSortableColumn="activo">Activo</th>
+                    <th>Acciones</th>
+                </tr>
+            </ng-template>
+            <ng-template pTemplate="body" let-usuario>
+                <tr>
+                    <td>
+                        <div class="flex items-center gap-3">
+                            <p-avatar 
+                                [label]="(usuario.nombreUsuario || 'A').charAt(0).toUpperCase()"
+                                shape="circle"
+                                styleClass="bg-primary text-white font-bold">
+                            </p-avatar>
+                            <span>{{ usuario.nombreUsuario }}</span>
+                        </div>
+                    </td>
+                    <td>{{usuario.correo}}</td>
+                    <td>
+                        <p-tag [value]="usuario.rolUsuario" [severity]="getSeverityForRol(usuario.rolUsuario)"></p-tag>
+                    </td>
+                    <td class="text-center">
+                        <i class="pi" [ngClass]="{
+                            'pi-check-circle text-green-500': usuario.activo === 1,
+                            'pi-ban text-red-500': usuario.activo !== 1
+                        }"></i>
+                    </td>
+                    <td>
+                        <button pButton pRipple icon="pi pi-pencil" class="p-button-rounded" (click)="editarUsuario(usuario)" pTooltip="Editar Usuario"></button>
+                    </td>
+                </tr>
+            </ng-template>
+        </p-table>
+    </div>
 
-<p-dialog [(visible)]="usuarioDialog" [style]="{width: '600px', height: '450px', maxHeight: '600px', overflowY: 'auto'}" header="Editar Usuario" [modal]="true" class="p-fluid">
-    <ng-template pTemplate="content">
-        <div class="flex flex-col gap-4">
-            <div>
-                <label class="block font-bold mb-2">Nombre de Usuario</label>
-                <input type="text" pInputText [(ngModel)]="usuario.nombreUsuario" readonly class="bg-surface-100 dark:bg-surface-800" />
+    <p-dialog [(visible)]="usuarioDialog" [style]="{width: '600px', height: '450px', maxHeight: '600px', overflowY: 'auto'}" header="Editar Usuario" [modal]="true" class="p-fluid">
+        <ng-template pTemplate="content">
+            <div class="flex flex-col gap-4">
+                <div>
+                    <label class="block font-bold mb-2">Nombre de Usuario</label>
+                    <input type="text" pInputText [(ngModel)]="usuario.nombreUsuario" readonly class="bg-surface-100 dark:bg-surface-800" />
+                </div>
+                <div>
+                    <label class="block font-bold mb-2">Correo</label>
+                    <input type="email" pInputText [(ngModel)]="usuario.correo" readonly class="bg-surface-100 dark:bg-surface-800" />
+                </div>
+                <div class="field">
+                    <label for="rol" class="font-bold">Rol</label>
+                    <p-select id="rol"
+                            [options]="listaRoles"
+                            [(ngModel)]="usuario.rolUsuario"
+                            placeholder="Seleccione un rol"
+                            required
+                            styleClass="w-full">
+                    </p-select>
+                </div>
+                <div class="flex items-center mt-2">
+                    <p-inputSwitch [(ngModel)]="activoDialog"></p-inputSwitch>
+                    <label for="activo" class="ml-2">Activo</label>
+                </div>
             </div>
-            <div>
-                <label class="block font-bold mb-2">Correo</label>
-                <input type="email" pInputText [(ngModel)]="usuario.correo" readonly class="bg-surface-100 dark:bg-surface-800" />
-            </div>
-            <div>
-                <label for="rol" class="block font-bold mb-2">Rol</label>
-                <p-select [options]="roles" [(ngModel)]="usuario.rolUsuario" placeholder="Seleccionar un rol" styleClass="w-full"></p-select>
-            </div>
-            <div class="flex items-center mt-2">
-                <p-inputSwitch [(ngModel)]="activoDialog"></p-inputSwitch>
-                <label for="activo" class="ml-2">Activo</label>
-            </div>
-        </div>
-    </ng-template>
+        </ng-template>
 
-    <ng-template pTemplate="footer">
-        <button pButton pRipple label="Cancelar" icon="pi pi-times" class="p-button-text" (click)="cerrarDialogo()"></button>
-        <button pButton pRipple label="Guardar Cambios" icon="pi pi-check" class="p-button-text" (click)="guardarUsuario()"></button>
-    </ng-template>
-</p-dialog>
+        <ng-template pTemplate="footer">
+            <button pButton pRipple label="Cancelar" icon="pi pi-times" class="p-button-text" (click)="cerrarDialogo()"></button>
+            <button pButton pRipple label="Guardar Cambios" icon="pi pi-check" class="p-button-text" (click)="guardarUsuario()"></button>
+        </ng-template>
+    </p-dialog>

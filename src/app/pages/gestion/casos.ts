@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, signal, effect, ViewChild, ElementRef } from '@angular/core';
+import { Component, OnInit, inject, signal, effect, ViewChild, ElementRef, computed  } from '@angular/core';
 import { CommonModule, DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
@@ -33,6 +33,7 @@ import { AutenticacionService } from '../../services/autenticacion.service';
 import { Proyecto } from '../../models/proyecto';
 import { EstadoModificacion } from '../../models/estado-modificacion';
 import { EstadoModificacionService } from '../../services/estado-modificacion.service';
+import { CatalogoService } from '../../services/catalogo.service';
 
 // Se define una interfaz local para la estructura de los Hitos.
 interface Hito {
@@ -73,12 +74,15 @@ export class CasosPage implements OnInit {
     // Señal que modela el hito seleccionado en el diálogo de edición/creación.
     hitoSeleccionado = signal<number | null>(null);
     // Almacena las opciones para el filtro de estado en la tabla.
-    opcionesFiltroEstado: any[];
+    //opcionesFiltroEstado: any[];
 
     // Señal para las opciones del filtro de versión
     opcionesFiltroVersion = signal<any[]>([]);
     // Propiedad para controlar el switch de la fuente
     esFuenteExterna: boolean = false;
+
+    private catalogoService = inject(CatalogoService);
+    private estadosEvidencia = this.catalogoService.estadosEvidencia;
 
 
     estadosModificacion = signal<EstadoModificacion[]>([]);
@@ -113,6 +117,7 @@ export class CasosPage implements OnInit {
     private messageService = inject(MessageService);
     private datePipe = inject(DatePipe);
     private authService = inject(AutenticacionService);
+
 
     constructor() {
         // Se crea un 'effect' que reacciona a los cambios en la señal 'hitoSeleccionado'.
@@ -174,13 +179,13 @@ export class CasosPage implements OnInit {
 
 
         // Se inicializan las opciones para el menú de filtro de la columna 'Estado'.
-        this.opcionesFiltroEstado = [
-            { label: 'OK', value: 'OK' },
-            { label: 'NK', value: 'NK' },
-            { label: 'Sin Ejecutar', value: null }
-        ];
+        // this.opcionesFiltroEstado = [
+        //     { label: 'OK', value: 'OK' },
+        //     { label: 'NK', value: 'NK' },
+        //     { label: 'Sin Ejecutar', value: null }
+        // ];
 
-        // Se inicializan las nuevas opciones
+        //Se inicializan las nuevas opciones
         this.opcionesFiltroActivo = [
             { label: 'Activo', value: 1 },
             { label: 'Inactivo', value: 0 }
@@ -192,6 +197,34 @@ export class CasosPage implements OnInit {
             { label: 'Sin cambios', value: 3 }
         ];
     }
+
+    // opcionesFiltroActivo: { label: string, value: number | null }[] = [
+    //     { label: 'Cualquiera', value: null }, // Para limpiar el filtro
+    //     { label: 'Activo', value: 1 },
+    //     { label: 'Inactivo', value: 0 }
+    // ];
+
+    // opcionesFiltroModificacion: { label: string, value: number | null }[] = [
+    //     { label: 'Cualquiera', value: null }, // Para limpiar el filtro
+    //     { label: 'Nuevo', value: 1 },
+    //     { label: 'Modificado', value: 2 },
+    //     { label: 'Sin cambios', value: 3 }
+    // ];
+
+    
+    opcionesFiltroEstado = computed(() => {
+        // Permitimos que el valor sea number, string o null
+        const estados: { label: string, value: number | string | null }[] = 
+            this.estadosEvidencia().map(e => ({ label: e.nombre, value: e.id_estado_evidencia }));
+
+        // Para "Sin Ejecutar", el valor a filtrar ahora es nuestro identificador de texto.
+        estados.push({ label: 'Sin Ejecutar', value: 'SIN_EJECUTAR' });
+        
+        // "Cualquiera" sigue usando 'null' para limpiar el filtro.
+        estados.unshift({ label: 'Cualquiera', value: null });
+
+        return estados;
+    });
     
     // Método del ciclo de vida de Angular que se ejecuta al iniciar el componente.
     ngOnInit() {
@@ -199,6 +232,21 @@ export class CasosPage implements OnInit {
 
         this.cargarFormularios();
         this.cargarEstadosModificacion();
+    }
+
+    findEstadoEvidenciaNombre(id: number | undefined | string): string {
+        // Si el ID es nuestro identificador especial, ya sabemos qué es.
+        if (id === 'SIN_EJECUTAR') {
+            return 'Sin Ejecutar';
+        }
+
+        if (id === undefined || id === null) {
+            return 'Sin Ejecutar';
+        }
+
+        const estado = this.estadosEvidencia().find(e => e.id_estado_evidencia === id);
+
+        return estado ? estado.nombre : 'Sin Ejecutar'; 
     }
 
     cargarEstadosModificacion() {
@@ -244,11 +292,6 @@ export class CasosPage implements OnInit {
             this.cargandoCasos.set(true);
             this.casoService.getCasosPorComponente(this.componenteSeleccionadoId)
                 .subscribe(data => {
-                    // const casosLimpios = data.map(item => ({
-                        
-                    //     ...item,
-                    //     caso: { ...item.caso, version: item.caso.version || '' }
-                    // }));
 
                     const casosEnriquecidos = data.map(item => {
                     // Se busca el nombre del estado usando la función que ya tenemos.
@@ -261,10 +304,12 @@ export class CasosPage implements OnInit {
                         version: item.caso.version || ''
                     };
 
+                    const ultimoEstadoId = item.ultimaEvidencia?.id_estado_evidencia ?? 'SIN_EJECUTAR';
+
                     // Se devuelve el objeto completo con el 'caso' ya actualizado.
-                        return { ...item, caso: casoActualizado };
+                        return { ...item, caso: casoActualizado, ultimoEstadoId: ultimoEstadoId };
                     });
-                    this.casos.set(casosEnriquecidos);
+                    this.casos.set(casosEnriquecidos as any);
                     this.cargandoCasos.set(false);
                 });
         }
@@ -398,6 +443,15 @@ export class CasosPage implements OnInit {
         if (!this.caso.id_componente) {
             this.messageService.add({severity: 'warn', summary: 'Atención', detail: 'Debe seleccionar un componente para la prueba.'});
             return;
+        }
+        const versionRegex = /^\d+\.\d+$/; 
+        if (!versionRegex.test(this.caso.version)) {
+            this.messageService.add({ 
+                severity: 'warn', 
+                summary: 'Formato Incorrecto', 
+                detail: 'La versión debe tener el formato número.número (ej: 1.0).' 
+            });
+            return; // Detenemos el guardado
         }
 
         const proyectoActual = this.proyectoService.proyectoSeleccionado();

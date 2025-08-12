@@ -35,14 +35,14 @@
         <ng-template pTemplate="marker" let-evento>
             <span class="flex w-8 h-8 items-center justify-center text-white rounded-full z-10 shadow-sm"
                   [ngClass]="{
-                      'bg-green-500': evento.estado_evidencia === 'OK',
-                      'bg-red-500': evento.estado_evidencia === 'NK',
-                      'bg-gray-500': evento.estado_evidencia === 'N/A'
+                            'bg-green-500': findEstadoEvidenciaNombre(evento.id_estado_evidencia) === 'OK',
+                            'bg-red-500': findEstadoEvidenciaNombre(evento.id_estado_evidencia) === 'NK',
+                            'bg-gray-500': findEstadoEvidenciaNombre(evento.id_estado_evidencia) === 'N/A'
                   }">
                 <i [ngClass]="{
-                    'pi pi-check': evento.estado_evidencia === 'OK',
-                    'pi pi-times': evento.estado_evidencia === 'NK',
-                    'pi pi-stop': evento.estado_evidencia === 'N/A'
+                    'pi pi-check': findEstadoEvidenciaNombre(evento.id_estado_evidencia) === 'OK',
+                    'pi pi-times': findEstadoEvidenciaNombre(evento.id_estado_evidencia) === 'NK',
+                    'pi pi-stop': findEstadoEvidenciaNombre(evento.id_estado_evidencia) === 'N/A'
                 }"></i>
             </span>
         </ng-template>
@@ -55,8 +55,9 @@
 
                 <ng-template pTemplate="title">
                 <div class="flex items-center gap-2" [ngClass]="{ 'justify-end': evento.posicion === 'left' }">
-                    <p-tag [value]="evento.estado_evidencia" [severity]="getSeverityForEstado(evento.estado_evidencia)"></p-tag>
-                    <p-tag *ngIf="evento.criticidad" [value]="evento.criticidad" [severity]="getSeverityForCriticidad(evento.criticidad)" styleClass="font-bold"></p-tag>
+                    <p-tag [value]="findEstadoEvidenciaNombre(evento.id_estado_evidencia)" [severity]="getSeverityForEstado(findEstadoEvidenciaNombre(evento.id_estado_evidencia))"></p-tag>
+                    <p-tag *ngIf="evento.id_criticidad" [value]="findCriticidadNombre(evento.id_criticidad)" 
+                           [severity]="getSeverityForCriticidad(findCriticidadNombre(evento.id_criticidad))"  styleClass="font-bold"></p-tag>
                 </div>
                 </ng-template>
 

@@ -3,6 +3,13 @@ Todos los cambios significativos en este proyecto se documentarán en este archi
 El formato se basa en [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 y este proyecto adhiere al [Versionado Semántico](https://semver.org/lang/es/).
 
+
+## [0.2.0] - 2025-08-11
+
+### Added
+-   Se refactorizó el codigo para lea los estados dinámicamente. Paginas afectadas: `Casos`, `Ejecucion` y `Historial`
+
+
 ## [0.1.1] - 2025-08-11
 
 ### Added

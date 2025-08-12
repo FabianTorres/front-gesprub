@@ -1,6 +1,6 @@
 // src/app/pages/ejecucion/ejecucion.ts
 
-import { Component, OnInit, ViewChild, effect, inject, signal } from '@angular/core';
+import { Component, OnInit, ViewChild, computed, effect, inject, signal } from '@angular/core';
 import { CommonModule, DatePipe, Location  } from '@angular/common';
 import { FormsModule, NgModel } from '@angular/forms';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
@@ -12,7 +12,7 @@ import { CardModule } from 'primeng/card';
 import { InputTextModule } from 'primeng/inputtext';
 import { TextareaModule } from 'primeng/textarea';
 import { SelectButtonModule } from 'primeng/selectbutton';
-import { FileUploadModule, FileUploadHandlerEvent } from 'primeng/fileupload';
+import { FileUploadModule } from 'primeng/fileupload';
 import { ToastModule } from 'primeng/toast';
 import { DividerModule } from 'primeng/divider';
 import { FieldsetModule } from 'primeng/fieldset';
@@ -30,6 +30,7 @@ import { VersionFormatDirective } from '../../directives/version-format.directiv
 import { map, switchMap } from 'rxjs/operators';
 import { catchError, forkJoin, of } from 'rxjs';
 import { RutValidatorDirective } from '../../directives/rut-validator.directive';
+import { CatalogoService } from '../../services/catalogo.service';
 
 @Component({
     standalone: true,
@@ -56,6 +57,11 @@ export class EjecucionPage implements OnInit {
     private messageService = inject(MessageService);
     private location = inject(Location);
     private authService = inject(AutenticacionService);
+    private catalogoService = inject(CatalogoService); 
+
+    // Hacemos que los datos del catálogo sean accesibles para la vista
+    listaEstadosEvidencia = this.catalogoService.estadosEvidencia;
+    listaCriticidades = this.catalogoService.criticidades;
     // Señal para la lista de estados
     estadosModificacion = signal<EstadoModificacion[]>([]);
 
@@ -64,6 +70,24 @@ export class EjecucionPage implements OnInit {
 
     mostrarCampoFormulario = signal<boolean>(false);
     private proyectoService = inject(ProyectoService);
+
+     // Esta señal "calcula" cuál es el objeto de estado completo que el usuario ha seleccionado.
+    estadoSeleccionado = computed(() => {
+        const id = this.nuevaEvidencia.id_estado_evidencia;
+        if (!id) return undefined;
+        return this.listaEstadosEvidencia().find(e => e.id_estado_evidencia === id);
+    });
+
+    criticidadSeleccionada = computed(() => {
+        const id = this.nuevaEvidencia.id_criticidad;
+        if (!id) return undefined;
+        return this.listaCriticidades().find(c => c.id_criticidad === id);
+    });
+
+    // Esta señal nos da el ID específico de 'NK' de forma reactiva.
+    idEstadoNK = computed(() => {
+        return this.listaEstadosEvidencia().find(e => e.nombre === 'NK')?.id_estado_evidencia;
+    });
 
     constructor() {
     effect(() => {
@@ -90,6 +114,16 @@ export class EjecucionPage implements OnInit {
         this.cargarEstadosModificacion();
     }
 
+        getSeverityForCriticidad(nombreCriticidad: string): 'secondary' | 'success' | 'info' | 'warn' | 'danger' | 'contrast' {
+            switch (nombreCriticidad.toLowerCase()) {
+                case 'leve': return 'info';
+                case 'medio': return 'warn';
+                case 'grave': return 'danger';
+                case 'crítico': return 'contrast';
+                default: return 'secondary';
+            }
+        }
+
     cargarEstadosModificacion() {
         this.estadoModificacionService.getEstados().subscribe(data => this.estadosModificacion.set(data));
     }
@@ -110,19 +144,26 @@ export class EjecucionPage implements OnInit {
     }
 
     guardarEvidencia() {
+
+        // --- Lógica mejorada para obtener los objetos seleccionados ---
+        const estadoSeleccionado = this.listaEstadosEvidencia().find(e => e.id_estado_evidencia === this.nuevaEvidencia.id_estado_evidencia);
         const usuarioLogueado = this.authService.usuarioActual();
 
-       
+        
+        if (!estadoSeleccionado) {
+            this.messageService.add({ severity: 'warn', summary: 'Atención', detail: 'Debe seleccionar un resultado para la prueba.' });
+            return;
+        }
         if (!usuarioLogueado || !usuarioLogueado.idUsuario) {
             this.messageService.add({severity: 'error', summary: 'Error', detail: 'No se pudo identificar al usuario. Por favor, inicie sesión de nuevo.'});
             return;
         }
 
-        if ((this.nuevaEvidencia.estado_evidencia === 'NK' || this.nuevaEvidencia.estado_evidencia === 'N/A') && !this.nuevaEvidencia.descripcion_evidencia) {
+        if ((estadoSeleccionado?.nombre === 'NK' || estadoSeleccionado?.nombre === 'N/A') && !this.nuevaEvidencia.descripcion_evidencia) {
             this.messageService.add({ severity: 'warn', summary: 'Atención', detail: 'Si el resultado es NK o N/A, entonces la descripción es requerida.' });
             return;
         }
-        if (this.nuevaEvidencia.estado_evidencia === 'NK' && !this.nuevaEvidencia.criticidad) {
+        if (estadoSeleccionado?.nombre === 'NK' && !this.nuevaEvidencia.id_criticidad) {
             this.messageService.add({ severity: 'warn', summary: 'Atención', detail: 'Si el resultado es NK, la criticidad es requerida.' });
             return;
         }
@@ -141,8 +182,8 @@ export class EjecucionPage implements OnInit {
             return; // Detenemos el guardado
         }
 
-        if (this.nuevaEvidencia.estado_evidencia !== 'NK') {
-            this.nuevaEvidencia.criticidad = null;
+        if (estadoSeleccionado?.nombre !== 'NK') {
+            this.nuevaEvidencia.id_criticidad = null;
         }
 
         // Comprobamos si el control del RUT existe y si es inválido.
@@ -156,7 +197,7 @@ export class EjecucionPage implements OnInit {
         }
 
         // Validar que OK o NK tengan al menos un archivo.
-        if ((this.nuevaEvidencia.estado_evidencia === 'OK' || this.nuevaEvidencia.estado_evidencia === 'NK') && this.archivosParaSubir().length === 0) {
+        if ((estadoSeleccionado?.nombre === 'OK' || estadoSeleccionado?.nombre === 'NK') && this.archivosParaSubir().length === 0) {
             this.messageService.add({ 
                 severity: 'warn', 
                 summary: 'Atención', 
@@ -166,7 +207,7 @@ export class EjecucionPage implements OnInit {
         }
 
         // Validar que NK tenga un Jira asociado.
-        if (this.nuevaEvidencia.estado_evidencia === 'NK' && (!this.jiraInput || this.jiraInput.trim() === '')) {
+        if (estadoSeleccionado?.nombre === 'NK' && (!this.jiraInput || this.jiraInput.trim() === '')) {
             this.messageService.add({ 
                 severity: 'warn', 
                 summary: 'Atención', 
@@ -189,15 +230,6 @@ export class EjecucionPage implements OnInit {
         
         this.nuevaEvidencia.usuarioEjecutante = usuarioLogueado; 
         
-        //RESTAURAR SI FALLA
-        // this.evidenciaService.createEvidencia(this.nuevaEvidencia as Evidencia).subscribe({
-        //     next: () => {
-        //         this.messageService.add({ severity: 'success', summary: 'Éxito', detail: 'Evidencia guardada correctamente.' });
-                 
-        //         setTimeout(() => this.router.navigate(['/pages/casos', this.nuevaEvidencia.id_caso]), 1500);
-        //     },
-        //     error: (err) => this.messageService.add({ severity: 'error', summary: 'Error', detail: 'No se pudo guardar la evidencia.' })
-        // });
 
         // 1. Se crea la evidencia
         this.evidenciaService.createEvidencia(this.nuevaEvidencia as Evidencia).pipe(
@@ -254,13 +286,6 @@ export class EjecucionPage implements OnInit {
         });
     }
 
-    // onUpload(event: any) {
-    //     // Aquí manejarías la subida del archivo. Por ahora, solo mostraremos un mensaje.
-    //     // En una implementación real, aquí se llamaría a un servicio que sube el archivo y devuelve la URL.
-    //     const file = event.files[0];
-    //     this.nuevaEvidencia.url_evidencia = `path/to/uploaded/${file.name}`; // URL simulada
-    //     this.messageService.add({ severity: 'info', summary: 'Archivo Subido', detail: file.name });
-    // }
     volverAtras(): void {
         this.location.back();
     }

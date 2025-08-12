@@ -6,11 +6,12 @@ import { Usuario } from "./usuario";
 export interface Evidencia {
   id_evidencia?: number;
   descripcion_evidencia: string;
-  estado_evidencia: 'OK' | 'NK' | 'N/A';
+  //estado_evidencia: 'OK' | 'NK' | 'N/A';
+  id_estado_evidencia: number;
   version_ejecucion: string;
-  criticidad?: 'Leve' | 'Medio' | 'Grave' | 'Crítico' | null;
+  //criticidad?: 'Leve' | 'Medio' | 'Grave' | 'Crítico' | null;
+  id_criticidad?: number | null;
   fecha_evidencia?: string;
-  //url_evidencia?: string;
   id_jira?: number | null;
   id_usuario_ejecutante: number;
   usuarioEjecutante?: Usuario;

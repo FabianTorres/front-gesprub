@@ -18,6 +18,7 @@ import { environment } from '../../../../environment/environment';
 import { ProyectoService } from '../../../services/proyecto.service';
 import { forkJoin, map, of, switchMap } from 'rxjs';
 import { EvidenciaService } from '../../../services/evidencia.service';
+import { CatalogoService } from '../../../services/catalogo.service';
 
 @Component({
     standalone: true,
@@ -38,6 +39,9 @@ export class HistorialPage implements OnInit {
     historial = signal<Evidencia[]>([]);
     datosHistorial = signal<HistorialCaso | null>(null);
     private evidenciaService = inject(EvidenciaService);
+    private catalogoService = inject(CatalogoService); 
+    private estadosEvidencia = this.catalogoService.estadosEvidencia;
+    private criticidades = this.catalogoService.criticidades;
 
     private route = inject(ActivatedRoute);
     private casoService = inject(CasoService);
@@ -160,6 +164,21 @@ export class HistorialPage implements OnInit {
             default:
                 return 'secondary';
         }
+    }
+
+    findEstadoEvidenciaNombre(id: number | undefined): string {
+        if (id === undefined) return 'Desconocido';
+        const estado = this.estadosEvidencia().find(e => e.id_estado_evidencia === id);
+        return estado ? estado.nombre : 'Desconocido';
+    }
+
+    // Busca el nombre de la criticidad a partir de su ID
+    findCriticidadNombre(id: number | undefined): string | undefined {
+        if (id === undefined || id === null) {
+            return undefined;
+        }
+        const criticidad = this.criticidades().find(c => c.id_criticidad === id);
+        return criticidad ? criticidad.nombre_criticidad : undefined;
     }
 
     volverAtras(): void {

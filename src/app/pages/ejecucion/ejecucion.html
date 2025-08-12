@@ -65,52 +65,46 @@
             <div>
                 <label class="block font-bold mb-2 text-xl">Resultado de la Prueba <span class="text-red-500">*</span></label>
                 <div class="flex gap-2">
-                    <button pButton type="button" label="OK" icon="pi pi-check-circle" 
-                            (click)="nuevaEvidencia.estado_evidencia = 'OK'" 
-                            severity="success" [ngClass]="{'p-button-outlined': nuevaEvidencia.estado_evidencia !== 'OK'}"></button>
-                    <button pButton type="button" label="NK" icon="pi pi-times-circle" 
-                            (click)="nuevaEvidencia.estado_evidencia = 'NK'" 
-                            severity="danger" [ngClass]="{'p-button-outlined': nuevaEvidencia.estado_evidencia !== 'NK'}"></button>
-                    <button pButton type="button" label="N/A" icon="pi pi-stop-circle" 
-                            (click)="nuevaEvidencia.estado_evidencia = 'N/A'" 
-                            severity="secondary" 
+                    <button *ngFor="let estado of listaEstadosEvidencia()"
+                            pButton 
+                            type="button" 
+                            [label]="estado.nombre"
+                            (click)="nuevaEvidencia.id_estado_evidencia = estado.id_estado_evidencia"
                             [ngClass]="{
-                                    'p-button-outlined': nuevaEvidencia.estado_evidencia !== 'N/A', 
-                                    'btn-na-selected': nuevaEvidencia.estado_evidencia === 'N/A'
-                                }">
-                </button>    
+                                        'p-button-outlined': nuevaEvidencia.id_estado_evidencia !== estado.id_estado_evidencia, 
+                                        'btn-na-selected': nuevaEvidencia.id_estado_evidencia === estado.id_estado_evidencia && estado.nombre === 'N/A'
+                                    }"
+                            [icon]="estado.nombre === 'OK' ? 'pi pi-check-circle' : (estado.nombre === 'NK' ? 'pi pi-times-circle' : 'pi pi-stop-circle')"
+                            [severity]="estado.nombre === 'OK' ? 'success' : (estado.nombre === 'NK' ? 'danger' : 'secondary')">
+                    </button>   
                 </div>
             </div>
 
-            <div *ngIf="nuevaEvidencia.estado_evidencia === 'NK'">
+            <div *ngIf="nuevaEvidencia.id_estado_evidencia === idEstadoNK()">
                 <label for="criticidad" class="block font-bold mb-2 text-xl">Criticidad del Fallo</label>
                 <div class="flex flex-wrap gap-2">
-                    <button pButton type="button" label="Leve" 
-                            (click)="nuevaEvidencia.criticidad = 'Leve'"
-                            severity="info" [ngClass]="{'p-button-outlined': nuevaEvidencia.criticidad !== 'Leve'}"></button>
-                    <button pButton type="button" label="Medio" 
-                            (click)="nuevaEvidencia.criticidad = 'Medio'"
-                            severity="warn" [ngClass]="{'p-button-outlined': nuevaEvidencia.criticidad !== 'Medio'}"></button>
-                    <button pButton type="button" label="Grave" 
-                            (click)="nuevaEvidencia.criticidad = 'Grave'"
-                            severity="danger" [ngClass]="{'p-button-outlined': nuevaEvidencia.criticidad !== 'Grave'}"></button>
-                    <button pButton type="button" label="Crítico" 
-                            (click)="nuevaEvidencia.criticidad = 'Crítico'"
-                            severity="contrast" [ngClass]="{'p-button-outlined': nuevaEvidencia.criticidad !== 'Crítico'}"></button>
+                    <button *ngFor="let c of listaCriticidades()"
+                            pButton 
+                            type="button" 
+                            [label]="c.nombre_criticidad"
+                            (click)="nuevaEvidencia.id_criticidad = c.id_criticidad"
+                            [ngClass]="{'p-button-outlined': nuevaEvidencia.id_criticidad !== c.id_criticidad}"
+                            [severity]="getSeverityForCriticidad(c.nombre_criticidad)">
+                    </button>
                 </div>
             </div>
 
             <div>
                 <label for="descripcion" class="block font-bold mb-2 text-xl">Descripción de Evidencia
-                    <span *ngIf="nuevaEvidencia.estado_evidencia === 'NK' || nuevaEvidencia.estado_evidencia === 'N/A'" class="text-red-500">*</span>
+                    <span *ngIf="estadoSeleccionado()?.nombre === 'NK' || estadoSeleccionado()?.nombre === 'N/A'" class="text-red-500">*</span>
                 </label>
                 <textarea id="descripcion" pTextarea [(ngModel)]="nuevaEvidencia.descripcion_evidencia" 
                     rows="5" placeholder="Describe lo que sucedió..." class="w-full"
-                    [required]="nuevaEvidencia.estado_evidencia === 'NK' || nuevaEvidencia.estado_evidencia === 'N/A'"
+                    [required]="estadoSeleccionado()?.nombre === 'NK' || estadoSeleccionado()?.nombre === 'N/A'"
                     #descripcion="ngModel">
                 </textarea>
                 <small class="p-error text-red-500" 
-                    *ngIf="descripcion.invalid && descripcion.touched && (nuevaEvidencia.estado_evidencia === 'NK' || nuevaEvidencia.estado_evidencia === 'N/A')">
+                    *ngIf="descripcion.invalid && descripcion.touched && (estadoSeleccionado()?.nombre === 'NK' || estadoSeleccionado()?.nombre === 'N/A')">
                     La descripción es requerida para los estados NK y N/A.
                 </small>
             </div>
@@ -172,7 +166,7 @@
                 </p-fileUpload>
             </div>
             
-            <div *ngIf="nuevaEvidencia.estado_evidencia === 'NK'">
+            <div *ngIf="nuevaEvidencia.id_estado_evidencia === idEstadoNK()">
                 <label for="jira" class="block font-bold mb-2 text-xl">Jira</label>
                 <input type="text" pInputText id="jira" [(ngModel)]="jiraInput" 
                        maxlength="20" placeholder="Ej: CERTRTA25-1381" class="w-full"/>

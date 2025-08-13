@@ -67,7 +67,8 @@ export class AppMenu implements OnInit {
                     {
                         label: 'Dashboard',
                         icon: 'pi pi-fw pi-home',
-                        routerLink: ['/']
+                        //routerLink: ['/'],
+                        //visible: false
                     }
                 ]
             },
@@ -100,7 +101,20 @@ export class AppMenu implements OnInit {
                         routerLink: ['/pages/admin/usuarios'] 
                     }
                 ]
-            }
+            },
+            {
+                label: 'Personal',
+                items: [
+                    { label: 'Mi Perfil', icon: 'pi pi-fw pi-user', routerLink: ['/pages/perfil'] }
+                ]
+            },
+            {
+                label: 'Herramientas',
+                //items: [
+                //    { label: 'Mi Perfil', icon: 'pi pi-fw pi-user', routerLink: ['/pages/perfil'] }
+                //]
+            },
+            
 
             
         ];

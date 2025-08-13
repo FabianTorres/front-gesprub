@@ -1,0 +1,128 @@
+<p-toast></p-toast>
+<div class="card" *ngIf="usuarioActual() as user; else cargando">
+    
+    <div class="flex flex-col md:flex-row gap-4 items-center mb-6">
+        <p-avatar 
+            [label]="(user.nombreUsuario || 'A').charAt(0).toUpperCase()" 
+            styleClass="w-20 h-20 text-4xl"
+            shape="circle">
+        </p-avatar>
+
+        <div class="text-center md:text-left">
+            <h2 class="text-3xl font-bold m-0">{{ user.nombreUsuario }}</h2>
+            <p-tag [value]="user.rolUsuario" 
+                   [severity]="getSeverityForRol(user.rolUsuario)" 
+                   styleClass="mt-2 text-lg">
+            </p-tag>
+        </div>
+
+        <div class="md:ml-auto flex flex-col sm:flex-row gap-2">
+            <button pButton label="Editar Perfil" icon="pi pi-pencil" class="p-button-outlined" (click)="abrirDialogoEditar()"></button>
+            <button pButton label="Cambiar Contraseña" icon="pi pi-lock" class="p-button-secondary" (click)="abrirDialogoPassword()"></button>
+        </div>
+    </div>
+
+    <hr class="my-6" />
+
+    <h3 class="text-xl font-semibold mb-4">Detalles de la Cuenta</h3>
+    <ul class="list-none p-0 m-0">
+        <li class="flex items-center p-3">
+            <i class="pi pi-envelope mr-3 text-xl text-surface-500"></i>
+            <div class="flex flex-col">
+                <span class="font-bold text-surface-700 dark:text-surface-200">Correo Electrónico</span>
+                <span class="text-surface-600 dark:text-surface-300">{{ user.correo }}</span>
+            </div>
+        </li>
+        <li class="flex items-center p-3">
+            <i class="pi pi-calendar-plus mr-3 text-xl text-surface-500"></i>
+            <div class="flex flex-col">
+                <span class="font-bold text-surface-700 dark:text-surface-200">Miembro desde</span>
+                <span class="text-surface-600 dark:text-surface-300">{{ user.fechaCreacion | date:'dd \'de\' MMMM \'de\' yyyy' }}</span>
+            </div>
+        </li>
+        <li class="flex items-center p-3">
+            <i class="pi pi-history mr-3 text-xl text-surface-500"></i>
+            <div class="flex flex-col">
+                <span class="font-bold text-surface-700 dark:text-surface-200">Último Inicio de Sesión</span>
+                <span class="text-surface-600 dark:text-surface-300">{{ user.ultimoLogin | date:'dd/MM/yyyy h:mm a' }}</span>
+            </div>
+        </li>
+    </ul>
+</div>
+
+<ng-template #cargando>
+    <div class="card">
+        <p>Cargando información del perfil...</p>
+    </div>
+</ng-template>
+
+<p-dialog [(visible)]="perfilDialog" [style]="{width: '500px'}" header="Editar Mi Perfil" [modal]="true" class="p-fluid">
+    <ng-template pTemplate="content">
+        <div class="flex flex-col gap-4">
+
+            <div class="field">
+                <label for="nombreUsuario" class="block font-bold mb-2">Nombre de Usuario</label>
+                <input pInputText id="nombreUsuario" type="text" [(ngModel)]="usuarioEditado.nombreUsuario" required class="w-full" />
+            </div>
+
+            <div class="field">
+                <label for="correo" class="block font-bold mb-2">Correo Electrónico</label>
+                <input pInputText id="correo" type="email" [(ngModel)]="usuarioEditado.correo" required class="w-full" />
+            </div>
+
+        </div>
+    </ng-template>
+
+    <ng-template pTemplate="footer">
+        <button pButton pRipple label="Cancelar" icon="pi pi-times" class="p-button-text" (click)="cerrarDialogo()"></button>
+        <button pButton pRipple label="Guardar" icon="pi pi-check" class="p-button-text" (click)="guardarCambios()"></button>
+    </ng-template>
+</p-dialog>
+
+<p-dialog [(visible)]="passwordDialog" [style]="{width: '500px'}" header="Cambiar mi Contraseña" [modal]="true" class="p-fluid">
+    <ng-template pTemplate="content">
+        <div class="flex flex-col gap-4">
+
+            <div class="field">
+                <label for="passwordActual" class="block font-bold mb-2">Contraseña Actual</label>
+                <p-password id="passwordActual" 
+                            [(ngModel)]="datosPassword.passwordActual" 
+                            [feedback]="false" 
+                            [toggleMask]="true"
+                            styleClass="w-full"
+                            appendTo="body"
+                            inputStyleClass="w-full">
+                </p-password>
+            </div>
+
+            <div class="field">
+                <label for="nuevaPassword" class="block font-bold mb-2">Nueva Contraseña</label>
+                <p-password id="nuevaPassword" 
+                            [(ngModel)]="datosPassword.nuevaPassword" 
+                            [toggleMask]="true"
+                            styleClass="w-full"
+                            appendTo="body"
+                            inputStyleClass="w-full">
+                </p-password>
+            </div>
+
+            <div class="field">
+                <label for="confirmacionPassword" class="block font-bold mb-2">Confirmar Nueva Contraseña</label>
+                <p-password id="confirmacionPassword" 
+                            [(ngModel)]="datosPassword.confirmacionPassword" 
+                            [feedback]="false" 
+                            [toggleMask]="true"
+                            styleClass="w-full"
+                            appendTo="body"
+                            inputStyleClass="w-full">
+                </p-password>
+            </div>
+
+        </div>
+    </ng-template>
+
+    <ng-template pTemplate="footer">
+        <button pButton pRipple label="Cancelar" icon="pi pi-times" class="p-button-text" (click)="cerrarDialogoPassword()"></button>
+        <button pButton pRipple label="Guardar" icon="pi pi-check" class="p-button-text" (click)="guardarNuevaPassword()"></button>
+    </ng-template>
+</p-dialog>

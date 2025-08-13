@@ -394,8 +394,6 @@ export class CasosPage implements OnInit {
             return;
         }
 
-        console.log(caso)
-
         this.caso = { ...caso };
         this.editando = true;
         this.activoDialog = caso.activo === 1;

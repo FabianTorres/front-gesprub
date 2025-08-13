@@ -27,6 +27,15 @@ export class UsuarioService {
     return this.http.put<Usuario>(`${this.apiUrl}/${id}`, datosActualizados);
   }
 
+  getUsuarioById(id: number): Observable<Usuario> {
+    return this.http.get<Usuario>(`${this.apiUrl}/${id}`);
+  }
+
+  cambiarPassword(datos: any): Observable<any> {
+      const urlCambioPassword = `${environment.apiUrl}/usuario/cambiar-password`;
+      return this.http.patch(urlCambioPassword, datos); 
+  }
+
 
   //Servicio de registrar usuario
   register(datosUsuario: any): Observable<Usuario> {

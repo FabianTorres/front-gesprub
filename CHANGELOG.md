@@ -3,6 +3,14 @@ Todos los cambios significativos en este proyecto se documentarán en este archi
 El formato se basa en [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 y este proyecto adhiere al [Versionado Semántico](https://semver.org/lang/es/).
 
+## [0.3.0] - 2025-08-11
+
+### Added
+-   Se agrego pagina de perfil personal, con edicion de perfil y cambio de contraseña
+-   Se agrego el cuadro superior de perfil personal
+### Changed
+-   Se modificaron las rutas para mejorar el flujo de la aplicación
+
 
 ## [0.2.0] - 2025-08-11
 

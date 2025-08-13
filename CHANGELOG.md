@@ -3,7 +3,19 @@ Todos los cambios significativos en este proyecto se documentarán en este archi
 El formato se basa en [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 y este proyecto adhiere al [Versionado Semántico](https://semver.org/lang/es/).
 
-## [0.3.0] - 2025-08-11
+## [0.3.1] - 2025-08-14
+
+### Added
+-   Ahora se valida el rol del usuario al entrar.
+-   Se añade un boton de Cerrar Sesión
+### Changed
+-   Ahora cuando se cambia la contraseña, se cierra sesión y manda al login
+-   Ahora cuando se cambia el nombre de usuario, se actualiza localmente en caché
+### Fixed
+-   Se solucionó problema que impedía ver los iconos correctos en el `Historial`
+
+
+## [0.3.0] - 2025-08-13
 
 ### Added
 -   Se agrego pagina de perfil personal, con edicion de perfil y cambio de contraseña

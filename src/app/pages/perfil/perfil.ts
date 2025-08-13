@@ -125,6 +125,8 @@ export class PerfilPage implements OnInit {
 
             // Actualizamos la señal principal con los nuevos datos para que la vista se refresque
             this.usuarioActual.set(usuarioActualizado);
+
+            this.authService.actualizarUsuarioLocal(usuarioActualizado);
             
             this.cerrarDialogo(); // Cerramos el diálogo
         },
@@ -201,8 +203,14 @@ export class PerfilPage implements OnInit {
             this.messageService.add({ 
                 severity: 'success', 
                 summary: 'Éxito', 
-                detail: 'Contraseña actualizada correctamente.' 
+                detail: 'Contraseña actualizada. Por favor, inicie sesión de nuevo.' 
             });
+
+            // Cerramos el diálogo y, después de un breve momento, desconectamos al usuario.
+            this.cerrarDialogoPassword();
+            setTimeout(() => {
+                this.authService.logout();
+            }, 1500);
             this.cerrarDialogoPassword(); // Cerramos el diálogo
         },
         error: (err) => {

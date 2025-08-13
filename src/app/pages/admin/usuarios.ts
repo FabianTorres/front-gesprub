@@ -45,8 +45,7 @@ export class UsuariosPage implements OnInit {
         // ===== INICIO DE LA LÍNEA AÑADIDA =====
         // Inicializamos la lista de roles en el constructor.
         this.listaRoles = [
-            { label: 'Tester', value: 'Tester' },
-            { label: 'Jefe de Proyecto', value: 'Jefe de Proyecto' },
+            { label: 'Certificador', value: 'Certificador' },
             { label: 'Administrador', value: 'Administrador' }
         ];
         // ===== FIN DE LA LÍNEA AÑADIDA =====
@@ -116,8 +115,7 @@ export class UsuariosPage implements OnInit {
     getSeverityForRol(rol: string): string {
         switch (rol) {
             case 'Administrador': return 'danger';
-            case 'Jefe de Proyecto': return 'warning';
-            case 'Tester': return 'info';
+            case 'Certificador': return 'info';
             default: return 'secondary';
         }
     }

@@ -61,6 +61,11 @@
                         </p-avatar>
                         <div>
                             <span class="block font-bold text-lg">{{ user.nombreUsuario }}</span>
+                            <p-tag [value]="user.rolUsuario" 
+                                [severity]="getSeverityForRol(user.rolUsuario)"
+                                styleClass="mb-2">
+                            </p-tag>
+                            <div></div>
                             <span class="text-sm text-surface-500 dark:text-surface-400">
                                 Última conexión: {{ user.ultimoLogin | date:'dd/MM/yy, h:mm a' }}
                             </span>
@@ -71,6 +76,12 @@
                             iconPos="right" 
                             class="w-full p-button-outlined" 
                             routerLink="/pages/perfil">
+                    </button>
+                    <hr class="my-3" />
+                    <button pButton label="Cerrar Sesión" 
+                            icon="pi pi-sign-out" 
+                            class="w-full p-button-danger p-button-text" 
+                            (click)="logout()">
                     </button>
                 </div>
                 <ng-template #noUser>

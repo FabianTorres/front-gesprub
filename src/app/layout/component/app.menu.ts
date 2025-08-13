@@ -9,6 +9,7 @@ import { FormsModule } from '@angular/forms';
 import { SelectModule } from 'primeng/select';
 import { Proyecto } from '../../models/proyecto';
 import { ProyectoService } from '../../services/proyecto.service';
+import { AutenticacionService } from '../../services/autenticacion.service';
 
 @Component({
     selector: 'app-menu',
@@ -19,38 +20,28 @@ import { ProyectoService } from '../../services/proyecto.service';
               SelectModule,
               FormsModule
             ],
-    template: `
-        <div class="project-selector px-4 py-3">
-            <label class="block font-bold text-sm mb-2 text-surface-600 dark:text-surface-300">Proyecto Activo</label>
-            <p-select [options]="proyectos()" 
-                      [(ngModel)]="proyectoActivo"
-                      (onChange)="onProjectChange($event.value)"
-                      optionLabel="nombre_proyecto"
-                      placeholder="Seleccionar Proyecto"
-                      [showClear]="true"
-                      styleClass="w-full">
-            </p-select>
-        </div>
-        <ul class="layout-menu">
-            <ng-container *ngFor="let item of model; let i = index">
-                <li app-menuitem *ngIf="!item.separator" [item]="item" [index]="i" [root]="true"></li>
-            </ng-container>
-        </ul>
-    `
+    templateUrl: './app.menu.html' 
 })
 export class AppMenu implements OnInit {
     
-    model: MenuItem[] = [];
+    model = signal<MenuItem[]>([]);
 
     proyectos = signal<Proyecto[]>([]);
     proyectoActivo: Proyecto | null = null;
     
     proyectoService = inject(ProyectoService);
 
+    private authService = inject(AutenticacionService);
+
     constructor() {
         // Se crea un 'effect' para reaccionar a los cambios del servicio.
         effect(() => {
             this.proyectoActivo = this.proyectoService.proyectoSeleccionado();
+        });
+
+        effect(() => {
+            const usuario = this.authService.usuarioActual();
+            this.buildMenu(usuario?.rolUsuario); // Construimos el menú basado en el rol del usuario
         });
     }
 
@@ -60,7 +51,69 @@ export class AppMenu implements OnInit {
         this.proyectoService.cargarProyectoGuardado();
 
 
-        this.model = [
+        // this.model = [
+        //     {
+        //         label: 'Inicio',
+        //         items: [
+        //             {
+        //                 label: 'Dashboard',
+        //                 icon: 'pi pi-fw pi-home',
+        //                 //routerLink: ['/'],
+        //                 //visible: false
+        //             }
+        //         ]
+        //     },
+        //     {
+        //         label: 'Gestión de Pruebas',
+        //         items: [
+        //             {
+        //                 label: 'Componentes',
+        //                 icon: 'pi pi-fw pi-server',
+        //                 routerLink: ['/pages/gestion/componentes'] 
+        //             },
+        //             {
+        //                 label: 'Casos de Prueba',
+        //                 icon: 'pi pi-fw pi-file-edit',
+        //                 routerLink: ['/pages/gestion/casos'] 
+        //             },
+        //             {
+        //                 label: 'Ciclos de Prueba',
+        //                 icon: 'pi pi-fw pi-sync',
+        //                 // routerLink: ['/pages/gestion/ciclos'] // Lo dejaremos comentado por ahora
+        //             }
+        //         ]
+        //     },
+        //     {
+        //         label: 'Administración',
+        //         items: [
+        //             {
+        //                 label: 'Usuarios',
+        //                 icon: 'pi pi-fw pi-users',
+        //                 routerLink: ['/pages/admin/usuarios'] 
+        //             }
+        //         ]
+        //     },
+        //     {
+        //         label: 'Personal',
+        //         items: [
+        //             { label: 'Mi Perfil', icon: 'pi pi-fw pi-user', routerLink: ['/pages/perfil'] }
+        //         ]
+        //     },
+        //     {
+        //         label: 'Herramientas',
+        //         //items: [
+        //         //    { label: 'Mi Perfil', icon: 'pi pi-fw pi-user', routerLink: ['/pages/perfil'] }
+        //         //]
+        //     },
+            
+
+            
+        // ];
+    }
+
+    // ===== 4. CREAMOS UNA FUNCIÓN PARA CONSTRUIR EL MENÚ DINÁMICAMENTE =====
+    buildMenu(rol?: string) {
+        const menuItems: MenuItem[] = [
             {
                 label: 'Inicio',
                 items: [
@@ -68,38 +121,16 @@ export class AppMenu implements OnInit {
                         label: 'Dashboard',
                         icon: 'pi pi-fw pi-home',
                         //routerLink: ['/'],
-                        //visible: false
+                        //visible: false // Mantenemos el dashboard oculto como querías
                     }
                 ]
             },
             {
                 label: 'Gestión de Pruebas',
                 items: [
-                    {
-                        label: 'Componentes',
-                        icon: 'pi pi-fw pi-server',
-                        routerLink: ['/pages/gestion/componentes'] 
-                    },
-                    {
-                        label: 'Casos de Prueba',
-                        icon: 'pi pi-fw pi-file-edit',
-                        routerLink: ['/pages/gestion/casos'] 
-                    },
-                    {
-                        label: 'Ciclos de Prueba',
-                        icon: 'pi pi-fw pi-sync',
-                        // routerLink: ['/pages/gestion/ciclos'] // Lo dejaremos comentado por ahora
-                    }
-                ]
-            },
-            {
-                label: 'Administración',
-                items: [
-                    {
-                        label: 'Usuarios',
-                        icon: 'pi pi-fw pi-users',
-                        routerLink: ['/pages/admin/usuarios'] 
-                    }
+                    { label: 'Componentes', icon: 'pi pi-fw pi-server', routerLink: ['/pages/gestion/componentes'] },
+                    { label: 'Casos de Prueba', icon: 'pi pi-fw pi-file-edit', routerLink: ['/pages/gestion/casos'] },
+                    { label: 'Ciclos de Prueba', icon: 'pi pi-fw pi-sync', disabled: true } // Deshabilitado en lugar de comentado
                 ]
             },
             {
@@ -107,17 +138,25 @@ export class AppMenu implements OnInit {
                 items: [
                     { label: 'Mi Perfil', icon: 'pi pi-fw pi-user', routerLink: ['/pages/perfil'] }
                 ]
-            },
-            {
-                label: 'Herramientas',
-                //items: [
-                //    { label: 'Mi Perfil', icon: 'pi pi-fw pi-user', routerLink: ['/pages/perfil'] }
-                //]
-            },
-            
-
-            
+            }
+            // La sección de Administración se añade condicionalmente más abajo
         ];
+
+        // ===== 5. LÓGICA CONDICIONAL PARA AÑADIR EL MENÚ DE ADMINISTRACIÓN =====
+        // Si el rol del usuario es 'Administrador'...
+        if (rol === 'Administrador') {
+            // ...añadimos la sección completa al array del menú.
+            console.log(rol)
+            menuItems.push({
+                label: 'Administración',
+                items: [
+                    { label: 'Usuarios', icon: 'pi pi-fw pi-users', routerLink: ['/pages/admin/usuarios'] }
+                ]
+            });
+        }
+
+        // Finalmente, actualizamos la señal del modelo con el menú construido.
+        this.model.set(menuItems);
     }
 
     cargarProyectos() {

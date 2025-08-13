@@ -79,6 +79,14 @@ export class AutenticacionService {
     }
   }
 
+  actualizarUsuarioLocal(usuario: Usuario): void {
+    // 1. Actualizamos la señal para que toda la app reaccione al cambio.
+    this.usuarioActual.set(usuario);
+    
+    // 2. Sobrescribimos el objeto 'currentUser' en localStorage con los nuevos datos.
+    localStorage.setItem('currentUser', JSON.stringify(usuario));
+  }
+
   private isTokenExpired(token: string): boolean {
     try {
       const expiry = JSON.parse(atob(token.split('.')[1])).exp;

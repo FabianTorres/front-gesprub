@@ -12,4 +12,12 @@ export class EstadoModificacionService {
     getEstados(): Observable<EstadoModificacion[]> {
         return this.http.get<EstadoModificacion[]>(this.apiUrl);
     }
+
+     createEstado(estado: Partial<EstadoModificacion>): Observable<EstadoModificacion> {
+        return this.http.post<EstadoModificacion>(this.apiUrl, estado);
+      }
+    
+      updateEstado(id: number, estado: Partial<EstadoModificacion>): Observable<EstadoModificacion> {
+        return this.http.put<EstadoModificacion>(`${this.apiUrl}/${id}`, estado);
+      }
 }

@@ -1,0 +1,84 @@
+<p-toast></p-toast>
+<div class="card">
+    <h2 class="text-2xl font-semibold mb-4">Gestión de Proyectos</h2>
+
+    <p-toolbar styleClass="mb-4">
+        <ng-template pTemplate="left">
+            <button pButton 
+                    pRipple 
+                    label="Nuevo Proyecto" 
+                    icon="pi pi-plus" 
+                    (click)="abrirDialogoNuevo()">
+            </button>
+        </ng-template>
+    </p-toolbar>
+
+    <p-table [value]="proyectos()" [rows]="10" [paginator]="true" responsiveLayout="scroll" dataKey="id_proyecto" styleClass="p-datatable-gridlines">
+        <ng-template pTemplate="header">
+            <tr>
+                <!-- <th pSortableColumn="id_proyecto" style="width:10%">ID <p-sortIcon field="id_proyecto"></p-sortIcon></th> -->
+                <th pSortableColumn="nombre_proyecto">Nombre del Proyecto <p-sortIcon field="nombre_proyecto"></p-sortIcon></th>
+                <th pSortableColumn="anio" style="width:10%" class="text-center">Año <p-sortIcon field="anio"></p-sortIcon></th>
+                <th pSortableColumn="activo" style="width:10%" class="text-center">Activo <p-sortIcon field="activo"></p-sortIcon></th>
+                <th style="width:15%">Acciones</th>
+            </tr>
+        </ng-template>
+        <ng-template pTemplate="body" let-proyecto>
+            <tr>
+                <!-- <td>{{ proyecto.id_proyecto }}</td> -->
+                <td>{{ proyecto.nombre_proyecto }}</td>
+                <td class="text-center">{{ proyecto.anio }}</td>
+                <td class="text-center">
+                    <i class="pi text-xl" 
+                    [ngClass]="{
+                        'pi-check-circle text-green-500': proyecto.activo === 1, 
+                        'pi-ban text-red-500': proyecto.activo !== 1
+                    }"
+                    [pTooltip]="proyecto.activo === 1 ? 'Activo' : 'Inactivo'" 
+                    tooltipPosition="top">
+                    </i>
+                </td>
+                <td>
+                    <button pButton pRipple icon="pi pi-pencil" class="p-button-rounded mr-2" 
+                            pTooltip="Editar" tooltipPosition="top"
+                            (click)="abrirDialogoEditar(proyecto)">
+                    </button>
+                </td>
+            </tr>
+        </ng-template>
+        <ng-template pTemplate="emptymessage">
+            <tr>
+                <td colspan="5" class="text-center">No se encontraron proyectos.</td>
+            </tr>
+        </ng-template>
+    </p-table>
+</div>
+<p-dialog [(visible)]="proyectoDialog" [style]="{width: '500px'}" 
+          [header]="editando ? 'Editar Proyecto' : 'Nuevo Proyecto'" 
+          [modal]="true" class="p-fluid">
+    <ng-template pTemplate="content">
+        <div class="flex flex-col gap-4">
+
+            <div class="field">
+                <label for="nombre" class="block font-bold mb-2">Nombre del Proyecto</label>
+                <input pInputText id="nombre" type="text" [(ngModel)]="proyecto.nombre_proyecto" required class="w-full" />
+            </div>
+
+            <div class="field">
+                <label for="anio" class="block font-bold mb-2">Año</label>
+                <p-inputNumber id="anio" [(ngModel)]="proyecto.anio" [useGrouping]="false" [max]="9999" class="w-full"></p-inputNumber>
+            </div>
+
+            <div class="field flex items-center mt-2">
+                <p-inputSwitch [(ngModel)]="activoDialog"></p-inputSwitch>
+                <label class="ml-2">Activo</label>
+            </div>
+
+        </div>
+    </ng-template>
+
+    <ng-template pTemplate="footer">
+        <button pButton pRipple label="Cancelar" icon="pi pi-times" class="p-button-text" (click)="cerrarDialogo()"></button>
+        <button pButton pRipple label="Guardar" icon="pi pi-check" class="p-button-text" (click)="guardarProyecto()"></button>
+    </ng-template>
+</p-dialog>

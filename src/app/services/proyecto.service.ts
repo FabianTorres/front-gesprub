@@ -36,4 +36,12 @@ export class ProyectoService {
             this.proyectoSeleccionado.set(JSON.parse(proyectoGuardado));
         }
     }
+
+    createProyecto(proyecto: Partial<Proyecto>): Observable<Proyecto> {
+        return this.http.post<Proyecto>(this.apiUrl, proyecto);
+    }
+
+    updateProyecto(id: number, proyecto: Partial<Proyecto>): Observable<Proyecto> {
+        return this.http.put<Proyecto>(`${this.apiUrl}/${id}`, proyecto);
+    }
 }

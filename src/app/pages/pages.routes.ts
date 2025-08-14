@@ -23,6 +23,24 @@ export default [
         path: 'perfil',
         loadComponent: () => import('./perfil/perfil').then(m => m.PerfilPage)
     },
+    {
+        path: 'config/proyectos',
+        loadComponent: () => import('./config/proyectos/proyectos.component').then(m => m.ProyectosComponent),
+    },
+    {
+        path: 'config/estados-evidencia',
+        loadComponent: () => import('./config/estados-evidencia/estados-evidencia.component').then(m => m.EstadosEvidenciaComponent),
+        
+    },
+    {
+        path: 'config/estados-modificacion',
+        loadComponent: () => import('./config/estados-modificacion/estados-modificacion.component').then(m => m.EstadosModificacionComponent),
+        
+    },
+     {
+        path: 'config/criticidades',
+        loadComponent: () => import('./config/criticidades/criticidades.component').then(m => m.CriticidadesComponent),
+    },
 
 
     { path: '**', redirectTo: '/notfound' }

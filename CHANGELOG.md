@@ -3,6 +3,12 @@ Todos los cambios significativos en este proyecto se documentarán en este archi
 El formato se basa en [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 y este proyecto adhiere al [Versionado Semántico](https://semver.org/lang/es/).
 
+## [0.4.0] - 2025-08-14
+
+### Added
+-   Se agregaron las configuraciones para estados, proyectos y criticidades.
+
+
 ## [0.3.1] - 2025-08-14
 
 ### Added

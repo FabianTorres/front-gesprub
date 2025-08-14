@@ -138,6 +138,15 @@ export class AppMenu implements OnInit {
                 items: [
                     { label: 'Mi Perfil', icon: 'pi pi-fw pi-user', routerLink: ['/pages/perfil'] }
                 ]
+            },
+            {
+                label: 'Configuración',
+                items: [
+                    { label: 'Proyectos', icon: 'pi pi-fw pi-briefcase', routerLink: ['/pages/config/proyectos'] },
+                    { label: 'Estados de Evidencia', icon: 'pi pi-fw pi-tags', routerLink: ['/pages/config/estados-evidencia'] },
+                    { label: 'Estados de Modificación', icon: 'pi pi-fw pi-tags', routerLink: ['/pages/config/estados-modificacion'] },
+                    { label: 'Criticidades', icon: 'pi pi-fw pi-tags', routerLink: ['/pages/config/criticidades'] }
+                ]
             }
             // La sección de Administración se añade condicionalmente más abajo
         ];
@@ -146,7 +155,7 @@ export class AppMenu implements OnInit {
         // Si el rol del usuario es 'Administrador'...
         if (rol === 'Administrador') {
             // ...añadimos la sección completa al array del menú.
-            console.log(rol)
+            
             menuItems.push({
                 label: 'Administración',
                 items: [

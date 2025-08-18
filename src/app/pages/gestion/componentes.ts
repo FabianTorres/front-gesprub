@@ -26,6 +26,8 @@ import { InputIconModule } from 'primeng/inputicon';
 import { Componente } from '../../models/componente';
 import { ComponenteService } from '../../services/componente.service';
 import { ProyectoService } from '../../services/proyecto.service'; 
+import { CatalogoService } from '../../services/catalogo.service'; 
+import { Ambito } from '../../models/ambito'; 
 
 @Component({
     standalone: true,
@@ -57,6 +59,7 @@ export class ComponentesPage implements OnInit {
     // Inyección de dependencias
     private componenteService = inject(ComponenteService);
     private messageService = inject(MessageService);
+    private catalogoService = inject(CatalogoService);
     private datePipe = inject(DatePipe);
 
     private router = inject(Router);
@@ -64,6 +67,8 @@ export class ComponentesPage implements OnInit {
 
     hitos = signal<any[]>([]);
     opcionesFiltroActivo: any[];
+
+    listaAmbitos = this.catalogoService.ambitos;
 
     constructor() {
 
@@ -177,6 +182,11 @@ export class ComponentesPage implements OnInit {
     // Se añade la función para el filtro global
     onGlobalFilter(table: Table, event: Event) {
         table.filterGlobal((event.target as HTMLInputElement).value, 'contains');
+    }
+
+    findAmbitoNombre(id: number): string {
+        const ambito = this.listaAmbitos().find(a => a.id_ambito === id);
+        return ambito ? ambito.nombre_ambito : 'No definido';
     }
 
     // Se añade la función para limpiar los filtros

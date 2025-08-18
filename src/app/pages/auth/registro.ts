@@ -110,7 +110,7 @@ export class Registro {
     const { confirmPassword, ...datosUsuario } = this.registerForm.value;
     this.usuarioService.register(datosUsuario).subscribe({
       next: () => {
-     
+        
         this.messageService.add({ 
             severity: 'success', 
             summary: '¡Éxito!', 

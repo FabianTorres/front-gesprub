@@ -46,6 +46,8 @@
                                 <p-columnFilter type="date" field="fecha_limite" display="menu"></p-columnFilter>
                             </div>
                         </th>
+
+                        <th pSortableColumn="id_ambito">Ámbito <p-sortIcon field="id_ambito"></p-sortIcon></th>
                         <th pSortableColumn="activo">
                             <div class="flex justify-between items-center">
                                 Activo
@@ -64,6 +66,7 @@
                         <td>{{componente.hito_componente}}</td>
                         <td>{{componente.nombre_componente}}</td>
                         <td>{{componente.fecha_limite | date: 'dd/MM/yyyy'}}</td>
+                        <td>{{ findAmbitoNombre(componente.id_ambito) }}</td>
                         <td class="text-center">
                             <i class="pi text-xl" [ngClass]="{
                                 'pi-check-circle text-green-500': componente.activo === 1, 
@@ -93,6 +96,24 @@
         <p-dialog [(visible)]="componenteDialog" [style]="{width: '450px'}" [header]="editando ? 'Editar Componente' : 'Nuevo Componente'" [modal]="true" class="p-fluid">
             <ng-template pTemplate="content">
                 <div class="flex flex-col gap-4">
+
+                    <div class="field">
+                        <label for="ambito" class="block font-bold mb-2">Ámbito</label>
+                        <p-select id="ambito"
+                                [options]="listaAmbitos()"
+                                [(ngModel)]="componente.id_ambito"
+                                optionLabel="nombre_ambito"
+                                optionValue="id_ambito"
+                                placeholder="Seleccione un ámbito"
+                                required
+                                styleClass="w-full">
+                        </p-select>
+                    </div>
+
+                    <div>
+                        <label for="hito" class="block font-bold mb-2">Hito</label>
+                        <p-inputNumber id="hito" [(ngModel)]="componente.hito_componente" styleClass="w-full"></p-inputNumber>
+                    </div>
                     
                     <div>
                         <label for="nombre" class="block font-bold mb-2">Nombre</label>
@@ -100,15 +121,14 @@
                         <small class="p-error" *ngIf="submitted && !componente.nombre_componente">El nombre es requerido.</small>
                     </div>
 
-                    <div>
-                        <label for="hito" class="block font-bold mb-2">Hito</label>
-                        <p-inputNumber id="hito" [(ngModel)]="componente.hito_componente" styleClass="w-full"></p-inputNumber>
-                    </div>
+                    
 
                     <div>
                         <label for="fecha" class="block font-bold mb-2">Fecha Límite</label>
                         <p-datePicker id="fecha" [(ngModel)]="fechaLimiteDialog" dateFormat="dd/mm/yy" [appendTo]="'body'" styleClass="w-full"></p-datePicker>
                     </div>
+
+                    
 
                     <div class="flex items-center mt-2">
                         <p-inputSwitch [(ngModel)]="activoDialog" inputId="activo"></p-inputSwitch>

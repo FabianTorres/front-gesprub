@@ -145,7 +145,8 @@ export class AppMenu implements OnInit {
                     { label: 'Proyectos', icon: 'pi pi-fw pi-briefcase', routerLink: ['/pages/config/proyectos'] },
                     { label: 'Estados de Evidencia', icon: 'pi pi-fw pi-tags', routerLink: ['/pages/config/estados-evidencia'] },
                     { label: 'Estados de Modificación', icon: 'pi pi-fw pi-tags', routerLink: ['/pages/config/estados-modificacion'] },
-                    { label: 'Criticidades', icon: 'pi pi-fw pi-tags', routerLink: ['/pages/config/criticidades'] }
+                    { label: 'Criticidades', icon: 'pi pi-fw pi-tags', routerLink: ['/pages/config/criticidades'] },
+                    { label: 'Ámbitos', icon: 'pi pi-fw pi-tags', routerLink: ['/pages/config/ambitos'] }
                 ]
             }
             // La sección de Administración se añade condicionalmente más abajo

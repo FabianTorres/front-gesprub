@@ -41,6 +41,10 @@ export default [
         path: 'config/criticidades',
         loadComponent: () => import('./config/criticidades/criticidades.component').then(m => m.CriticidadesComponent),
     },
+    {
+        path: 'config/ambitos',
+        loadComponent: () => import('./config/ambito/ambitos.component').then(m => m.AmbitosComponent),
+    },
 
 
     { path: '**', redirectTo: '/notfound' }

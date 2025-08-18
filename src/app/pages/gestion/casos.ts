@@ -2,7 +2,7 @@ import { Component, OnInit, inject, signal, effect, ViewChild, ElementRef, compu
 import { CommonModule, DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
-import { ConfirmationService, MessageService } from 'primeng/api';
+import { ConfirmationService, MessageService, MenuItem } from 'primeng/api';
 import { Table, TableModule } from 'primeng/table';
 import { ButtonModule } from 'primeng/button';
 import { TagModule } from 'primeng/tag';
@@ -19,6 +19,7 @@ import { ToastModule } from 'primeng/toast';
 import { SelectModule } from 'primeng/select';
 import { InputNumberModule } from 'primeng/inputnumber';
 import { TooltipModule } from 'primeng/tooltip';
+import { SplitButtonModule } from 'primeng/splitbutton';
 import { FieldsetModule } from 'primeng/fieldset';
 import { Caso } from '../../models/caso';
 import { CasoService } from '../../services/caso.service';
@@ -35,6 +36,7 @@ import { EstadoModificacion } from '../../models/estado-modificacion';
 import { EstadoModificacionService } from '../../services/estado-modificacion.service';
 import { CatalogoService } from '../../services/catalogo.service';
 
+
 // Se define una interfaz local para la estructura de los Hitos.
 interface Hito {
     id: number;
@@ -44,7 +46,7 @@ interface Hito {
 @Component({
     standalone: true,
     imports: [
-        IconFieldModule, AutoCompleteModule,  FieldsetModule, InputIconModule, TooltipModule, CommonModule, FormsModule, TableModule, ButtonModule, ToolbarModule, DialogModule,
+        IconFieldModule, AutoCompleteModule,SplitButtonModule,  FieldsetModule, InputIconModule, TooltipModule, CommonModule, FormsModule, TableModule, ButtonModule, ToolbarModule, DialogModule,
         RouterModule, TruncatePipe , TagModule, InputTextModule, TextareaModule, SelectModule, InputSwitchModule, ConfirmDialogModule, ToastModule, InputNumberModule, VersionFormatDirective
     ],
     providers: [MessageService, ConfirmationService, DatePipe],
@@ -80,6 +82,9 @@ export class CasosPage implements OnInit {
     opcionesFiltroVersion = signal<any[]>([]);
     // Propiedad para controlar el switch de la fuente
     esFuenteExterna: boolean = false;
+
+    // Propiedad para los items del botón de exportar
+    opcionesExportar: MenuItem[];
 
     private catalogoService = inject(CatalogoService);
     private estadosEvidencia = this.catalogoService.estadosEvidencia;
@@ -195,6 +200,26 @@ export class CasosPage implements OnInit {
             { label: 'Nuevo', value: 1 },
             { label: 'Modificado', value: 2 },
             { label: 'Sin cambios', value: 3 }
+        ];
+
+
+
+        // Definimos las opciones que aparecerán en el menú del botón de exportación
+        this.opcionesExportar = [
+            {
+                label: 'Exportar a Excel',
+                icon: 'pi pi-file-excel',
+                command: () => {
+                    this.exportarCasos('excel');
+                }
+            },
+            {
+                label: 'Exportar a CSV',
+                icon: 'pi pi-file',
+                command: () => {
+                    this.exportarCasos('csv');
+                }
+            }
         ];
     }
 
@@ -543,5 +568,21 @@ export class CasosPage implements OnInit {
     cargarHitos(componentes: Componente[]) {
         const hitosUnicos = [...new Map(componentes.map(c => [c.hito_componente, c.hito_componente])).values()];
         this.hitos.set(hitosUnicos.map(h => ({ id: h, nombre: `Hito ${h}` })));
+    }
+
+
+    importarCasos() {
+        // Lógica futura para la importación
+        this.messageService.add({ severity: 'info', summary: 'Próximamente', detail: 'Esta funcionalidad de importación estará disponible en el futuro.' });
+    }
+
+    exportarCasos(formato: string) {
+        // Lógica futura para la exportación
+        this.messageService.add({ severity: 'info', summary: 'Próximamente', detail: `La exportación a ${formato} estará disponible en el futuro.` });
+    }
+
+    exportarPlanDePruebas() {
+        // Lógica futura para el informe
+        this.messageService.add({ severity: 'info', summary: 'Próximamente', detail: 'La generación del Plan de Pruebas estará disponible en el futuro.' });
     }
 }

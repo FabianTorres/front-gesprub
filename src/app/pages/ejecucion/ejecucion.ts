@@ -31,6 +31,7 @@ import { map, switchMap } from 'rxjs/operators';
 import { catchError, forkJoin, of } from 'rxjs';
 import { RutValidatorDirective } from '../../directives/rut-validator.directive';
 import { CatalogoService } from '../../services/catalogo.service';
+import { HistorialCaso } from '../../models/historial-caso';
 
 @Component({
     standalone: true,
@@ -43,6 +44,7 @@ import { CatalogoService } from '../../services/catalogo.service';
 })
 export class EjecucionPage implements OnInit {
     caso = signal<Caso | null>(null);
+    historial = signal<HistorialCaso | null>(null);
     nuevaEvidencia: Partial<Evidencia> = {};
     jiraInput: string | null = null;
     archivosParaSubir = signal<File[]>([]); 
@@ -57,7 +59,10 @@ export class EjecucionPage implements OnInit {
     private messageService = inject(MessageService);
     private location = inject(Location);
     private authService = inject(AutenticacionService);
-    private catalogoService = inject(CatalogoService); 
+    private catalogoService = inject(CatalogoService);
+
+
+    //private ultimaEvidencia: Evidencia;
 
     // Hacemos que los datos del catálogo sean accesibles para la vista
     listaEstadosEvidencia = this.catalogoService.estadosEvidencia;
@@ -89,6 +94,22 @@ export class EjecucionPage implements OnInit {
         return this.listaEstadosEvidencia().find(e => e.nombre === 'NK')?.id_estado_evidencia;
     });
 
+    //Obtiene la ultima version ejecutada desde el historial
+    ultimaVersionEjecutada = computed(() => {
+      const historialActual = this.historial();
+        if (historialActual && historialActual.historial.length > 0) {
+            // Se ordenan las evidencias por fecha
+             const evidenciasOrdenadas = [...historialActual.historial].sort((a, b) => {
+                 const dateA = a.fecha_evidencia ? new Date(a.fecha_evidencia).getTime() : 0;
+                 const dateB = b.fecha_evidencia ? new Date(b.fecha_evidencia).getTime() : 0;
+                 return dateB - dateA;
+             });
+             const ultima = evidenciasOrdenadas[0];
+             return ultima.version_ejecucion;
+         }
+         return 'No hay ejecuciones previas';
+     });
+
     constructor() {
     effect(() => {
         const proyectoActual = this.proyectoService.proyectoSeleccionado();
@@ -105,10 +126,18 @@ export class EjecucionPage implements OnInit {
         
         const casoId = this.route.snapshot.paramMap.get('id');
         if (casoId) {
-           
+            
+            //Obtiene el caso por el id
             this.casoService.getCasoById(+casoId).subscribe(data => {
                 this.caso.set(data);
             });
+
+            //Obtiene el historial del caso 
+            this.casoService.getHistorialPorCasoId(+casoId).subscribe(data=>{
+                 this.historial.set(data);
+             });
+
+          
             this.nuevaEvidencia.id_caso = +casoId;
         }
         this.cargarEstadosModificacion();

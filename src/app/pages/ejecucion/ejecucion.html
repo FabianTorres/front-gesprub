@@ -110,7 +110,12 @@
             </div>
 
             <div>
-                <label for="version_ejecucion" class="block font-bold mb-2 text-xl">Versión Ejecución <span class="text-red-500">*</span></label>
+                <div class="flex items-baseline justify-between">
+                    <label for="version_ejecucion" class="block font-bold mb-2 text-xl">Versión Ejecución <span class="text-red-500">*</span></label>
+                    <span class="text-sm font-normal text-surface-500 dark:text-surface-400">
+                        Última ejecutada: <strong>{{ ultimaVersionEjecutada() }}</strong>
+                    </span>
+                </div>
                 <input type="text" pInputText id="version_ejecucion" 
                         [(ngModel)]="nuevaEvidencia.version_ejecucion" 
                         placeholder="Ingresar versión..." class="w-full"

@@ -15,6 +15,7 @@ import { TextareaModule } from 'primeng/textarea';
 import { InputSwitchModule } from 'primeng/inputswitch';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { AutoCompleteModule, AutoCompleteCompleteEvent } from 'primeng/autocomplete';
+import { ChipsModule } from 'primeng/chips';
 import { ToastModule } from 'primeng/toast';
 import { SelectModule } from 'primeng/select';
 import { InputNumberModule } from 'primeng/inputnumber';
@@ -35,6 +36,9 @@ import { Proyecto } from '../../models/proyecto';
 import { EstadoModificacion } from '../../models/estado-modificacion';
 import { EstadoModificacionService } from '../../services/estado-modificacion.service';
 import { CatalogoService } from '../../services/catalogo.service';
+import { Fuente } from '../../models/fuente'; 
+import { FuenteService } from '../../services/fuente.service';
+import { switchMap } from 'rxjs';
 
 
 // Se define una interfaz local para la estructura de los Hitos.
@@ -47,7 +51,7 @@ interface Hito {
     standalone: true,
     imports: [
         IconFieldModule, AutoCompleteModule,SplitButtonModule,  FieldsetModule, InputIconModule, TooltipModule, CommonModule, FormsModule, TableModule, ButtonModule, ToolbarModule, DialogModule,
-        RouterModule, TruncatePipe , TagModule, InputTextModule, TextareaModule, SelectModule, InputSwitchModule, ConfirmDialogModule, ToastModule, InputNumberModule, VersionFormatDirective
+        RouterModule, TruncatePipe , ChipsModule, TagModule, InputTextModule, TextareaModule, SelectModule, InputSwitchModule, ConfirmDialogModule, ToastModule, InputNumberModule, VersionFormatDirective
     ],
     providers: [MessageService, ConfirmationService, DatePipe],
     templateUrl: './casos.html'
@@ -81,13 +85,18 @@ export class CasosPage implements OnInit {
     // Señal para las opciones del filtro de versión
     opcionesFiltroVersion = signal<any[]>([]);
     // Propiedad para controlar el switch de la fuente
-    esFuenteExterna: boolean = false;
+    //esFuenteExterna: boolean = false;
 
     // Propiedad para los items del botón de exportar
     opcionesExportar: MenuItem[];
 
     private catalogoService = inject(CatalogoService);
     private estadosEvidencia = this.catalogoService.estadosEvidencia;
+
+    private fuenteService = inject(FuenteService); 
+    todasLasFuentes = signal<Fuente[]>([]);
+
+    sugerenciasFuentes = signal<Fuente[]>([]); 
 
 
     estadosModificacion = signal<EstadoModificacion[]>([]);
@@ -160,18 +169,6 @@ export class CasosPage implements OnInit {
                 this.componentes.set([]);
             }
         });
-        //Effect que permite mostrar el campo de formulario dependiendo del proyecto seleccionado
-        // effect(() => {
-        //     const proyectoActual = this.proyectoService.proyectoSeleccionado();
-        //     if (proyectoActual) {
-        //         // Se revisa si el nombre del proyecto está en la lista de configuración
-        //         const debeMostrar = environment.proyectosDeDDJJ.includes(proyectoActual.nombre_proyecto);
-        //         this.mostrarCampoFormulario.set(debeMostrar);
-        //     } else {
-        //         // Si no hay proyecto, no se muestra
-        //         this.mostrarCampoFormulario.set(false);
-        //     }
-        // });
 
         // Effect que extrae las versiones únicas de los casos cargados
         effect(() => {
@@ -223,19 +220,6 @@ export class CasosPage implements OnInit {
         ];
     }
 
-    // opcionesFiltroActivo: { label: string, value: number | null }[] = [
-    //     { label: 'Cualquiera', value: null }, // Para limpiar el filtro
-    //     { label: 'Activo', value: 1 },
-    //     { label: 'Inactivo', value: 0 }
-    // ];
-
-    // opcionesFiltroModificacion: { label: string, value: number | null }[] = [
-    //     { label: 'Cualquiera', value: null }, // Para limpiar el filtro
-    //     { label: 'Nuevo', value: 1 },
-    //     { label: 'Modificado', value: 2 },
-    //     { label: 'Sin cambios', value: 3 }
-    // ];
-
     
     opcionesFiltroEstado = computed(() => {
         // Permitimos que el valor sea number, string o null
@@ -257,6 +241,7 @@ export class CasosPage implements OnInit {
 
         this.cargarFormularios();
         this.cargarEstadosModificacion();
+        this.cargarTodasLasFuentes();
     }
 
     findEstadoEvidenciaNombre(id: number | undefined | string): string {
@@ -280,6 +265,26 @@ export class CasosPage implements OnInit {
         });
 
     
+    }
+
+    cargarTodasLasFuentes() {
+        this.fuenteService.getFuentes().subscribe(data => {
+            this.todasLasFuentes.set(data);
+        });
+    }
+
+    filtrarFuentes(event: AutoCompleteCompleteEvent) {
+        // 1. Normalizamos lo que el usuario escribe.
+        const queryNormalizada = this.normalizarTexto(event.query);
+
+        // 2. Filtramos la lista de fuentes...
+        const filtradas = this.todasLasFuentes().filter(fuente => {
+            // 3. ...normalizando también el nombre de cada fuente antes de comparar.
+            const nombreNormalizado = this.normalizarTexto(fuente.nombre_fuente);
+            return nombreNormalizado.includes(queryNormalizada);
+    });
+
+    this.sugerenciasFuentes.set(filtradas);
     }
 
     // Añade esta función para encontrar el nombre del estado por su ID
@@ -371,7 +376,7 @@ export class CasosPage implements OnInit {
         this.editando = false;
         this.activoDialog = true;
         this.hitoSeleccionado.set(componenteActual?.hito_componente || null);
-        this.esFuenteExterna = false;
+        //this.esFuenteExterna = false;
         this.detallesAvanzadosColapsados = true;
         this.casoDialog = true;
         
@@ -422,7 +427,7 @@ export class CasosPage implements OnInit {
         this.caso = { ...caso };
         this.editando = true;
         this.activoDialog = caso.activo === 1;
-        this.esFuenteExterna = !!caso.fuente; 
+        //this.esFuenteExterna = !!caso.fuente; 
         const hitoId = this.componentes().find(c => c.id_componente === caso.id_componente)?.hito_componente || null;
         this.hitoSeleccionado.set(hitoId); 
         
@@ -497,27 +502,52 @@ export class CasosPage implements OnInit {
             ? this.casoService.updateCaso(this.caso.id_caso!, this.caso as Caso)
             : this.casoService.createCaso(this.caso as Caso);
         
-        peticion.subscribe({
+        peticion.pipe(
+            // switchMap nos permite ejecutar una segunda operación después de que la primera tenga éxito.
+            // Recibimos el 'casoGuardado' de la primera operación.
+            switchMap(casoGuardado => {
+                
+                const idCaso = casoGuardado.id_caso!;
+                const fuentes = this.caso.fuentes || [];
+                console.log(this.caso.fuentes)
+                // Hacemos la segunda llamada para actualizar las fuentes.
+                return this.casoService.updateFuentesDeCaso(idCaso, fuentes);
+            })
+        ).subscribe({
             next: () => {
-                this.messageService.add({severity: 'success', summary: 'Éxito', detail: 'Caso de prueba guardado'});
+                // Este bloque se ejecuta solo si AMBAS operaciones (guardar caso y guardar fuentes) tienen éxito.
+                this.messageService.add({
+                    severity: 'success', 
+                    summary: 'Éxito', 
+                    detail: 'Caso de prueba guardado correctamente.'
+                });
+                
+                // Actualizamos la tabla
                 this.onComponenteSeleccionado(); 
+                this.cerrarDialogo();
             },
-            error: (err) => this.messageService.add({severity: 'error', summary: 'Error', detail: 'No se pudo guardar el caso'})
+            error: (err) => {
+                // Si cualquiera de las dos operaciones falla, se captura el error aquí.
+                
+                console.error('Error al guardar el caso o sus fuentes:', err, this.caso);
+                this.messageService.add({
+                    severity: 'error', 
+                    summary: 'Error', 
+                    detail: 'No se pudo guardar el caso'
+                });
+            }
         });
         
         this.cerrarDialogo();
     }
 
-    //Se ejecuta cuando el usuario cambia el switch
-    onTipoFuenteChange() {
-        if (this.esFuenteExterna) {
-            // Si cambia a Fuente, se limpia el campo de formulario
-            if (this.caso) this.caso.num_formulario = undefined;
-        } else {
-            // Si cambia a Formulario, se limpia el campo de fuente
-            if (this.caso) this.caso.fuente = undefined;
+    private normalizarTexto(texto: string): string {
+            if (!texto) return '';
+            return texto
+                .toLowerCase()
+                .normalize("NFD")
+                .replace(/[\u0300-\u036f]/g, "");
         }
-    }
     
     // Cierra el diálogo emergente.
     cerrarDialogo() {
@@ -549,6 +579,14 @@ export class CasosPage implements OnInit {
             default:
                 return 'secondary';
         }
+    }
+
+    getFuentesRestantesTooltip(fuentes: Fuente[], visibles: number = 1): string {
+        if (!fuentes || fuentes.length <= visibles) {
+            return '';
+        }
+        // Tomamos las fuentes restantes, extraemos sus nombres y las unimos con un salto de línea.
+        return fuentes.slice(visibles).map(f => f.nombre_fuente).join('\n');
     }
 
     // Aplica el filtro de texto global a la tabla.

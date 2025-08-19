@@ -3,6 +3,11 @@ Todos los cambios significativos en este proyecto se documentarán en este archi
 El formato se basa en [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 y este proyecto adhiere al [Versionado Semántico](https://semver.org/lang/es/).
 
+## [0.5.0] - 2025-08-19
+
+### Added
+-   Se agrego la capacidad de ingresar varias fuentes a cada caso
+
 ## [0.4.2] - 2025-08-19
 
 ### Changed

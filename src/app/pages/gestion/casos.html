@@ -86,10 +86,10 @@
                             <p-columnFilter type="text" field="caso.descripcion_caso" display="menu"></p-columnFilter>
                         </div>
                     </th>
-                    <th pSortableColumn="caso.num_formulario" style="width:15%">
+                    <th pSortableColumn="fuentes" style="width:15%">
                         <div class="flex justify-between items-center">
-                            Fuente
-                            <p-columnFilter type="text" field="caso.fuente" display="menu"></p-columnFilter>
+                            Fuentes
+                             <p-columnFilter type="text" field="fuentes.nombre_fuente" display="menu"></p-columnFilter>
                         </div>
                     </th>
                     <th pSortableColumn="caso.version" style="width:5%">
@@ -137,7 +137,18 @@
                     </td>
                    
                     <td class="text-center">
-                         {{ item.caso.fuente || item.caso.num_formulario }}
+                        <div class="flex flex-wrap gap-1 justify-center items-center">
+                            <p-tag *ngFor="let fuente of item.caso.fuentes?.slice(0, 1)" 
+                                [value]="fuente.nombre_fuente">
+                            </p-tag>
+
+                            <p-tag *ngIf="item.caso.fuentes && item.caso.fuentes.length > 1" 
+                                [value]="'+' + (item.caso.fuentes.length - 1) + ' más'"
+                                severity="secondary"
+                                [pTooltip]="getFuentesRestantesTooltip(item.caso.fuentes)"
+                                tooltipPosition="top">
+                            </p-tag>
+                        </div>
                     </td>
                     <td class="text-center">{{item.caso.version}}</td>
                     <td>
@@ -227,25 +238,18 @@
                 <textarea id="descripcion" pTextarea [(ngModel)]="caso.descripcion_caso" rows="3" [autoResize]="true" class="w-full"></textarea>
             </div>
             <div>
-                <div class="flex items-center my-4">
-                    <p-inputSwitch [(ngModel)]="esFuenteExterna" (onChange)="onTipoFuenteChange()"></p-inputSwitch>
-                    <label class="ml-2 font-semibold">Usar otra fuente (ej: Nómina)</label>
-                </div>
-                <div *ngIf="!esFuenteExterna">
-                        <label for="num_formulario" class="block font-bold mb-2">Formulario</label>
-                        <p-autocomplete [(ngModel)]="caso.num_formulario"
-                                        [suggestions]="sugerenciasFormulario()"
-                                        (completeMethod)="filtrarFormulario($event)"
-                                        placeholder="Buscar o ingresar formulario..."
-                                        emptyMessage="No se encontró el formulario."
-                                        styleClass="w-full"
-                                        maxlength="4">
-                        </p-autocomplete>
-                </div>
-                <div *ngIf="esFuenteExterna">
-                    <label for="fuente" class="block font-bold mb-2">Fuente</label>
-                    <input type="text" pInputText id="fuente" [(ngModel)]="caso.fuente" class="w-full"
-                            placeholder="Ingresar fuente..." />
+                <div class="field">
+                    <label for="fuentes" class="block font-bold mb-2">Fuentes de Información</label>
+                    <p-autoComplete id="fuentes"
+                                    [(ngModel)]="caso.fuentes"
+                                    [suggestions]="sugerenciasFuentes()"
+                                    (completeMethod)="filtrarFuentes($event)"
+                                    field="nombre_fuente"
+                                    [multiple]="true"
+                                    placeholder="Buscar fuentes existentes..."
+                                    styleClass="w-full"
+                                    emptyMessage="No se encontró la fuente ingresada.">
+                    </p-autoComplete>
                 </div>
             </div>
 

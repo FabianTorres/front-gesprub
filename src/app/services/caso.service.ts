@@ -8,6 +8,7 @@ import { Caso } from '../models/caso';
 import { CasoConEvidencia } from '../models/casoevidencia';
 import { Evidencia } from '../models/evidencia';
 import { HistorialCaso } from '../models/historial-caso';
+import { Fuente } from '../models/fuente';
 
 @Injectable({ providedIn: 'root' })
 export class CasoService {
@@ -47,5 +48,17 @@ export class CasoService {
 
     getFormularios(): Observable<number[]> {
         return this.http.get<number[]>(`${this.apiUrl}/formularios`);
+    }
+
+
+    updateFuentesDeCaso(idCaso: number, fuentes: Fuente[]): Observable<any> {
+        const url = `${this.apiUrl}/${idCaso}/fuentes`;
+        
+        // ===== CAMBIO CLAVE =====
+        // Transformamos el array de objetos Fuente en un array de solo los IDs.
+        const idsFuente = fuentes.map(fuente => fuente.id_fuente);
+        
+        // Enviamos el array de IDs en el cuerpo de la petición PUT.
+        return this.http.put(url, idsFuente);
     }
 }

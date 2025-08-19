@@ -16,7 +16,7 @@
 
                     </h2>
                     <p class="text-muted-color m-0 " >{{ c.descripcion_caso }}</p>
-                    <p *ngIf="mostrarCampoFormulario()" class="text-muted-color m-0 mt-1">Formulario: <strong>{{ c.num_formulario }}</strong></p>
+                    <p class="text-muted-color m-0 mt-1">Formulario: <strong>{{ c.num_formulario }}</strong></p>
                 </div>
         </div>
         <button pButton 
@@ -55,6 +55,15 @@
 
                 <ng-template pTemplate="title">
                 <div class="flex items-center gap-2" [ngClass]="{ 'justify-end': evento.posicion === 'left' }">
+                    
+                    <button pButton type="button" icon="pi pi-send"
+                            class="p-button-rounded p-button-text p-button-secondary"
+                            (click)="abrirDialogoMover(evento)"
+                            pTooltip="Mover evidencia a otro caso" tooltipPosition="top">
+                    </button>
+
+                    <!-- <div class="flex-grow"></div> -->
+
                     <p-tag [value]="findEstadoEvidenciaNombre(evento.id_estado_evidencia)" [severity]="getSeverityForEstado(findEstadoEvidenciaNombre(evento.id_estado_evidencia))"></p-tag>
                     <p-tag *ngIf="evento.id_criticidad" [value]="findCriticidadNombre(evento.id_criticidad)" 
                            [severity]="getSeverityForCriticidad(findCriticidadNombre(evento.id_criticidad))"  styleClass="font-bold"></p-tag>
@@ -75,29 +84,33 @@
                        
                         <span *ngIf="evento.rut" class="font-normal"> <i class="pi pi-id-card"></i> RUT: <strong>{{ evento.rut }}</strong></span>
                     </div>
+
+                    
                         
                 </div>
                 </ng-template>
 
                 <div [ngClass]="{ 'text-right': evento.posicion === 'left' }">
-                <p>{{ evento.descripcion_evidencia }}</p>
-                
-                <div class="mt-4 flex flex-col gap-2" 
-                    [ngClass]="{ 'items-end': evento.posicion === 'left' }" 
-                    *ngIf="(evento.archivos && evento.archivos.length > 0) || evento.id_jira">
+                    <p>{{ evento.descripcion_evidencia }}</p>
                     
-                    <div *ngIf="evento.archivos && evento.archivos.length > 0" class="font-semibold text-sm mb-1"></div>
-                    <a *ngFor="let archivo of evento.archivos" 
-                        [href]="'http://localhost:8090' + archivo.url_archivo" target="_blank" 
-                        class="text-primary hover:underline text-sm flex items-center gap-2"
-                        [ngClass]="{ 'flex-row-reverse': evento.posicion === 'left' }">
-                            <i class="pi pi-paperclip"></i>
-                            <span>{{ archivo.nombre_archivo }}</span>
+                    <div class="mt-4 flex flex-col gap-2" 
+                        [ngClass]="{ 'items-end': evento.posicion === 'left' }" 
+                        *ngIf="(evento.archivos && evento.archivos.length > 0) || evento.id_jira">
+                        
+                        <div *ngIf="evento.archivos && evento.archivos.length > 0" class="font-semibold text-sm mb-1"></div>
+                        <a *ngFor="let archivo of evento.archivos" 
+                            [href]="'http://localhost:8090' + archivo.url_archivo" target="_blank" 
+                            class="text-primary hover:underline text-sm flex items-center gap-2"
+                            [ngClass]="{ 'flex-row-reverse': evento.posicion === 'left' }">
+                                <i class="pi pi-paperclip"></i>
+                                <span>{{ archivo.nombre_archivo }}</span>
+                            </a>
+                        <a *ngIf="evento.id_jira" href="#" class="text-primary hover:underline">
+                        <i class="pi pi-ticket mr-2"></i>Ver Incidencia en Jira: {{ evento.id_jira }}
+                        
                         </a>
-                    <a *ngIf="evento.id_jira" href="#" class="text-primary hover:underline">
-                    <i class="pi pi-ticket mr-2"></i>Ver Incidencia en Jira: {{ evento.id_jira }}
-                    </a>
-                </div>
+                        
+                    </div>
                 </div>
                 
             </p-card>
@@ -110,3 +123,62 @@
         Este caso de prueba aún no tiene ejecuciones registradas.
     </div>
 </div>
+
+<p-dialog [(visible)]="moverDialog" 
+          [style]="{width: '600px', height: '550px'}" 
+          header="Mover evidencia a otro caso existente" 
+          [modal]="true" class="p-fluid">
+    <ng-template pTemplate="content">
+        <div class="flex flex-col gap-4">
+            
+            <div class="field">
+                <label for="hitoDestino" class="block font-bold mb-2">Seleccione el Hito</label>
+                <p-select id="hitoDestino"
+                          [options]="hitos()"
+                          [(ngModel)]="hitoSeleccionadoId"
+                          (onChange)="onHitoChange()"
+                          optionLabel="nombre"
+                          optionValue="id"
+                          placeholder="Seleccionar Hito"
+                          styleClass="w-full">
+                </p-select>
+            </div>
+
+            <div class="field">
+                <label for="componenteDestino" class="block font-bold mb-2">Seleccione el Componente</label>
+                <p-select id="componenteDestino"
+                          [options]="componentesFiltrados()"
+                          [(ngModel)]="componenteSeleccionadoId"
+                          (onChange)="onComponenteChange()"
+                          optionLabel="nombre_componente"
+                          optionValue="id_componente"
+                          placeholder="Seleccionar Componente"
+                          [disabled]="!hitoSeleccionadoId"
+                          styleClass="w-full">
+                </p-select>
+            </div>
+
+            <div class="field">
+                <label for="casoDestino" class="block font-bold mb-2">Seleccione el Caso de Prueba de Destino</label>
+                <p-select id="casoDestino"
+                          [options]="casos()"
+                          [(ngModel)]="casoDestinoId"
+                          optionLabel="nombre_caso"
+                          optionValue="id_caso"
+                          placeholder="Seleccionar Caso"
+                          [disabled]="!componenteSeleccionadoId"
+                          styleClass="w-full">
+                </p-select>
+            </div>
+        </div>
+    </ng-template>
+
+    <ng-template pTemplate="footer">
+        <button pButton pRipple label="Cancelar" icon="pi pi-times" class="p-button-text" (click)="cerrarDialogoMover()"></button>
+        <button pButton pRipple label="Mover Evidencia" icon="pi pi-check" 
+                [disabled]="!casoDestinoId"
+                (click)="confirmarMovimiento()"></button>
+    </ng-template>
+</p-dialog>
+
+<p-confirmDialog [style]="{width: '450px'}"></p-confirmDialog>

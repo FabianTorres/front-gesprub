@@ -160,18 +160,18 @@ export class CasosPage implements OnInit {
                 this.componentes.set([]);
             }
         });
-
-        effect(() => {
-            const proyectoActual = this.proyectoService.proyectoSeleccionado();
-            if (proyectoActual) {
-                // Se revisa si el nombre del proyecto está en la lista de configuración
-                const debeMostrar = environment.proyectosDeDDJJ.includes(proyectoActual.nombre_proyecto);
-                this.mostrarCampoFormulario.set(debeMostrar);
-            } else {
-                // Si no hay proyecto, no se muestra
-                this.mostrarCampoFormulario.set(false);
-            }
-        });
+        //Effect que permite mostrar el campo de formulario dependiendo del proyecto seleccionado
+        // effect(() => {
+        //     const proyectoActual = this.proyectoService.proyectoSeleccionado();
+        //     if (proyectoActual) {
+        //         // Se revisa si el nombre del proyecto está en la lista de configuración
+        //         const debeMostrar = environment.proyectosDeDDJJ.includes(proyectoActual.nombre_proyecto);
+        //         this.mostrarCampoFormulario.set(debeMostrar);
+        //     } else {
+        //         // Si no hay proyecto, no se muestra
+        //         this.mostrarCampoFormulario.set(false);
+        //     }
+        // });
 
         // Effect que extrae las versiones únicas de los casos cargados
         effect(() => {

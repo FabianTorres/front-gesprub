@@ -111,15 +111,15 @@ export class EjecucionPage implements OnInit {
      });
 
     constructor() {
-    effect(() => {
-        const proyectoActual = this.proyectoService.proyectoSeleccionado();
-        if (proyectoActual) {
-            const debeMostrar = environment.proyectosDeDDJJ.includes(proyectoActual.nombre_proyecto);
-            this.mostrarCampoFormulario.set(debeMostrar);
-        } else {
-            this.mostrarCampoFormulario.set(false);
-        }
-    });
+        // effect(() => {
+        //     const proyectoActual = this.proyectoService.proyectoSeleccionado();
+        //     if (proyectoActual) {
+        //         const debeMostrar = environment.proyectosDeDDJJ.includes(proyectoActual.nombre_proyecto);
+        //         this.mostrarCampoFormulario.set(debeMostrar);
+        //     } else {
+        //         this.mostrarCampoFormulario.set(false);
+        //     }
+        // });
 }
 
     ngOnInit() {

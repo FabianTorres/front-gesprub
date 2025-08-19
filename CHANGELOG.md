@@ -3,11 +3,19 @@ Todos los cambios significativos en este proyecto se documentarán en este archi
 El formato se basa en [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 y este proyecto adhiere al [Versionado Semántico](https://semver.org/lang/es/).
 
+## [0.4.2] - 2025-08-19
+
+### Changed
+-   Se cambió el formulario. Ahora se muestra en todos los proyectos.
+
 ## [0.4.1] - 2025-08-18
 
 ### Added
--   Se agregó un campo para compontente: ámbito.
+-   Se agregó un campo para componente: ámbito.
 -   Se agregó a la configuracion el campo ámbito.
+-   Se añadió la visualización de la ultima versión del caso que se esta ejecutando
+### Changed
+-   Se modificó la tarjeta de evidencias en el historial. Ahora se puede cambiar una evidencia a otro caso.
 
 ## [0.4.0] - 2025-08-14
 

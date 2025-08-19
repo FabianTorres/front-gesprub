@@ -28,4 +28,10 @@ export class EvidenciaService {
     getArchivosPorEvidencia(idEvidencia: number): Observable<ArchivoEvidencia[]> {
         return this.http.get<ArchivoEvidencia[]>(`${this.apiUrl}/${idEvidencia}/archivos`);
     }
+
+    moverEvidencia(idEvidencia: number, nuevoIdCaso: number): Observable<any> {
+        const url = `${this.apiUrl}/${idEvidencia}/mover`;
+        const body = { nuevoIdCaso };
+        return this.http.patch(url, body);
+    }
 }

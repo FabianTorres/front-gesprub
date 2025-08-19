@@ -86,7 +86,7 @@
                             <p-columnFilter type="text" field="caso.descripcion_caso" display="menu"></p-columnFilter>
                         </div>
                     </th>
-                    <th *ngIf="mostrarCampoFormulario()" pSortableColumn="caso.num_formulario" style="width:15%">
+                    <th pSortableColumn="caso.num_formulario" style="width:15%">
                         <div class="flex justify-between items-center">
                             Fuente
                             <p-columnFilter type="text" field="caso.fuente" display="menu"></p-columnFilter>
@@ -136,7 +136,7 @@
                         {{item.caso.descripcion_caso | truncate:60}}
                     </td>
                    
-                    <td *ngIf="mostrarCampoFormulario()" class="text-center">
+                    <td class="text-center">
                          {{ item.caso.fuente || item.caso.num_formulario }}
                     </td>
                     <td class="text-center">{{item.caso.version}}</td>
@@ -226,7 +226,7 @@
                 <label for="descripcion" class="block font-bold mb-2">Descripción</label>
                 <textarea id="descripcion" pTextarea [(ngModel)]="caso.descripcion_caso" rows="3" [autoResize]="true" class="w-full"></textarea>
             </div>
-            <div *ngIf="mostrarCampoFormulario()">
+            <div>
                 <div class="flex items-center my-4">
                     <p-inputSwitch [(ngModel)]="esFuenteExterna" (onChange)="onTipoFuenteChange()"></p-inputSwitch>
                     <label class="ml-2 font-semibold">Usar otra fuente (ej: Nómina)</label>

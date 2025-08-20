@@ -7,6 +7,7 @@ y este proyecto adhiere al [Versionado Semántico](https://semver.org/lang/es/).
 
 ### Added
 -   Ahora se puede desactivar una ejecución en el Historial.
+-   Se agrega CRUD de fuentes de informacion.
 
 ### Changed
 -   Se mejoró la información de las fuentes en el Historial y en Ejecucion.

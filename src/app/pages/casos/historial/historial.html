@@ -40,14 +40,16 @@
         <ng-template pTemplate="marker" let-evento>
             <span class="flex w-8 h-8 items-center justify-center text-white rounded-full z-10 shadow-sm"
                   [ngClass]="{
-                            'bg-green-500': findEstadoEvidenciaNombre(evento.id_estado_evidencia) === 'OK',
-                            'bg-red-500': findEstadoEvidenciaNombre(evento.id_estado_evidencia) === 'NK',
-                            'bg-gray-500': findEstadoEvidenciaNombre(evento.id_estado_evidencia) === 'N/A'
+                            'bg-neutral-300': evento.activo === 0,
+                            'bg-green-500': evento.activo !== 0 && findEstadoEvidenciaNombre(evento.id_estado_evidencia) === 'OK',
+                            'bg-red-500': evento.activo !== 0 && findEstadoEvidenciaNombre(evento.id_estado_evidencia) === 'NK',
+                            'bg-gray-500': evento.activo !== 0 && findEstadoEvidenciaNombre(evento.id_estado_evidencia) === 'N/A'
                   }">
                 <i class="pi" [ngClass]="{
-                    'pi-check': findEstadoEvidenciaNombre(evento.id_estado_evidencia) === 'OK',
-                    'pi-times': findEstadoEvidenciaNombre(evento.id_estado_evidencia) === 'NK',
-                    'pi-stop': findEstadoEvidenciaNombre(evento.id_estado_evidencia) === 'N/A'
+                    'pi-ban': evento.activo === 0,
+                    'pi-check': evento.activo !== 0 && findEstadoEvidenciaNombre(evento.id_estado_evidencia) === 'OK',
+                    'pi-times': evento.activo !== 0 && findEstadoEvidenciaNombre(evento.id_estado_evidencia) === 'NK',
+                    'pi-stop': evento.activo !== 0 && findEstadoEvidenciaNombre(evento.id_estado_evidencia) === 'N/A'
                 }"></i>
             </span>
         </ng-template>

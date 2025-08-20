@@ -96,19 +96,25 @@ export class EjecucionPage implements OnInit {
 
     //Obtiene la ultima version ejecutada desde el historial
     ultimaVersionEjecutada = computed(() => {
-      const historialActual = this.historial();
+        const historialActual = this.historial();
         if (historialActual && historialActual.historial.length > 0) {
-            // Se ordenan las evidencias por fecha
-             const evidenciasOrdenadas = [...historialActual.historial].sort((a, b) => {
-                 const dateA = a.fecha_evidencia ? new Date(a.fecha_evidencia).getTime() : 0;
-                 const dateB = b.fecha_evidencia ? new Date(b.fecha_evidencia).getTime() : 0;
-                 return dateB - dateA;
-             });
-             const ultima = evidenciasOrdenadas[0];
-             return ultima.version_ejecucion;
-         }
-         return 'No hay ejecuciones previas';
-     });
+            
+            // 1. Filtramos para quedarnos solo con las evidencias ACTIVAS.
+            const evidenciasActivas = historialActual.historial.filter(e => e.activo !== 0);
+
+            if (evidenciasActivas.length > 0) {
+                // 2. Ordenamos las activas por fecha para encontrar la más reciente.
+                const evidenciasOrdenadas = [...evidenciasActivas].sort((a, b) => {
+                    const dateA = a.fecha_evidencia ? new Date(a.fecha_evidencia).getTime() : 0;
+                    const dateB = b.fecha_evidencia ? new Date(b.fecha_evidencia).getTime() : 0;
+                    return dateB - dateA;
+                });
+                const ultimaActiva = evidenciasOrdenadas[0];
+                return ultimaActiva.version_ejecucion;
+            }
+        }
+        return 'No hay ejecuciones previas'; // Se muestra si no hay historial o ninguna está activa.
+    });
 
     constructor() {
 

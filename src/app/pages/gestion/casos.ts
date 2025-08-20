@@ -494,21 +494,17 @@ export class CasosPage implements OnInit {
             return; // Detenemos el guardado
         }
 
-        
+        // Reemplaza el bloque antiguo por este:
+        if (!this.caso.fuentes || this.caso.fuentes.length === 0) {
+            this.messageService.add({
+                severity: 'warn', 
+                summary: 'Atención', 
+                detail: 'Debe seleccionar al menos una fuente de información.'
+            });
+            return; // Detenemos el guardado
+        }
 
-        const proyectoActual = this.proyectoService.proyectoSeleccionado();
-        const debeMostrar = null;
-            if (proyectoActual) {
-                // Se revisa si el nombre del proyecto está en la lista de configuración
-                const debeMostrar = environment.proyectosDeDDJJ.includes(proyectoActual.nombre_proyecto);
-                    if (!this.caso.num_formulario && !this.caso.fuente && debeMostrar) {
-                        this.messageService.add({severity: 'warn', summary: 'Atención', detail: 'Debe seleccionar alguna fuente de información.'});
-                        return;
-                    }
-            } else {
-                // Si no hay proyecto, no se muestra
-                
-            }
+        
 
         
 

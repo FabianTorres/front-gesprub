@@ -22,7 +22,9 @@
                     <i class="pi text-xl" [ngClass]="{'pi-check-circle text-green-500': item.activo === 1, 'pi-ban text-red-500': item.activo !== 1}" [pTooltip]="item.activo === 1 ? 'Activo' : 'Inactivo'" tooltipPosition="top"></i>
                 </td>
                 <td>
-                    <button pButton pRipple icon="pi pi-pencil" class="p-button-rounded mr-2" pTooltip="Editar" tooltipPosition="top" (click)="abrirDialogoEditar(item)"></button>
+                    <button pButton pRipple icon="pi pi-pencil" class="p-button-rounded mr-2" 
+                            pTooltip="Editar" tooltipPosition="top" 
+                            (click)="abrirDialogoEditar(item)"></button>
                 </td>
             </tr>
         </ng-template>

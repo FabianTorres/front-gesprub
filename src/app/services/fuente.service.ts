@@ -19,4 +19,19 @@ export class FuenteService {
   getFuentes(): Observable<Fuente[]> {
     return this.http.get<Fuente[]>(this.apiUrl);
   }
+
+  // POST: Crea una nueva fuente
+  createFuente(fuente: Partial<Fuente>): Observable<Fuente> {
+    return this.http.post<Fuente>(this.apiUrl, fuente);
+  }
+
+  // PUT: Actualiza una fuente existente
+  updateFuente(id: number, fuente: Partial<Fuente>): Observable<Fuente> {
+    return this.http.put<Fuente>(`${this.apiUrl}/${id}`, fuente);
+  }
+  
+  // PATCH: Para activar/desactivar (asumiendo este endpoint)
+  updateActivo(id: number, activo: number): Observable<any> {
+    return this.http.patch(`${this.apiUrl}/${id}/activo`, { activo });
+  }
 }

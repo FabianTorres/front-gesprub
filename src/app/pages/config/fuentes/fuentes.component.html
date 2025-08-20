@@ -1,0 +1,77 @@
+<p-toast></p-toast>
+<div class="card">
+    <h2 class="text-2xl font-semibold mb-4">Gestión de Fuentes</h2>
+    <p-toolbar styleClass="mb-4">
+        <ng-template pTemplate="left">
+            <button pButton pRipple label="Nueva Fuente" icon="pi pi-plus" (click)="abrirDialogoNuevo()"></button>
+        </ng-template>
+    </p-toolbar>
+
+    <p-table #dt
+        [value]="fuentes()"
+        [rows]="10"
+        [paginator]="true"
+        [loading]="loading()"
+        [globalFilterFields]="['nombre_fuente']"
+        dataKey="id_fuente"
+        styleClass="p-datatable-gridlines">
+        
+        <ng-template pTemplate="caption">
+            <div class="flex justify-end">
+                <p-iconfield iconPosition="left">
+                    <p-inputicon><i class="pi pi-search"></i></p-inputicon>
+                    <input pInputText type="text" (input)="dt.filterGlobal($any($event.target).value, 'contains')" placeholder="Buscar fuente..." />
+                </p-iconfield>
+            </div>
+        </ng-template>
+        
+        <ng-template pTemplate="header">
+            <tr>
+                <th pSortableColumn="nombre_fuente">Nombre de la Fuente <p-sortIcon field="nombre_fuente"></p-sortIcon></th>
+                <th pSortableColumn="activo" style="width:10%" class="text-center">Activo <p-sortIcon field="activo"></p-sortIcon></th>
+                <th style="width:15%">Acciones</th>
+            </tr>
+        </ng-template>
+        <ng-template pTemplate="body" let-item>
+            <tr>
+                <td>{{ item.nombre_fuente }}</td>
+                <td class="text-center">
+                    <i class="pi text-xl" 
+                       [ngClass]="{'pi-check-circle text-green-500': item.activo === 1, 'pi-ban text-red-500': item.activo !== 1}"
+                       [pTooltip]="item.activo === 1 ? 'Activo' : 'Inactivo'"
+                       tooltipPosition="top"></i>
+                </td>
+                <td>
+                    <button pButton pRipple icon="pi pi-pencil" class="p-button-rounded mr-2" 
+                            pTooltip="Editar" tooltipPosition="top"
+                            (click)="abrirDialogoEditar(item)"></button>
+                </td>
+            </tr>
+        </ng-template>
+        <ng-template pTemplate="emptymessage">
+            <tr>
+                <td colspan="3" class="text-center">No se encontraron fuentes.</td>
+            </tr>
+        </ng-template>
+    </p-table>
+</div>
+
+<p-dialog [(visible)]="fuenteDialog" 
+          [style]="{width: '500px'}" 
+          [header]="editando ? 'Editar Fuente' : 'Nueva Fuente'" 
+          [modal]="true" class="p-fluid">
+    <ng-template pTemplate="content">
+        <div class="field">
+            <label for="nombre" class="block font-bold mb-2">Nombre</label>
+            <input pInputText id="nombre" type="text" [(ngModel)]="fuente.nombre_fuente" required class="w-full" />
+        </div>
+        <div class="field flex items-center mt-4">
+            <p-inputSwitch [(ngModel)]="activoDialog"></p-inputSwitch>
+            <label class="ml-2">Activo</label>
+        </div>
+    </ng-template>
+    <ng-template pTemplate="footer">
+        <button pButton pRipple label="Cancelar" icon="pi pi-times" class="p-button-text" (click)="cerrarDialogo()"></button>
+        <button pButton pRipple label="Guardar" icon="pi pi-check" (click)="guardarFuente()"></button>
+    </ng-template>
+</p-dialog>

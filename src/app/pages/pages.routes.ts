@@ -45,6 +45,10 @@ export default [
         path: 'config/ambitos',
         loadComponent: () => import('./config/ambito/ambitos.component').then(m => m.AmbitosComponent),
     },
+    {
+        path: 'config/fuentes',
+        loadComponent: () => import('./config/fuentes/fuentes.component').then(m => m.FuentesComponent),
+    },
 
 
     { path: '**', redirectTo: '/notfound' }

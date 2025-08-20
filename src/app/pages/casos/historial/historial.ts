@@ -309,7 +309,7 @@ export class HistorialPage implements OnInit {
             this.messageService.add({ 
                 severity: 'info', 
                 summary: 'Información', 
-                detail: 'Esta evidencia ya está anulada y la acción no se puede revertir.' 
+                detail: 'Esta evidencia ya está desactivada y la acción no se puede revertir.' 
             });
             return; 
         }
@@ -321,34 +321,58 @@ export class HistorialPage implements OnInit {
             acceptLabel: `Sí, ${accion}`,
             rejectLabel: 'Cancelar',
             accept: () => {
-                this.evidenciaService.updateEstadoActivo(evidencia.id_evidencia!, nuevoEstado).subscribe({
-                    next: () => {
-                        // Actualizamos el estado localmente para no recargar la página
-                        this.datosHistorial.update(historialActual => {
-                            if (historialActual) {
-                                const index = historialActual.historial.findIndex(e => e.id_evidencia === evidencia.id_evidencia);
-                                if (index !== -1) {
-                                    historialActual.historial[index].activo = nuevoEstado;
-                                }
-                            }
-                            return historialActual ? { ...historialActual } : null;
-                        });
+                const idEvidencia = evidencia.id_evidencia!;
+                const idCaso = this.datosHistorial()!.id_caso;
 
-                        this.messageService.add({ 
-                            severity: 'success', 
-                            summary: 'Éxito', 
-                            detail: 'El estado de la ejecución ha sido actualizado.' 
-                        });
-                    },
-                    error: (err) => {
-                        this.messageService.add({ 
-                            severity: 'error', 
-                            summary: 'Error', 
-                            detail: `No se pudo ${accion} la ejecución.`
-                        });
-                        console.error(`${accionGerundio} ejecución falló`, err);
-                    }
-                });
+                
+                    this.evidenciaService.updateEstadoActivo(idEvidencia, 0).pipe(
+                        // 1. Después de anular, pedimos el historial actualizado del caso.
+                        switchMap(() => {
+                            return this.casoService.getHistorialPorCasoId(idCaso);
+                        }),
+                        // 2. Con el historial actualizado, calculamos la nueva versión y la guardamos.
+                        switchMap(historialActualizado => {
+                            let nuevaVersion = '1.0'; // Versión por defecto si no quedan evidencias activas.
+
+                            // Filtramos solo las evidencias activas
+                            const evidenciasActivas = historialActualizado.historial?.filter(e => e.activo !== 0) || [];
+
+                            if (evidenciasActivas.length > 0) {
+                                // Asumimos que el historial viene ordenado del más nuevo al más viejo
+                                nuevaVersion = evidenciasActivas[0].version_ejecucion;
+                            }
+                            
+                            // Actualizamos la versión del caso principal en la base de datos
+                            return this.casoService.updateCasoVersion(idCaso, nuevaVersion);
+                        })
+                    ).subscribe({
+                        next: () => {
+                            // Actualizamos el estado localmente para que se refleje en la vista
+                            this.datosHistorial.update(historialActual => {
+                                if (historialActual) {
+                                    const index = historialActual.historial.findIndex(e => e.id_evidencia === idEvidencia);
+                                    if (index !== -1) {
+                                        historialActual.historial[index].activo = 0;
+                                    }
+                                }
+                                return historialActual ? { ...historialActual } : null;
+                            });
+
+                            this.messageService.add({ 
+                                severity: 'success', 
+                                summary: 'Éxito', 
+                                detail: 'La ejecución ha sido desactivada.' 
+                            });
+                        },
+                        error: (err) => {
+                            this.messageService.add({ 
+                                severity: 'error', 
+                                summary: 'Error', 
+                                detail: `No se pudo desactivar la ejecución.`
+                            });
+                            console.error(`Anulando ejecución falló`, err);
+                        }
+                    });
             }
         });
     }

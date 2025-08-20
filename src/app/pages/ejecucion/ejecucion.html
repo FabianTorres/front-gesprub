@@ -31,9 +31,11 @@
                     <p class="mt-1 m-0 text-surface-900 dark:text-surface-0">{{ c.descripcion_caso }}</p>
                 </div>
 
-                <div>
-                    <span class="font-semibold block text-surface-600 dark:text-surface-300 text-2xl">Formulario</span>
-                    <p class="mt-1 m-0 text-surface-900 dark:text-surface-0">{{ c.num_formulario }}</p>
+                <div *ngIf="c.fuentes && c.fuentes.length > 0">
+                    <span class="font-semibold block text-surface-600 dark:text-surface-300 text-2xl">Fuentes</span>
+                    <div class="flex flex-wrap gap-1 mt-2">
+                        <p-tag *ngFor="let fuente of c.fuentes" [value]="fuente.nombre_fuente"></p-tag>
+                    </div>
                 </div>
 
                 <div>

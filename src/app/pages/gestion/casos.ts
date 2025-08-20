@@ -326,12 +326,16 @@ export class CasosPage implements OnInit {
                     const casosEnriquecidos = data.map(item => {
                     // Se busca el nombre del estado usando la función que ya tenemos.
                     const nombreEstado = this.findEstadoModificacionNombre(item.caso.id_estado_modificacion);
-                    
+                    // Se unen los nombres de las fuentes en un solo string, separados por un espacio.
+                    const nombresFuentes = item.caso.fuentes?.map(f => f.nombre_fuente).join(' ') || '';
+
+
                     // Se crea una nueva versión del objeto 'caso' que incluye el nombre.
                     const casoActualizado = { 
                         ...item.caso, 
                         nombre_estado_modificacion: nombreEstado,
-                        version: item.caso.version || ''
+                        version: item.caso.version || '',
+                        fuentes_nombres: nombresFuentes 
                     };
 
                     const ultimoEstadoId = item.ultimaEvidencia?.id_estado_evidencia ?? 'SIN_EJECUTAR';

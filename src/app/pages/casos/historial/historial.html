@@ -16,7 +16,12 @@
 
                     </h2>
                     <p class="text-muted-color m-0 " >{{ c.descripcion_caso }}</p>
-                    <p class="text-muted-color m-0 mt-1">Formulario: <strong>{{ c.num_formulario }}</strong></p>
+                    <div class="mt-1" *ngIf="c.fuentes && c.fuentes.length > 0">
+                        <p class="text-muted-color m-0">Fuentes:</p>
+                        <div class="flex flex-wrap gap-1 mt-1">
+                            <p-tag *ngFor="let fuente of c.fuentes" [value]="fuente.nombre_fuente"></p-tag>
+                        </div>
+                    </div>
                 </div>
         </div>
         <button pButton 

@@ -48,7 +48,7 @@
                      [rows]="10" [paginator]="true" 
                      responsiveLayout="scroll" 
                      dataKey="caso.id_caso"
-                     [globalFilterFields]="['caso.nombre_estado_modificacion','caso.nombre_caso', 'caso.descripcion_caso', 'caso.version', 'caso.num_formulario','caso.fuente']"
+                     [globalFilterFields]="['caso.nombre_estado_modificacion','caso.nombre_caso', 'caso.descripcion_caso', 'caso.version', 'caso.num_formulario','caso.fuentes_nombres']"
                      [loading]="cargandoCasos()" class="p-datatable-gridlines">
             
             <ng-template pTemplate="caption">
@@ -138,11 +138,13 @@
                    
                     <td class="text-center">
                         <div class="flex flex-wrap gap-1 justify-center items-center">
-                            <p-tag *ngFor="let fuente of item.caso.fuentes?.slice(0, 1)" 
-                                [value]="fuente.nombre_fuente">
+                            <p-tag *ngFor="let fuente of item.caso.fuentes?.slice(0, 1)"
+                                [pTooltip]="fuente.nombre_fuente"
+                                tooltipPosition="top"
+                                [tooltipDisabled]="fuente.nombre_fuente.length <= 5"
+                                [value]="fuente.nombre_fuente | truncate:5">
                             </p-tag>
-
-                            <p-tag *ngIf="item.caso.fuentes && item.caso.fuentes.length > 1" 
+                            <p-tag *ngIf="item.caso.fuentes && item.caso.fuentes.length > 1"
                                 [value]="'+' + (item.caso.fuentes.length - 1) + ' más'"
                                 severity="secondary"
                                 [pTooltip]="getFuentesRestantesTooltip(item.caso.fuentes)"

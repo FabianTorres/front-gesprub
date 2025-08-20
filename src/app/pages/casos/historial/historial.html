@@ -19,7 +19,7 @@
                     <div class="mt-1" *ngIf="c.fuentes && c.fuentes.length > 0">
                         <p class="text-muted-color m-0">Fuentes:</p>
                         <div class="flex flex-wrap gap-1 mt-1">
-                            <p-tag *ngFor="let fuente of c.fuentes" [value]="fuente.nombre_fuente"></p-tag>
+                            <p-tag *ngFor="let fuente of c.fuentes | sortFuentes" [value]="fuente.nombre_fuente"></p-tag>
                         </div>
                     </div>
                 </div>
@@ -56,23 +56,45 @@
         <ng-template pTemplate="content" let-evento>
 
             
-           <p-card [ngClass]="{ 'timeline-card-left': evento.posicion === 'left' }">
+           <p-card [ngClass]="{ 
+                                'timeline-card-left': evento.posicion === 'left',
+                                'opacity-50 grayscale': evento.activo === 0 
+
+                              }">
 
                 <ng-template pTemplate="title">
-                <div class="flex items-center gap-2" [ngClass]="{ 'justify-end': evento.posicion === 'left' }">
-                    
-                    <button pButton type="button" icon="pi pi-send"
-                            class="p-button-rounded p-button-text p-button-secondary"
-                            (click)="abrirDialogoMover(evento)"
-                            pTooltip="Mover evidencia a otro caso" tooltipPosition="top">
-                    </button>
+                    <div class="flex items-center gap-2" [ngClass]="{ 'justify-end': evento.posicion === 'left' }">
+                        <p-tag *ngIf="evento.activo === 0" 
+                            value="Desactivado" 
+                            severity="secondary" 
+                            icon="pi pi-ban">
+                        </p-tag> 
 
-                    <!-- <div class="flex-grow"></div> -->
+                        <button pButton 
+                                type="button"
+                                (click)="toggleEstadoEvidencia(evento)"
+                                pTooltip="{{ evento.activo === 1 ? 'Desactivar ejecución' : 'Reactivar ejecución' }}"
+                                tooltipPosition="top"
+                                [disabled]="evento.activo === 0"
+                                [icon]="evento.activo === 1 ? 'pi pi-ban' : 'pi pi-check-circle'"
+                                [ngClass]="{
+                                    'p-button-danger': evento.activo === 1,
+                                    'p-button-success': evento.activo === 0
+                                }"
+                                class="p-button-rounded p-button-text">
+                        </button>
+                        <button pButton type="button" icon="pi pi-send" [disabled]="evento.activo === 0"
+                                class="p-button-rounded p-button-text p-button-secondary"
+                                (click)="abrirDialogoMover(evento)"
+                                pTooltip="Mover ejecución a otro caso" tooltipPosition="top">
+                        </button>
 
-                    <p-tag [value]="findEstadoEvidenciaNombre(evento.id_estado_evidencia)" [severity]="getSeverityForEstado(findEstadoEvidenciaNombre(evento.id_estado_evidencia))"></p-tag>
-                    <p-tag *ngIf="evento.id_criticidad" [value]="findCriticidadNombre(evento.id_criticidad)" 
-                           [severity]="getSeverityForCriticidad(findCriticidadNombre(evento.id_criticidad))"  styleClass="font-bold"></p-tag>
-                </div>
+                       
+                           
+                        <p-tag [value]="findEstadoEvidenciaNombre(evento.id_estado_evidencia)" [severity]="getSeverityForEstado(findEstadoEvidenciaNombre(evento.id_estado_evidencia))"></p-tag>
+                        <p-tag *ngIf="evento.id_criticidad" [value]="findCriticidadNombre(evento.id_criticidad)" 
+                            [severity]="getSeverityForCriticidad(findCriticidadNombre(evento.id_criticidad))"  styleClass="font-bold"></p-tag>
+                    </div>
                 </ng-template>
 
                 <ng-template pTemplate="subtitle">

@@ -32,13 +32,13 @@ import { TruncatePipe } from '../../pipes/truncate.pipe';
 import { environment } from '../../../environment/environment';
 import { ProyectoService } from '../../services/proyecto.service';
 import { AutenticacionService } from '../../services/autenticacion.service';
-import { Proyecto } from '../../models/proyecto';
 import { EstadoModificacion } from '../../models/estado-modificacion';
 import { EstadoModificacionService } from '../../services/estado-modificacion.service';
 import { CatalogoService } from '../../services/catalogo.service';
 import { Fuente } from '../../models/fuente'; 
 import { FuenteService } from '../../services/fuente.service';
 import { switchMap } from 'rxjs';
+import { SortFuentesPipe } from '../../pipes/sort-fuentes.pipe';
 
 
 // Se define una interfaz local para la estructura de los Hitos.
@@ -50,7 +50,7 @@ interface Hito {
 @Component({
     standalone: true,
     imports: [
-        IconFieldModule, AutoCompleteModule,SplitButtonModule,  FieldsetModule, InputIconModule, TooltipModule, CommonModule, FormsModule, TableModule, ButtonModule, ToolbarModule, DialogModule,
+        IconFieldModule, SortFuentesPipe, AutoCompleteModule,SplitButtonModule,  FieldsetModule, InputIconModule, TooltipModule, CommonModule, FormsModule, TableModule, ButtonModule, ToolbarModule, DialogModule,
         RouterModule, TruncatePipe , ChipsModule, TagModule, InputTextModule, TextareaModule, SelectModule, InputSwitchModule, ConfirmDialogModule, ToastModule, InputNumberModule, VersionFormatDirective
     ],
     providers: [MessageService, ConfirmationService, DatePipe],
@@ -196,7 +196,9 @@ export class CasosPage implements OnInit {
         this.opcionesFiltroModificacion = [
             { label: 'Nuevo', value: 1 },
             { label: 'Modificado', value: 2 },
-            { label: 'Sin cambios', value: 3 }
+            { label: 'Sin cambios', value: 3 },
+            { label: 'Eliminado', value: 6 }
+            
         ];
 
 
@@ -329,16 +331,22 @@ export class CasosPage implements OnInit {
                     // Se unen los nombres de las fuentes en un solo string, separados por un espacio.
                     const nombresFuentes = item.caso.fuentes?.map(f => f.nombre_fuente).join(' ') || '';
 
+                    const ultimoEstadoId = item.ultimaEvidencia?.id_estado_evidencia ?? 'SIN_EJECUTAR';
 
+                    const rutsParaBuscar = item.rutsUnicos?.join(' ') || '';
+
+                   
                     // Se crea una nueva versión del objeto 'caso' que incluye el nombre.
                     const casoActualizado = { 
                         ...item.caso, 
                         nombre_estado_modificacion: nombreEstado,
                         version: item.caso.version || '',
-                        fuentes_nombres: nombresFuentes 
+                        fuentes_nombres: nombresFuentes,
+                        ruts_concatenados: rutsParaBuscar
+                         
                     };
 
-                    const ultimoEstadoId = item.ultimaEvidencia?.id_estado_evidencia ?? 'SIN_EJECUTAR';
+                    
 
                     // Se devuelve el objeto completo con el 'caso' ya actualizado.
                         return { ...item, caso: casoActualizado, ultimoEstadoId: ultimoEstadoId };
@@ -486,6 +494,8 @@ export class CasosPage implements OnInit {
             return; // Detenemos el guardado
         }
 
+        
+
         const proyectoActual = this.proyectoService.proyectoSeleccionado();
         const debeMostrar = null;
             if (proyectoActual) {
@@ -505,6 +515,9 @@ export class CasosPage implements OnInit {
         const peticion = this.editando
             ? this.casoService.updateCaso(this.caso.id_caso!, this.caso as Caso)
             : this.casoService.createCaso(this.caso as Caso);
+
+
+        
         
         peticion.pipe(
             // switchMap nos permite ejecutar una segunda operación después de que la primera tenga éxito.
@@ -513,7 +526,7 @@ export class CasosPage implements OnInit {
                 
                 const idCaso = casoGuardado.id_caso!;
                 const fuentes = this.caso.fuentes || [];
-                console.log(this.caso.fuentes)
+                
                 // Hacemos la segunda llamada para actualizar las fuentes.
                 return this.casoService.updateFuentesDeCaso(idCaso, fuentes);
             })
@@ -542,7 +555,7 @@ export class CasosPage implements OnInit {
             }
         });
         
-        this.cerrarDialogo();
+        //this.cerrarDialogo();
     }
 
     private normalizarTexto(texto: string): string {
@@ -580,6 +593,8 @@ export class CasosPage implements OnInit {
                 return 'info';    // Azul
             case 'Sin cambios':
                 return 'secondary'; // Verde
+            case 'Eliminado':
+                return 'danger'; // Rojo
             default:
                 return 'secondary';
         }

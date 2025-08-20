@@ -5,8 +5,12 @@ y este proyecto adhiere al [Versionado Semántico](https://semver.org/lang/es/).
 
 ## [0.5.1] - 2025-08-20
 
+### Added
+-   Ahora se puede desactivar una ejecución en el Historial.
+
 ### Changed
--   Se mejoro la información de las fuentes en el Historial y en Ejecucion.
+-   Se mejoró la información de las fuentes en el Historial y en Ejecucion.
+-   Se agregó el estado "Eliminado"
 
 ## [0.5.0] - 2025-08-19
 

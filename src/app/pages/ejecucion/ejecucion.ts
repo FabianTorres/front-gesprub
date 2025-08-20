@@ -24,7 +24,6 @@ import { AutenticacionService } from '../../services/autenticacion.service';
 import { EstadoModificacion } from '../../models/estado-modificacion';
 import { EstadoModificacionService } from '../../services/estado-modificacion.service';
 import { TagModule } from 'primeng/tag';
-import { environment } from '../../../environment/environment';
 import { ProyectoService } from '../../services/proyecto.service';
 import { VersionFormatDirective } from '../../directives/version-format.directive';
 import { map, switchMap } from 'rxjs/operators';
@@ -32,12 +31,13 @@ import { catchError, forkJoin, of } from 'rxjs';
 import { RutValidatorDirective } from '../../directives/rut-validator.directive';
 import { CatalogoService } from '../../services/catalogo.service';
 import { HistorialCaso } from '../../models/historial-caso';
+import { SortFuentesPipe } from '../../pipes/sort-fuentes.pipe';
 
 @Component({
     standalone: true,
     imports: [
         CommonModule, RutValidatorDirective , VersionFormatDirective , TagModule, FieldsetModule,DividerModule , FormsModule, RouterModule, ButtonModule, ButtonGroupModule, CardModule, InputTextModule,
-        TextareaModule, SelectModule, SelectButtonModule, FileUploadModule, ToastModule
+        TextareaModule, SelectModule, SortFuentesPipe, SelectButtonModule, FileUploadModule, ToastModule
     ],
     providers: [MessageService, DatePipe],
     templateUrl: './ejecucion.html'
@@ -160,6 +160,7 @@ export class EjecucionPage implements OnInit {
             case 'Modificado': return 'warn';
             case 'Nuevo': return 'info';
             case 'Sin cambios': return 'secondary';
+            case 'Eliminado': return 'danger';
             default: return 'secondary';
         }
     }

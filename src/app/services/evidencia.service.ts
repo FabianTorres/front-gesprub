@@ -34,4 +34,9 @@ export class EvidenciaService {
         const body = { nuevoIdCaso };
         return this.http.patch(url, body);
     }
+
+    updateEstadoActivo(idEvidencia: number, activo: number): Observable<Evidencia> {
+        
+        return this.http.patch<Evidencia>(`${this.apiUrl}/${idEvidencia}/activo`, { activo });
+    }
 }

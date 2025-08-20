@@ -19,7 +19,6 @@ import { CasoService } from '../../../services/caso.service';
 import { HistorialCaso } from '../../../models/historial-caso';
 import { EstadoModificacion } from '../../../models/estado-modificacion';
 import { EstadoModificacionService } from '../../../services/estado-modificacion.service';
-import { environment } from '../../../../environment/environment';
 import { ProyectoService } from '../../../services/proyecto.service';
 import { forkJoin, map, of, switchMap } from 'rxjs';
 import { EvidenciaService } from '../../../services/evidencia.service';
@@ -28,6 +27,7 @@ import { ComponenteService } from '../../../services/componente.service';
 import { Proyecto } from '../../../models/proyecto';
 import { Componente } from '../../../models/componente';
 import { CasoConEvidencia } from '../../../models/casoevidencia';
+import { SortFuentesPipe } from '../../../pipes/sort-fuentes.pipe';
 
 
 // Se define la interfaz local para Hito
@@ -44,7 +44,7 @@ interface Hito {
         ButtonModule,
         CardModule,
         TimelineModule,
-        TagModule,
+        TagModule, SortFuentesPipe, 
         ToastModule, DialogModule, SelectModule, FormsModule, ConfirmDialogModule, TooltipModule
     ],
     providers: [MessageService, DatePipe, ConfirmationService],
@@ -140,7 +140,7 @@ export class HistorialPage implements OnInit {
                         // Si no hay datos, simplemente los establecemos como están
                         this.datosHistorial.set(data);
                     }
-                    // --- FIN DE LA MODIFICACIÓN ---
+                   
 
                 });
             }
@@ -166,6 +166,7 @@ export class HistorialPage implements OnInit {
             case 'Modificado': return 'warn';
             case 'Nuevo': return 'info';
             case 'Sin cambios': return 'secondary';
+            case 'Eliminado': return 'danger';
             default: return 'secondary';
         }
     }
@@ -293,6 +294,61 @@ export class HistorialPage implements OnInit {
             accept: () => {
                
                 this.moverEvidencia();
+            }
+        });
+    }
+
+    toggleEstadoEvidencia(evidencia: Evidencia) {
+        const nuevoEstado = evidencia.activo === 1 ? 0 : 1;
+        const accion = nuevoEstado === 0 ? 'desactivar' : 'reactivar';
+        const accionGerundio = nuevoEstado === 0 ? 'Desactivando' : 'Reactivando';
+
+
+        // Si la evidencia ya está inactiva (0), no hacemos nada.
+        if (evidencia.activo === 0) {
+            this.messageService.add({ 
+                severity: 'info', 
+                summary: 'Información', 
+                detail: 'Esta evidencia ya está anulada y la acción no se puede revertir.' 
+            });
+            return; 
+        }
+
+        this.confirmationService.confirm({
+            message: `¿Está seguro de que desea ${accion} esta ejecución? Esta acción no se puede revertir`,
+            header: `Confirmar Acción`,
+            icon: 'pi pi-exclamation-triangle',
+            acceptLabel: `Sí, ${accion}`,
+            rejectLabel: 'Cancelar',
+            accept: () => {
+                this.evidenciaService.updateEstadoActivo(evidencia.id_evidencia!, nuevoEstado).subscribe({
+                    next: () => {
+                        // Actualizamos el estado localmente para no recargar la página
+                        this.datosHistorial.update(historialActual => {
+                            if (historialActual) {
+                                const index = historialActual.historial.findIndex(e => e.id_evidencia === evidencia.id_evidencia);
+                                if (index !== -1) {
+                                    historialActual.historial[index].activo = nuevoEstado;
+                                }
+                            }
+                            return historialActual ? { ...historialActual } : null;
+                        });
+
+                        this.messageService.add({ 
+                            severity: 'success', 
+                            summary: 'Éxito', 
+                            detail: 'El estado de la ejecución ha sido actualizado.' 
+                        });
+                    },
+                    error: (err) => {
+                        this.messageService.add({ 
+                            severity: 'error', 
+                            summary: 'Error', 
+                            detail: `No se pudo ${accion} la ejecución.`
+                        });
+                        console.error(`${accionGerundio} ejecución falló`, err);
+                    }
+                });
             }
         });
     }

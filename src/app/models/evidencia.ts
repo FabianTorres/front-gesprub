@@ -18,4 +18,5 @@ export interface Evidencia {
   id_caso: number;
   archivos?: ArchivoEvidencia[];
   rut?: string;
+  activo?: number;
 }

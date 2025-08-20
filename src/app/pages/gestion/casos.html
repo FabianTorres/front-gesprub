@@ -48,7 +48,13 @@
                      [rows]="10" [paginator]="true" 
                      responsiveLayout="scroll" 
                      dataKey="caso.id_caso"
-                     [globalFilterFields]="['caso.nombre_estado_modificacion','caso.nombre_caso', 'caso.descripcion_caso', 'caso.version', 'caso.num_formulario','caso.fuentes_nombres']"
+                     [globalFilterFields]="['caso.nombre_estado_modificacion',
+                                            'caso.nombre_caso', 
+                                            'caso.descripcion_caso', 
+                                            'caso.version', 
+                                            'caso.fuentes_nombres', 
+                                            'caso.nombre_ultimo_estado',
+                                            'caso.ruts_concatenados']"
                      [loading]="cargandoCasos()" class="p-datatable-gridlines">
             
             <ng-template pTemplate="caption">
@@ -86,10 +92,10 @@
                             <p-columnFilter type="text" field="caso.descripcion_caso" display="menu"></p-columnFilter>
                         </div>
                     </th>
-                    <th pSortableColumn="fuentes" style="width:15%">
+                    <th pSortableColumn="caso.fuentes_nombres" style="width:15%">
                         <div class="flex justify-between items-center">
                             Fuentes
-                             <p-columnFilter type="text" field="fuentes.nombre_fuente" display="menu"></p-columnFilter>
+                             <p-columnFilter type="text" field="caso.fuentes_nombres" display="menu"></p-columnFilter>
                         </div>
                     </th>
                     <th pSortableColumn="caso.version" style="width:5%">
@@ -138,7 +144,7 @@
                    
                     <td class="text-center">
                         <div class="flex flex-wrap gap-1 justify-center items-center">
-                            <p-tag *ngFor="let fuente of item.caso.fuentes?.slice(0, 1)"
+                            <p-tag *ngFor="let fuente of (item.caso.fuentes | sortFuentes)?.slice(0, 1)"
                                 [pTooltip]="fuente.nombre_fuente"
                                 tooltipPosition="top"
                                 [tooltipDisabled]="fuente.nombre_fuente.length <= 5"

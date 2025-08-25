@@ -22,6 +22,8 @@ import { InputNumberModule } from 'primeng/inputnumber';
 import { TooltipModule } from 'primeng/tooltip';
 import { SplitButtonModule } from 'primeng/splitbutton';
 import { FieldsetModule } from 'primeng/fieldset';
+import * as XLSX from 'xlsx';
+import { saveAs } from 'file-saver';
 import { Caso } from '../../models/caso';
 import { CasoService } from '../../services/caso.service';
 import { Componente } from '../../models/componente';
@@ -629,9 +631,50 @@ export class CasosPage implements OnInit {
         this.messageService.add({ severity: 'info', summary: 'Próximamente', detail: 'Esta funcionalidad de importación estará disponible en el futuro.' });
     }
 
-    exportarCasos(formato: string) {
-        // Lógica futura para la exportación
-        this.messageService.add({ severity: 'info', summary: 'Próximamente', detail: `La exportación a ${formato} estará disponible en el futuro.` });
+     exportarCasos(formato: string) {
+        if (this.casos().length === 0) {
+            this.messageService.add({ severity: 'warn', summary: 'No hay datos', detail: 'No hay casos para exportar.' });
+            return;
+        }
+
+        // Mapeamos los datos a un formato más simple y legible para el Excel
+        const datosParaExportar = this.casos().map(item => {
+            // Unimos los nombres de las fuentes en un solo string
+            const fuentes = item.caso.fuentes?.map(f => f.nombre_fuente).join(', ') || '';
+
+            return {
+                'ID Caso': item.caso.id_caso,
+                'Nombre del Caso': item.caso.nombre_caso,
+                'Descripción': item.caso.descripcion_caso,
+                'Versión': item.caso.version,
+                'Estado Modificación': this.findEstadoModificacionNombre(item.caso.id_estado_modificacion),
+                'Último Estado Ejecución': this.findEstadoEvidenciaNombre((item as any).ultimoEstadoId),
+                'Fuentes': fuentes,
+                'Precondiciones': item.caso.precondiciones,
+                'Pasos': item.caso.pasos,
+                'Resultado Esperado': item.caso.resultado_esperado
+            };
+        });
+
+        // Creamos la hoja de cálculo a partir de nuestros datos
+        const worksheet: XLSX.WorkSheet = XLSX.utils.json_to_sheet(datosParaExportar);
+
+        // Creamos el libro de trabajo y le añadimos la hoja
+        const workbook: XLSX.WorkBook = { Sheets: { 'Casos': worksheet }, SheetNames: ['Casos'] };
+
+        // Generamos el buffer del archivo Excel
+        const excelBuffer: any = XLSX.write(workbook, { bookType: 'xlsx', type: 'array' });
+
+        // Guardamos el archivo
+        this.guardarArchivoExcel(excelBuffer, "CasosDePrueba");
+    }
+
+    // 3. AÑADE ESTE NUEVO MÉTODO AUXILIAR
+    private guardarArchivoExcel(buffer: any, nombreArchivo: string): void {
+        const data: Blob = new Blob([buffer], {
+            type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;charset=UTF-8'
+        });
+        saveAs(data, nombreArchivo + '_export_' + new Date().getTime() + '.xlsx');
     }
 
     exportarPlanDePruebas() {

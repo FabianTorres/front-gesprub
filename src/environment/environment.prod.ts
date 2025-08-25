@@ -1,6 +1,6 @@
 export const environment = {
   production: true,
-  apiUrl: 'http://10.32.1.11:8090/api',
+  apiUrl: 'https://gesprub-backend-app.orangedesert-b4c9ef18.eastus2.azurecontainerapps.io/api',
   anioTributario: 2025,
   proyectosDeDDJJ: ['DDJJ 2025']
 };

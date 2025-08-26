@@ -108,6 +108,9 @@ export class Registro {
       return;
     }
     const { confirmPassword, ...datosUsuario } = this.registerForm.value;
+    // Añadimos los campos que faltan al objeto antes de enviarlo
+    (datosUsuario as any).ultimoLogin = new Date();
+    (datosUsuario as any).activo = 1;
     this.usuarioService.register(datosUsuario).subscribe({
       next: () => {
         

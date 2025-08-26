@@ -12,10 +12,12 @@ import { RippleModule } from 'primeng/ripple';
 import { AppFloatingConfigurator } from '../../layout/component/app.floatingconfigurator';
 import { ToastModule } from 'primeng/toast'; 
 import { MessageService } from 'primeng/api';
+import { version } from '../../../environment/version';  
 
 export const passwordMatchValidator: ValidatorFn = (control: AbstractControl): ValidationErrors | null => {
   const password = control.get('password');
   const confirmPassword = control.get('confirmPassword');
+  
 
   // No devuelve error si los campos aún no existen o están vacíos.
   if (!password || !confirmPassword || !password.value || !confirmPassword.value) {
@@ -78,6 +80,9 @@ export const passwordMatchValidator: ValidatorFn = (control: AbstractControl): V
                                 <span class="text-muted-color">¿Ya tienes una cuenta? </span>
                                 <a routerLink="/auth/login" class="font-medium no-underline text-primary cursor-pointer">Inicia sesión aquí</a>
                             </div>
+                            <div class="text-center mt-6">
+                                <span class="text-muted-color font-normal">Gesprub v{{ appVersion }}</span>
+                            </div>
                         </div>
                     </div>
                 </form>
@@ -91,6 +96,7 @@ export class Registro {
   private usuarioService = inject(UsuarioService);
   private router = inject(Router);
   private messageService = inject(MessageService);
+  appVersion = version;
 
   registerForm = this.fb.group({
     nombreUsuario: ['', Validators.required],

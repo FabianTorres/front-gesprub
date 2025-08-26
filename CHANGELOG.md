@@ -3,6 +3,14 @@ Todos los cambios significativos en este proyecto se documentarán en este archi
 El formato se basa en [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 y este proyecto adhiere al [Versionado Semántico](https://semver.org/lang/es/).
 
+## [0.5.2] - 2025-08-26
+
+### Fixed
+-   Se corrigió un problema al obtener el rol del usuario la primera vez.
+### Changed
+-   Ahora tambien se puede ver la version en las paginas `Registro` y `Login`.
+
+
 ## [0.5.1] - 2025-08-20
 
 ### Added

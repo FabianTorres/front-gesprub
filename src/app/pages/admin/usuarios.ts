@@ -82,15 +82,13 @@ export class UsuariosPage implements OnInit {
             return;
         }
         
-        // Imprimimos en consola para verificar que ahora se envían todos los datos.
-        console.log('Enviando datos actualizados:', usuarioParaEnviar);
         
         // Se envia el objeto COMPLETO al servicio de actualización.
         this.usuarioService.updateUsuario(usuarioParaEnviar.idUsuario, usuarioParaEnviar as Usuario)
             .subscribe({
                 next: (usuarioActualizado) => {
                     this.messageService.add({severity: 'success', summary: 'Éxito', detail: 'Usuario actualizado'});
-                    // Opcional pero recomendado: Actualiza la lista sin recargar todo.
+                    // Actualiza la lista sin recargar todo.
                     this.actualizarUsuarioEnLista(usuarioActualizado);
                     this.cerrarDialogo();
                 },

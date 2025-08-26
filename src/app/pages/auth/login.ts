@@ -11,7 +11,8 @@ import { AutenticacionService } from '../../services/autenticacion.service';
 import { LoginCredentials } from '../../models/autenticacion';
 import { CommonModule } from '@angular/common'; 
 import { ToastModule } from 'primeng/toast'; 
-import { MessageService } from 'primeng/api';   
+import { MessageService } from 'primeng/api'; 
+import { version } from '../../../environment/version';  
 
 
 @Component({
@@ -69,6 +70,9 @@ import { MessageService } from 'primeng/api';
                                     <span class="text-muted-color">¿No tienes una cuenta? </span>
                                     <a routerLink="/auth/registro" class="font-medium no-underline text-primary cursor-pointer">Regístrate aquí</a>
                                 </div>
+                                <div class="text-center mt-6">
+                                    <span class="text-muted-color font-normal">Gesprub v{{ appVersion }}</span>
+                                </div>
                             </div>
                         </div>
                     </form>
@@ -82,6 +86,8 @@ export class Login {
     private fb = inject(FormBuilder);
     private authService = inject(AutenticacionService);
     private messageService = inject(MessageService);
+
+    appVersion = version;
     
     
     private router = inject(Router);

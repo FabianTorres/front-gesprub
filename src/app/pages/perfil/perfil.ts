@@ -65,6 +65,10 @@ export class PerfilPage implements OnInit {
   
   // Función para darle un color al tag del rol, similar a la de la página de usuarios.
   getSeverityForRol(rol: string): 'secondary' | 'success' | 'info' | 'warn' | 'danger' | 'contrast' {
+    if (!rol) {
+        return 'secondary';
+    }
+    
     switch (rol.toLowerCase()) {
         case 'administrador': return 'danger';
         case 'jefe de proyecto': return 'warn';

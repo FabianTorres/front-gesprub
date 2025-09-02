@@ -61,4 +61,8 @@ export class CasoService {
         // Enviamos el array de IDs en el cuerpo de la petición PUT.
         return this.http.put(url, idsFuente);
     }
+
+    importarCasos(casos: any[], idComponente: number): Observable<any> {
+        return this.http.post(`${this.apiUrl}/importar?id_componente=${idComponente}`, casos);
+    }
 }

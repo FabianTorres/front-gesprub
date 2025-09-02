@@ -3,6 +3,18 @@ Todos los cambios significativos en este proyecto se documentarán en este archi
 El formato se basa en [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 y este proyecto adhiere al [Versionado Semántico](https://semver.org/lang/es/).
 
+## [0.6.1] - 2025-08-27
+
+### Changed
+-   Ahora al agregar un nuevo caso de forma manual, tambien hace validaciones para detectar el porcentaje de similitud con los casos actuales y si hay duplicados
+
+## [0.6.0] - 2025-08-27
+
+### Added
+-   Se agrega funcionalidad de importar casos, con validaciones y sistemas que evitan errores al importar.
+### Fixed
+-   Se corrigió un problema con el campo "fecha_evidencia"
+
 ## [0.5.2] - 2025-08-26
 
 ### Fixed

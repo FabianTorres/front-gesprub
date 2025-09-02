@@ -22,8 +22,6 @@ import { InputNumberModule } from 'primeng/inputnumber';
 import { TooltipModule } from 'primeng/tooltip';
 import { SplitButtonModule } from 'primeng/splitbutton';
 import { FieldsetModule } from 'primeng/fieldset';
-import * as XLSX from 'xlsx';
-import { saveAs } from 'file-saver';
 import { Caso } from '../../models/caso';
 import { CasoService } from '../../services/caso.service';
 import { Componente } from '../../models/componente';
@@ -34,6 +32,9 @@ import { TruncatePipe } from '../../pipes/truncate.pipe';
 import { environment } from '../../../environment/environment';
 import { ProyectoService } from '../../services/proyecto.service';
 import { AutenticacionService } from '../../services/autenticacion.service';
+import { leerYValidarExcel, descargarPlantillaCasos, exportarAExcel } from '../../utils/excel.utils';
+import * as XLSX from 'xlsx';
+import { saveAs } from 'file-saver';
 import { EstadoModificacion } from '../../models/estado-modificacion';
 import { EstadoModificacionService } from '../../services/estado-modificacion.service';
 import { CatalogoService } from '../../services/catalogo.service';
@@ -41,6 +42,8 @@ import { Fuente } from '../../models/fuente';
 import { FuenteService } from '../../services/fuente.service';
 import { switchMap } from 'rxjs';
 import { SortFuentesPipe } from '../../pipes/sort-fuentes.pipe';
+import { FileUpload } from "primeng/fileupload";
+import * as similarity from 'string-similarity';
 
 
 // Se define una interfaz local para la estructura de los Hitos.
@@ -52,9 +55,10 @@ interface Hito {
 @Component({
     standalone: true,
     imports: [
-        IconFieldModule, SortFuentesPipe, AutoCompleteModule,SplitButtonModule,  FieldsetModule, InputIconModule, TooltipModule, CommonModule, FormsModule, TableModule, ButtonModule, ToolbarModule, DialogModule,
-        RouterModule, TruncatePipe , ChipsModule, TagModule, InputTextModule, TextareaModule, SelectModule, InputSwitchModule, ConfirmDialogModule, ToastModule, InputNumberModule, VersionFormatDirective
-    ],
+    IconFieldModule, FileUpload, SortFuentesPipe, AutoCompleteModule, SplitButtonModule, FieldsetModule, InputIconModule, TooltipModule, CommonModule, FormsModule, TableModule, ButtonModule, ToolbarModule, DialogModule,
+    RouterModule, TruncatePipe, ChipsModule, TagModule, InputTextModule, TextareaModule, SelectModule, InputSwitchModule, ConfirmDialogModule, ToastModule, InputNumberModule, VersionFormatDirective,
+    FileUpload
+],
     providers: [MessageService, ConfirmationService, DatePipe],
     templateUrl: './casos.html'
 })
@@ -92,6 +96,10 @@ export class CasosPage implements OnInit {
     // Propiedad para los items del botón de exportar
     opcionesExportar: MenuItem[];
 
+    // Propiedades para el diálogo de importación
+    importDialog: boolean = false;
+    archivoParaImportar: File | null = null;
+
     private catalogoService = inject(CatalogoService);
     private estadosEvidencia = this.catalogoService.estadosEvidencia;
 
@@ -107,6 +115,13 @@ export class CasosPage implements OnInit {
     todosLosFormularios = signal<number[]>([]);
     sugerenciasFormulario = signal<number[]>([]);
 
+    // Propiedades para el diálogo de advertencia
+    advertenciaDialog: boolean = false;
+    casosConAdvertencia: any[] = [];
+    casosValidadosTemporalmente: any[] = [];
+
+    private accionConfirmada: 'importar' | 'guardarManual' = 'importar'; 
+
     
 
 
@@ -118,7 +133,7 @@ export class CasosPage implements OnInit {
     opcionesFiltroModificacion: any[];
 
     // Señal para controlar la visibilidad del campo formulario
-    mostrarCampoFormulario = signal<boolean>(false);
+    //mostrarCampoFormulario = signal<boolean>(false);
 
     private proyectoService = inject(ProyectoService);
 
@@ -180,14 +195,6 @@ export class CasosPage implements OnInit {
                 versionesUnicas.map(version => ({ label: version, value: version }))
             );
         });
-
-
-        // Se inicializan las opciones para el menú de filtro de la columna 'Estado'.
-        // this.opcionesFiltroEstado = [
-        //     { label: 'OK', value: 'OK' },
-        //     { label: 'NK', value: 'NK' },
-        //     { label: 'Sin Ejecutar', value: null }
-        // ];
 
         //Se inicializan las nuevas opciones
         this.opcionesFiltroActivo = [
@@ -453,38 +460,67 @@ export class CasosPage implements OnInit {
 
     // Gestiona el guardado de un caso, ya sea para crear uno nuevo o actualizar uno existente.
     guardarCaso() {
+        // 1. Validaciones básicas de campos
+        if (!this.validarCamposBasicos()) {
+            return;
+        }
 
-        // Se obtiene el usuario actual desde el servicio de autenticación
+        const nombreCasoNuevo = this.caso.nombre_caso!;
+        const nombreNormalizadoNuevo = this.normalizarNombreCaso(nombreCasoNuevo);
+
+        // Si estamos editando, excluimos el caso actual de la lista de comparación
+        const otrosCasos = this.editando 
+            ? this.casos().filter(c => c.caso.id_caso !== this.caso.id_caso) 
+            : this.casos();
+
+        const nombresExistentes = otrosCasos.map(c => c.caso.nombre_caso);
+
+        // 2. Validación de duplicados exactos
+        if (nombresExistentes.some(nombre => this.normalizarNombreCaso(nombre) === nombreNormalizadoNuevo)) {
+            this.messageService.add({ severity: 'error', summary: 'Error', detail: 'Ya existe un caso con un nombre idéntico en este componente.' });
+            return;
+        }
+
+        // 3. Validación de duplicados similares
+        const umbralSimilitud = 0.5; // 50%
+        const coincidencias = similarity.findBestMatch(nombreNormalizadoNuevo, nombresExistentes.map(n => this.normalizarNombreCaso(n)));
+
+        if (coincidencias.ratings.length > 0 && coincidencias.bestMatch.rating > umbralSimilitud) {
+            this.casosConAdvertencia = [{
+                nombreNuevo: nombreCasoNuevo,
+                nombreExistente: nombresExistentes[coincidencias.bestMatchIndex],
+                similitud: Math.round(coincidencias.bestMatch.rating * 100)
+            }];
+            this.accionConfirmada = 'guardarManual'; // Configuramos la acción para la confirmación
+            this.advertenciaDialog = true; // Mostramos la advertencia
+        } else {
+            // Si no hay duplicados ni advertencias, guardamos directamente
+            this.procederConGuardadoManual();
+        }
+    }
+
+    private validarCamposBasicos(): boolean {
         const usuarioLogueado = this.authService.usuarioActual();
 
-        //Validaciones
-        // Se comprueba si hay un usuario logueado antes de continuar
         if (!usuarioLogueado || !usuarioLogueado.idUsuario) {
             this.messageService.add({severity: 'error', summary: 'Error', detail: 'No se pudo identificar al usuario. Por favor, inicie sesión de nuevo.'});
-            return;
+            return false;
         }
-        this.caso.activo = this.activoDialog ? 1 : 0;
-        this.caso.id_usuario_creador = usuarioLogueado.idUsuario;
-        this.caso.jp_responsable = usuarioLogueado.idUsuario;
-
         if (!this.caso.version) {
             this.messageService.add({severity: 'warn', summary: 'Atención', detail: 'Debe escribir la versión de ejecución de la prueba.'});
-            return;
+            return false;
         }
-
         if (!this.caso.descripcion_caso) {
             this.messageService.add({severity: 'warn', summary: 'Atención', detail: 'Debe escribir una descripción para la prueba.'});
-            return;
+            return false;
         }
-
         if (!this.caso.id_estado_modificacion) {
             this.messageService.add({severity: 'warn', summary: 'Atención', detail: 'Debe seleccionar un estado de modificación para la prueba.'});
-            return;
+            return false;
         }
-
         if (!this.caso.id_componente) {
             this.messageService.add({severity: 'warn', summary: 'Atención', detail: 'Debe seleccionar un componente para la prueba.'});
-            return;
+            return false;
         }
         const versionRegex = /^\d+\.\d+$/; 
         if (!versionRegex.test(this.caso.version)) {
@@ -493,67 +529,17 @@ export class CasosPage implements OnInit {
                 summary: 'Formato Incorrecto', 
                 detail: 'La versión debe tener el formato número.número (ej: 1.0).' 
             });
-            return; // Detenemos el guardado
+            return false;
         }
-
-        // Reemplaza el bloque antiguo por este:
         if (!this.caso.fuentes || this.caso.fuentes.length === 0) {
             this.messageService.add({
                 severity: 'warn', 
                 summary: 'Atención', 
                 detail: 'Debe seleccionar al menos una fuente de información.'
             });
-            return; // Detenemos el guardado
+            return false;
         }
-
-        
-
-        
-
-        const peticion = this.editando
-            ? this.casoService.updateCaso(this.caso.id_caso!, this.caso as Caso)
-            : this.casoService.createCaso(this.caso as Caso);
-
-
-        
-        
-        peticion.pipe(
-            // switchMap nos permite ejecutar una segunda operación después de que la primera tenga éxito.
-            // Recibimos el 'casoGuardado' de la primera operación.
-            switchMap(casoGuardado => {
-                
-                const idCaso = casoGuardado.id_caso!;
-                const fuentes = this.caso.fuentes || [];
-                
-                // Hacemos la segunda llamada para actualizar las fuentes.
-                return this.casoService.updateFuentesDeCaso(idCaso, fuentes);
-            })
-        ).subscribe({
-            next: () => {
-                // Este bloque se ejecuta solo si AMBAS operaciones (guardar caso y guardar fuentes) tienen éxito.
-                this.messageService.add({
-                    severity: 'success', 
-                    summary: 'Éxito', 
-                    detail: 'Caso de prueba guardado correctamente.'
-                });
-                
-                // Actualizamos la tabla
-                this.onComponenteSeleccionado(); 
-                this.cerrarDialogo();
-            },
-            error: (err) => {
-                // Si cualquiera de las dos operaciones falla, se captura el error aquí.
-                
-                console.error('Error al guardar el caso o sus fuentes:', err, this.caso);
-                this.messageService.add({
-                    severity: 'error', 
-                    summary: 'Error', 
-                    detail: 'No se pudo guardar el caso'
-                });
-            }
-        });
-        
-        //this.cerrarDialogo();
+        return true;
     }
 
     private normalizarTexto(texto: string): string {
@@ -627,8 +613,214 @@ export class CasosPage implements OnInit {
 
 
     importarCasos() {
-        // Lógica futura para la importación
-        this.messageService.add({ severity: 'info', summary: 'Próximamente', detail: 'Esta funcionalidad de importación estará disponible en el futuro.' });
+        this.archivoParaImportar = null; // Reseteamos el archivo seleccionado
+        this.importDialog = true; // Abrimos el diálogo de importación
+    }
+
+    cerrarDialogoImportar() {
+        this.importDialog = false;
+    }
+    cerrarDialogoAdvertencia() {
+        this.advertenciaDialog = false;
+        this.casosConAdvertencia = [];
+        this.casosValidadosTemporalmente = [];
+    }
+
+    onArchivoSeleccionado(event: any) {
+        const file = event.files[0];
+        if (file) {
+            this.archivoParaImportar = file;
+            this.messageService.add({ 
+                severity: 'info', 
+                summary: 'Archivo seleccionado', 
+                detail: `Listo para procesar: ${file.name}` 
+            });
+        }
+    }
+
+    async procesarArchivo() {
+        if (!this.archivoParaImportar || !this.componenteSeleccionadoId) {
+            this.messageService.add({ severity: 'warn', summary: 'Error', detail: 'Asegúrese de seleccionar un archivo y un componente.' });
+            return;
+        }
+
+        try {
+            // Llama a la utilidad para leer y validar la estructura básica del archivo
+            const casosLeidos = await leerYValidarExcel(this.archivoParaImportar, this.messageService);
+            if (!casosLeidos) return; // Si la validación básica falla, nos detenemos
+
+            // Inicia la validación de duplicados
+            this.casosConAdvertencia = [];
+            const errores: string[] = [];
+            const nombresCasosExistentes = this.casos().map(c => c.caso.nombre_caso);
+            const nombresEnArchivo = new Set<string>();
+            const umbralSimilitud = 0.5; // 50% de similitud
+
+            casosLeidos.forEach((fila: any, index: number) => {
+                const numeroFila = index + 2;
+                const nombreCasoActual = fila['Nombre del Caso'];
+                
+                if (nombreCasoActual) {
+                    const nombreNormalizado = this.normalizarNombreCaso(nombreCasoActual);
+                    
+                    // 1. Revisar duplicados exactos dentro del mismo archivo
+                    if (nombresEnArchivo.has(nombreNormalizado)) {
+                        errores.push(`Fila ${numeroFila}: El caso "${nombreCasoActual}" está duplicado en el archivo.`);
+                    } else {
+                        nombresEnArchivo.add(nombreNormalizado);
+                    }
+
+                    // 2. Revisar duplicados exactos y similares contra los casos ya existentes en el componente
+                    const coincidencias = similarity.findBestMatch(nombreNormalizado, nombresCasosExistentes.map(n => this.normalizarNombreCaso(n)));
+
+                    if (coincidencias.bestMatch.rating === 1) { // Duplicado 100% idéntico
+                        errores.push(`Fila ${numeroFila}: El caso "${nombreCasoActual}" ya existe en este componente.`);
+                    } else if (coincidencias.bestMatch.rating > umbralSimilitud) { // Similitud alta
+                        this.casosConAdvertencia.push({
+                            nombreNuevo: nombreCasoActual,
+                            nombreExistente: nombresCasosExistentes[coincidencias.bestMatchIndex],
+                            similitud: Math.round(coincidencias.bestMatch.rating * 100)
+                        });
+                    }
+                }
+            });
+
+            // Si hay errores críticos (duplicados exactos), nos detenemos
+            if (errores.length > 0) {
+                this.messageService.add({ severity: 'error', summary: 'Errores de Importación', detail: 'Se encontraron errores que impiden la importación.', sticky: true });
+                errores.slice(0, 5).forEach(error => this.messageService.add({ severity: 'warn', summary: error, sticky: true, life: 10000 }));
+                return;
+            }
+
+            // Guardamos los casos que pasaron la validación para usarlos después
+            this.casosValidadosTemporalmente = casosLeidos;
+
+            // Si hay advertencias por similitud, mostramos el diálogo de confirmación
+            if (this.casosConAdvertencia.length > 0) {
+                this.advertenciaDialog = true;
+            } else {
+                // Si no hay errores ni advertencias, procedemos directamente a la importación
+                this.procederConImportacion();
+            }
+
+        } catch (error) {
+            console.error("Fallo la validación del archivo:", error);
+            // El mensaje de error al usuario ya se mostró dentro de la función de utilidad leerYValidarExcel
+        }
+    }
+
+    procederConImportacion() {
+        const usuarioLogueado = this.authService.usuarioActual();
+        if (!usuarioLogueado) {
+            this.messageService.add({ severity: 'error', summary: 'Error de Sesión', detail: 'No se pudo identificar al usuario.' });
+            this.cerrarDialogoAdvertencia();
+            return;
+        }
+
+        // Usamos los casos que habíamos guardado temporalmente en this.casosValidadosTemporalmente
+        const casosParaEnviar = this.casosValidadosTemporalmente.map((fila: any) => ({
+            nombre_caso: String(fila['Nombre del Caso'] || ''),
+            descripcion_caso: String(fila['Descripción'] || ''),
+            version: String(fila['Versión']).replace(',', '.'),
+            nombre_estado_modificacion: String(fila['Estado Modificación'] || ''),
+            nombres_fuentes: String(fila['Fuentes'] || '').replace(/;/g, ','),
+            precondiciones: String(fila['Precondiciones'] || ''),
+            pasos: String(fila['Pasos'] || ''),
+            resultado_esperado: String(fila['Resultado Esperado'] || ''),
+            id_usuario_creador: usuarioLogueado.idUsuario,
+            jp_responsable: usuarioLogueado.idUsuario
+        }));
+
+        if (casosParaEnviar.length === 0) {
+            this.messageService.add({ severity: 'info', summary: 'Nada que importar', detail: 'No hay casos válidos para importar.' });
+            this.cerrarDialogoAdvertencia();
+            return;
+        }
+
+        this.casoService.importarCasos(casosParaEnviar, this.componenteSeleccionadoId!).subscribe({
+            next: () => {
+                this.messageService.add({ severity: 'success', summary: 'Importación Completada', detail: `Se importaron ${casosParaEnviar.length} casos.` });
+                this.onComponenteSeleccionado();
+                this.cerrarDialogoImportar();
+                this.cerrarDialogoAdvertencia();
+            },
+            error: (err) => {
+                if (err.error && err.error.errores && Array.isArray(err.error.errores)) {
+                    this.messageService.add({ 
+                        severity: 'error', 
+                        summary: 'Error de Validación en el Servidor', 
+                        detail: err.error.mensaje || 'Se encontraron errores en el archivo.',
+                        sticky: true
+                    });
+                    err.error.errores.slice(0, 5).forEach((errorDetallado: any) => {
+                        const mensaje = `Fila ${errorDetallado.fila}: ${errorDetallado.mensaje}`;
+                        this.messageService.add({ 
+                            severity: 'warn', 
+                            summary: mensaje,
+                            sticky: true,
+                            life: 15000
+                        });
+                    });
+                } else {
+                    this.messageService.add({ 
+                        severity: 'error', 
+                        summary: 'Error Inesperado', 
+                        detail: 'Ocurrió un error al procesar el archivo en el servidor.' 
+                    });
+                }
+                console.error('Error de importación desde el backend:', err);
+            }
+        });
+    }
+
+    confirmarAdvertencia() {
+        if (this.accionConfirmada === 'importar') {
+            this.procederConImportacion();
+        } else {
+            this.procederConGuardadoManual();
+        }
+    }
+
+    procederConGuardadoManual() {
+        const usuarioLogueado = this.authService.usuarioActual();
+        if (!usuarioLogueado) { 
+            this.messageService.add({ severity: 'error', summary: 'Error de Sesión', detail: 'No se pudo identificar al usuario.' });
+            this.cerrarDialogoAdvertencia();
+            return; }
+        
+        this.caso.activo = this.activoDialog ? 1 : 0;
+        this.caso.id_usuario_creador = usuarioLogueado.idUsuario;
+        this.caso.jp_responsable = usuarioLogueado.idUsuario;
+
+        const peticion = this.editando
+            ? this.casoService.updateCaso(this.caso.id_caso!, this.caso as Caso)
+            : this.casoService.createCaso(this.caso as Caso);
+        
+        peticion.pipe(
+            switchMap(casoGuardado => {
+                const idCaso = casoGuardado.id_caso!;
+                const fuentes = this.caso.fuentes || [];
+                return this.casoService.updateFuentesDeCaso(idCaso, fuentes);
+            })
+        ).subscribe({
+            next: () => {
+                this.messageService.add({
+                    severity: 'success', 
+                    summary: 'Éxito', 
+                    detail: 'Caso de prueba guardado correctamente.'
+                });
+                this.onComponenteSeleccionado(); 
+                this.cerrarDialogo();
+                this.cerrarDialogoAdvertencia(); // Cerramos también el diálogo de advertencia por si estaba abierto
+            },
+            error: (err) => {
+                this.messageService.add({
+                    severity: 'error', 
+                    summary: 'Error', 
+                    detail: 'No se pudo guardar el caso'
+                });
+            }
+        });
     }
 
      exportarCasos(formato: string) {
@@ -637,44 +829,32 @@ export class CasosPage implements OnInit {
             return;
         }
 
-        // Mapeamos los datos a un formato más simple y legible para el Excel
-        const datosParaExportar = this.casos().map(item => {
-            // Unimos los nombres de las fuentes en un solo string
-            const fuentes = item.caso.fuentes?.map(f => f.nombre_fuente).join(', ') || '';
-
-            return {
-                'ID Caso': item.caso.id_caso,
-                'Nombre del Caso': item.caso.nombre_caso,
-                'Descripción': item.caso.descripcion_caso,
-                'Versión': item.caso.version,
-                'Estado Modificación': this.findEstadoModificacionNombre(item.caso.id_estado_modificacion),
-                'Último Estado Ejecución': this.findEstadoEvidenciaNombre((item as any).ultimoEstadoId),
-                'Fuentes': fuentes,
-                'Precondiciones': item.caso.precondiciones,
-                'Pasos': item.caso.pasos,
-                'Resultado Esperado': item.caso.resultado_esperado
-            };
-        });
-
-        // Creamos la hoja de cálculo a partir de nuestros datos
-        const worksheet: XLSX.WorkSheet = XLSX.utils.json_to_sheet(datosParaExportar);
-
-        // Creamos el libro de trabajo y le añadimos la hoja
-        const workbook: XLSX.WorkBook = { Sheets: { 'Casos': worksheet }, SheetNames: ['Casos'] };
-
-        // Generamos el buffer del archivo Excel
-        const excelBuffer: any = XLSX.write(workbook, { bookType: 'xlsx', type: 'array' });
-
-        // Guardamos el archivo
-        this.guardarArchivoExcel(excelBuffer, "CasosDePrueba");
+        const datosParaExportar = this.casos().map((item: any) => ({
+            'ID Caso': item.caso.id_caso,
+            'Nombre del Caso': item.caso.nombre_caso,
+            'Descripción': item.caso.descripcion_caso,
+            'Versión': item.caso.version,
+            'Estado Modificación': item.caso.nombre_estado_modificacion,
+            'Último Estado Ejecución': item.nombre_ultimo_estado,
+            'Fuentes': item.caso.fuentes_nombres,
+            'RUTs': item.caso.ruts_concatenados,
+        }));
+        
+        exportarAExcel(datosParaExportar, "CasosDePrueba");
     }
 
-    // 3. AÑADE ESTE NUEVO MÉTODO AUXILIAR
-    private guardarArchivoExcel(buffer: any, nombreArchivo: string): void {
-        const data: Blob = new Blob([buffer], {
-            type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;charset=UTF-8'
-        });
-        saveAs(data, nombreArchivo + '_export_' + new Date().getTime() + '.xlsx');
+    descargarPlantilla() {
+        descargarPlantillaCasos();
+    }
+
+    private normalizarNombreCaso(nombre: string): string {
+        if (!nombre) {
+            return '';
+        }
+        return nombre
+            .toLowerCase() // 1. Convertir a minúsculas
+            .normalize("NFD").replace(/[\u0300-\u036f]/g, "") // 2. Quitar tildes y acentos
+            .replace(/[^a-z0-9]/g, ''); // 3. Quitar espacios y todos los caracteres no alfanuméricos
     }
 
     exportarPlanDePruebas() {

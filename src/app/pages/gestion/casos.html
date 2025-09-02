@@ -294,3 +294,80 @@
         <button pButton pRipple label="Guardar" icon="pi pi-check" class="p-button-text" (click)="guardarCaso()"></button>
     </ng-template>
 </p-dialog>
+
+<p-dialog [(visible)]="importDialog" 
+          header="Importar Casos de Prueba desde Excel" 
+          [modal]="true" 
+          [style]="{width: '650px'}" 
+          (onHide)="cerrarDialogoImportar()">
+    
+    <div class="flex flex-col gap-6 p-4">
+        <div class="flex items-center gap-4 p-4 border rounded-lg bg-surface-50 dark:bg-surface-800">
+            <i class="pi pi-download text-3xl text-primary"></i>
+            <div>
+                <h3 class="font-bold text-lg m-0">Paso 1: Descargar la Plantilla</h3>
+                <p class="m-0 mt-1 text-muted-color">
+                    Descarga el archivo Excel, rellénalo con los datos de tus casos de prueba y guárdalo en tu equipo.
+                </p>
+            </div>
+            <button pButton pRipple label="Descargar Plantilla" icon="pi pi-download" class="p-button-outlined ml-auto" (click)="descargarPlantilla()"></button>
+        </div>
+
+        <div class="flex items-center gap-4 p-4 border rounded-lg bg-surface-50 dark:bg-surface-800">
+            <i class="pi pi-upload text-3xl text-primary"></i>
+            <div>
+                <h3 class="font-bold text-lg m-0">Paso 2: Subir el Archivo</h3>
+                <p class="m-0 mt-1 text-muted-color">
+                    Selecciona el archivo Excel que completaste. Solo se permite un archivo a la vez.
+                </p>
+                <p-fileUpload #fileUploader
+                              name="archivoImportacion"
+                              mode="basic"
+                              chooseLabel="Seleccionar Archivo"
+                              chooseIcon="pi pi-folder-open"
+                              [auto]="true"
+                              [customUpload]="true"
+                              (uploadHandler)="onArchivoSeleccionado($event)"
+                              accept=".xlsx, .xls"
+                              class="mt-4">
+                </p-fileUpload>
+            </div>
+        </div>
+    </div>
+
+    <ng-template pTemplate="footer">
+        <button pButton pRipple label="Cancelar" icon="pi pi-times" class="p-button-text" (click)="cerrarDialogoImportar()"></button>
+        <button pButton pRipple label="Procesar Archivo" icon="pi pi-check" [disabled]="!archivoParaImportar" (click)="procesarArchivo()"></button>
+    </ng-template>
+</p-dialog>
+
+<p-dialog [(visible)]="advertenciaDialog" 
+          header="Advertencia de Posibles Duplicados" 
+          [modal]="true" 
+          [style]="{width: '700px'}" 
+          (onHide)="cerrarDialogoAdvertencia()">
+    
+    <div class="p-4">
+        <div class="flex items-center gap-4 bg-yellow-100 dark:bg-yellow-900/30 p-3 rounded-lg border border-yellow-300 dark:border-yellow-700">
+            <i class="pi pi-exclamation-triangle text-3xl text-yellow-500"></i>
+            <div>
+                <h3 class="font-bold text-lg m-0">Se encontraron casos con nombres muy parecidos</h3>
+                <p class="m-0 mt-1">Revisa la siguiente lista. Si estás seguro, puedes continuar con la creación de casos.</p>
+            </div>
+        </div>
+
+        <div class="mt-4 max-h-[300px] overflow-y-auto">
+            <ul class="list-none p-0 m-0">
+                <li *ngFor="let advertencia of casosConAdvertencia" class="mb-3 p-2 border-b border-surface-200 dark:border-surface-700">
+                    <div class="font-semibold text-color">Caso en el archivo: <span class="font-normal text-primary">{{ advertencia.nombreNuevo }}</span></div>
+                    <div class="text-sm text-muted-color mt-1">Es muy similar a un caso existente: <span class="font-normal">{{ advertencia.nombreExistente }}</span> ({{ advertencia.similitud }}% de similitud)</div>
+                </li>
+            </ul>
+        </div>
+    </div>
+
+    <ng-template pTemplate="footer">
+        <button pButton pRipple label="Cancelar" icon="pi pi-times" class="p-button-text" (click)="cerrarDialogoAdvertencia()"></button>
+        <button pButton pRipple label="Continuar de todas formas" icon="pi pi-check" class="p-button-warning" (click)="confirmarAdvertencia()"></button>
+    </ng-template>
+</p-dialog>

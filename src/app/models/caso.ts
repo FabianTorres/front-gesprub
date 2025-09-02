@@ -5,7 +5,6 @@ export interface Caso {
   nombre_caso: string;
   descripcion_caso: string;
   activo: number; // 1 para activo, 0 para inactivo
-  num_formulario?: number;//Se debe sacar
   id_componente: number;
   id_usuario_creador: number;
   id_estado_modificacion: number;
@@ -15,6 +14,5 @@ export interface Caso {
   jp_responsable: number;
   version?: string;
   anio?: number;
-  fuente?: string;//Se debe sacar
   fuentes?: Fuente[];
 }

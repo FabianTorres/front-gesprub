@@ -3,7 +3,12 @@ Todos los cambios significativos en este proyecto se documentarán en este archi
 El formato se basa en [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 y este proyecto adhiere al [Versionado Semántico](https://semver.org/lang/es/).
 
-## [0.6.1] - 2025-08-27
+## [0.6.2] - 2025-09-02
+
+### Fixed
+-   Se actualiza la fecha de ultimo login para que ahora si muestre el dato correcto
+
+## [0.6.1] - 2025-09-02
 
 ### Changed
 -   Ahora al agregar un nuevo caso de forma manual, tambien hace validaciones para detectar el porcentaje de similitud con los casos actuales y si hay duplicados

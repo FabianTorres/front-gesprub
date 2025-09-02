@@ -35,6 +35,8 @@ export class AutenticacionService {
       tap(usuarioCompleto => {
         this.guardarUsuario(usuarioCompleto);
         this.usuarioActual.set(usuarioCompleto);
+        //Se actualiza el ultimo login
+        this.usuarioService.actualizarUltimoLogin(usuarioCompleto.idUsuario!).subscribe();
         this.router.navigate(['/']);
       })
     );

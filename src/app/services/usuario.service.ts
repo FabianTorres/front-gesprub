@@ -41,4 +41,9 @@ export class UsuarioService {
   register(datosUsuario: any): Observable<Usuario> {
     return this.http.post<Usuario>(`${environment.apiUrl}/usuario`, datosUsuario);
   }
+
+  actualizarUltimoLogin(idUsuario: number): Observable<any> {
+      // Este método no necesita enviar un cuerpo, solo la petición PATCH a la URL.
+      return this.http.patch(`${this.apiUrl}/${idUsuario}/ultimo-login`, {});
+  }
 }

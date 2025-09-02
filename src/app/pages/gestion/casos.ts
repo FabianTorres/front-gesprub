@@ -409,17 +409,6 @@ export class CasosPage implements OnInit {
 
 
         const proyectoActual = this.proyectoService.proyectoSeleccionado();
-        const debeMostrar = null;
-            if (proyectoActual) {
-                // Se revisa si el nombre del proyecto está en la lista de configuración
-                const debeMostrar = environment.proyectosDeDDJJ.includes(proyectoActual.nombre_proyecto);
-                
-            } else {
-                // Si no hay proyecto, no se muestra
-                
-            }
-        
-            //validaciones a la entrada de datos
         const caso = casoConEvidencia.caso;
         if (!caso) {
             this.messageService.add({severity: 'error', summary: 'Error', detail: 'No se pudieron cargar los datos del caso.'});
@@ -448,7 +437,6 @@ export class CasosPage implements OnInit {
         this.caso = { ...caso };
         this.editando = true;
         this.activoDialog = caso.activo === 1;
-        //this.esFuenteExterna = !!caso.fuente; 
         const hitoId = this.componentes().find(c => c.id_componente === caso.id_componente)?.hito_componente || null;
         this.hitoSeleccionado.set(hitoId); 
         

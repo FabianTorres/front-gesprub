@@ -5,6 +5,8 @@ y este proyecto adhiere al [Versionado Semántico](https://semver.org/lang/es/).
 
 ## [0.6.2] - 2025-09-02
 
+### Added
+-   Se agrega funcionalidad de importar casos con asistente de carga de datos
 ### Fixed
 -   Se actualiza la fecha de ultimo login para que ahora si muestre el dato correcto
 

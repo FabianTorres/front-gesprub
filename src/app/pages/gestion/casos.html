@@ -72,7 +72,7 @@
                 <tr>
                     <th pSortableColumn="caso.id_estado_modificacion" style="width:10%">
                         <div class="flex justify-between items-center">
-                            Estado Mod.
+                            Tipo de actualización
                             <p-columnFilter field="caso.id_estado_modificacion" matchMode="equals" display="menu" [showMatchModes]="false">
                                 <ng-template pTemplate="filter" let-value let-filter="filterCallback">
                                     <p-select [ngModel]="value" [options]="opcionesFiltroModificacion" (onChange)="filter($event.value)" placeholder="Cualquiera"></p-select>
@@ -82,7 +82,7 @@
                     </th>
                     <th pSortableColumn="caso.nombre_caso">
                         <div class="flex justify-between items-center">
-                            Nombre del Caso
+                            Nombre
                             <p-columnFilter type="text" field="caso.nombre_caso" display="menu"></p-columnFilter>
                         </div>
                     </th>
@@ -296,48 +296,126 @@
 </p-dialog>
 
 <p-dialog [(visible)]="importDialog" 
-          header="Importar Casos de Prueba desde Excel" 
+          header="Importar Casos de Prueba" 
           [modal]="true" 
-          [style]="{width: '650px'}" 
+          [style]="{width: '80vw', 'max-width': '950px'}" 
           (onHide)="cerrarDialogoImportar()">
-    
-    <div class="flex flex-col gap-6 p-4">
-        <div class="flex items-center gap-4 p-4 border rounded-lg bg-surface-50 dark:bg-surface-800">
-            <i class="pi pi-download text-3xl text-primary"></i>
-            <div>
-                <h3 class="font-bold text-lg m-0">Paso 1: Descargar la Plantilla</h3>
-                <p class="m-0 mt-1 text-muted-color">
-                    Descarga el archivo Excel, rellénalo con los datos de tus casos de prueba y guárdalo en tu equipo.
-                </p>
-            </div>
-            <button pButton pRipple label="Descargar Plantilla" icon="pi pi-download" class="p-button-outlined ml-auto" (click)="descargarPlantilla()"></button>
-        </div>
 
-        <div class="flex items-center gap-4 p-4 border rounded-lg bg-surface-50 dark:bg-surface-800">
-            <i class="pi pi-upload text-3xl text-primary"></i>
-            <div>
-                <h3 class="font-bold text-lg m-0">Paso 2: Subir el Archivo</h3>
-                <p class="m-0 mt-1 text-muted-color">
-                    Selecciona el archivo Excel que completaste. Solo se permite un archivo a la vez.
-                </p>
-                <p-fileUpload #fileUploader
-                              name="archivoImportacion"
-                              mode="basic"
-                              chooseLabel="Seleccionar Archivo"
-                              chooseIcon="pi pi-folder-open"
-                              [auto]="true"
-                              [customUpload]="true"
-                              (uploadHandler)="onArchivoSeleccionado($event)"
-                              accept=".xlsx, .xls"
-                              class="mt-4">
-                </p-fileUpload>
+    <div *ngIf="importStep === 'selection'">
+        <div class="grid">
+            <div class="col-12 md:col-6">
+                <p-fieldset legend="Opción 1: Importación Rápida con Plantilla">
+                    <div class="flex flex-col items-center text-center p-4">
+                        <i class="pi pi-file-excel text-4xl text-green-500 mb-3"></i>
+                        <p class="font-bold">La forma más sencilla y recomendada.</p>
+                        <p class="text-muted-color">Descarga nuestra plantilla, rellénala con tus datos y súbela aquí para una importación automática.</p>
+                        <div class="flex gap-2 mt-4">
+                            <button pButton pRipple type="button" label="Descargar Plantilla" icon="pi pi-download" class="p-button-outlined" (click)="descargarPlantilla()"></button>
+                            <p-fileUpload #plantillaUploader
+                                          mode="basic"
+                                          chooseLabel="Subir Plantilla"
+                                          chooseIcon="pi pi-upload"
+                                          [auto]="true"
+                                          [customUpload]="true"
+                                          (uploadHandler)="onArchivoSeleccionado($event); procesarArchivo() "
+                                          accept=".xlsx, .xls">
+                            </p-fileUpload>
+                        </div>
+                    </div>
+                </p-fieldset>
+            </div>
+
+            <div class="col-12 md:col-6">
+                <p-fieldset legend="Opción 2: Asistente para Archivo Propio">
+                    <div class="flex flex-col items-center text-center p-4">
+                        <i class="pi pi-sliders-h text-4xl text-blue-500 mb-3"></i>
+                        <p class="font-bold">¿Ya tienes tu propio archivo Excel?</p>
+                        <p class="text-muted-color">Sube tu archivo y te guiaremos paso a paso para que nos digas qué significa cada columna. No necesitas cambiar tu archivo.</p>
+                        <p-fileUpload #asistenteUploader
+                                      mode="basic"
+                                      chooseLabel="Subir Archivo Propio"
+                                      chooseIcon="pi pi-folder-open"
+                                      [auto]="true"
+                                      [customUpload]="true"
+                                      (uploadHandler)="onArchivoAsistenteSeleccionado($event)"
+                                      accept=".xlsx, .xls"
+                                      class="mt-4">
+                        </p-fileUpload>
+                    </div>
+                </p-fieldset>
             </div>
         </div>
     </div>
 
+
+    <div *ngIf="importStep === 'mapping'">
+        <div class="mb-4">
+            <label for="hojaSelect" class="block font-bold mb-2">Paso 1: Selecciona la hoja con los datos</label>
+            <p-select id="hojaSelect"
+                      [options]="excelHojas"
+                      [(ngModel)]="excelHojaSeleccionada"
+                      (onChange)="seleccionarHoja($event.value)"
+                      styleClass="w-full md:w-1/3">
+            </p-select>
+        </div>
+
+        <div class="p-fluid">
+            <h3 class="font-bold mt-4 mb-3">Paso 2: Asigna tus columnas a nuestros campos</h3>
+            <div *ngFor="let campo of nuestrosCampos" class="field grid items-center">
+                <label class="col-12 mb-2 md:col-4 md:mb-0">
+                    {{ campo.campo }}
+                    <span *ngIf="campo.obligatorio" class="text-red-500">*</span>
+                </label>
+                <div class="col-12 md:col-8">
+                    <p-select [options]="excelEncabezados" 
+                              [(ngModel)]="mapeoColumnas[campo.campo]"
+                              placeholder="-- Ignorar esta columna --" 
+                              [showClear]="true">
+                    </p-select>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div *ngIf="importStep === 'preview'">
+        <h3 class="font-bold mt-2 mb-3">Paso 3: Revisa tus datos transformados</h3>
+        <p class="text-muted-color mb-4">
+            A continuación se muestran las primeras 5 filas de tu archivo con el formato final. Si todo es correcto, puedes proceder a importar.
+        </p>
+
+        <p-table [value]="datosPrevisualizacion" responsiveLayout="scroll">
+            <ng-template pTemplate="header">
+                <tr>
+                    <th *ngFor="let col of columnasPrevisualizacion">{{ col.header }}</th>
+                </tr>
+            </ng-template>
+            <ng-template pTemplate="body" let-fila>
+                <tr>
+                    <td *ngFor="let col of columnasPrevisualizacion">
+                        {{ fila[col.field] }}
+                    </td>
+                </tr>
+            </ng-template>
+            <ng-template pTemplate="emptymessage">
+                <tr>
+                    <td [attr.colspan]="columnasPrevisualizacion.length" class="text-center">No hay datos para previsualizar.</td>
+                </tr>
+            </ng-template>
+        </p-table>
+    </div>
+
+
     <ng-template pTemplate="footer">
-        <button pButton pRipple label="Cancelar" icon="pi pi-times" class="p-button-text" (click)="cerrarDialogoImportar()"></button>
-        <button pButton pRipple label="Procesar Archivo" icon="pi pi-check" [disabled]="!archivoParaImportar" (click)="procesarArchivo()"></button>
+        <button pButton pRipple label="Cerrar" icon="pi pi-times" class="p--text" (click)="cerrarDialogoImportar()"></button>
+        
+        <button pButton pRipple label="Atrás" icon="pi pi-arrow-left" class="p-button-secondary" *ngIf="importStep === 'mapping'" (click)="importStep = 'selection'"></button>
+        <button pButton pRipple label="Atrás" icon="pi pi-arrow-left" class="p-button-secondary" *ngIf="importStep === 'preview'" (click)="importStep = 'mapping'"></button>
+        <button pButton pRipple label="Previsualizar Datos" icon="pi pi-eye" *ngIf="importStep === 'mapping'" (click)="previsualizarDatos()"></button>
+        
+        <div *ngIf="importStep === 'preview'">
+            <button pButton pRipple label="Descargar con Formato" icon="pi pi-download" class="p-button-outlined" (click)="descargarConFormato()"></button>
+            <button pButton pRipple label="Importar Directamente" icon="pi pi-check" class="ml-2" (click)="importarDirectamente()"></button>
+        </div>
     </ng-template>
 </p-dialog>
 

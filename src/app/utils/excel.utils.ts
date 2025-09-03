@@ -14,8 +14,8 @@ export function leerYValidarExcel(file: File, messageService: MessageService): P
 
     reader.onload = (e: any) => {
       try {
-        const bstr: string = e.target.result;
-        const workbook: XLSX.WorkBook = XLSX.read(bstr, { type: 'binary' });
+        const bstr: ArrayBuffer = e.target.result;
+        const workbook: XLSX.WorkBook = XLSX.read(bstr, { type: 'array' });
         const worksheetName: string = workbook.SheetNames[0];
         const worksheet: XLSX.WorkSheet = workbook.Sheets[worksheetName];
 
@@ -67,7 +67,7 @@ export function leerYValidarExcel(file: File, messageService: MessageService): P
     };
 
     reader.onerror = (error) => reject(error);
-    reader.readAsBinaryString(file);
+    reader.readAsArrayBuffer(file);
   });
 }
 

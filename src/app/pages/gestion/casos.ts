@@ -122,6 +122,32 @@ export class CasosPage implements OnInit {
 
     private accionConfirmada: 'importar' | 'guardarManual' = 'importar'; 
 
+    // Controla el estado/paso actual del proceso de importación
+    importStep: 'selection' | 'mapping' | 'preview' = 'selection';
+
+    // Propiedades para el Asistente de Importación
+    nuestrosCampos: any[] = [
+        { campo: 'Nombre del Caso', obligatorio: true },
+        { campo: 'Descripción', obligatorio: true },
+        { campo: 'Versión', obligatorio: true },
+        { campo: 'Estado Modificación', obligatorio: true },
+        { campo: 'Fuentes', obligatorio: false },
+        { campo: 'Precondiciones', obligatorio: false },
+        { campo: 'Pasos', obligatorio: false },
+        { campo: 'Resultado Esperado', obligatorio: false }
+    ];
+    excelHojas: string[] = [];
+    excelHojaSeleccionada: string = '';
+    excelEncabezados: string[] = [];
+    mapeoColumnas: { [key: string]: string | null } = {};
+
+
+    //Propiedades para la Previsualización
+    datosPrevisualizacion: any[] = [];
+    columnasPrevisualizacion: { field: string, header: string }[] = [];
+    private todasLasFilasDelExcel: any[] = [];
+
+
     
 
 
@@ -601,6 +627,7 @@ export class CasosPage implements OnInit {
 
 
     importarCasos() {
+        this.importStep = 'selection'; // Reinicia a la vista de selección
         this.archivoParaImportar = null; // Reseteamos el archivo seleccionado
         this.importDialog = true; // Abrimos el diálogo de importación
     }
@@ -624,6 +651,164 @@ export class CasosPage implements OnInit {
                 detail: `Listo para procesar: ${file.name}` 
             });
         }
+    }
+
+    onArchivoAsistenteSeleccionado(event: any) {
+        const file = event.files[0];
+        if (!file) return;
+
+        this.archivoParaImportar = file;
+        const reader = new FileReader();
+
+        reader.onload = (e: any) => {
+            try {
+                const bstr: ArrayBuffer = e.target.result;
+                const workbook: XLSX.WorkBook = XLSX.read(bstr, { type: 'array' });
+                
+                // 1. Obtenemos los nombres de todas las hojas del archivo
+                this.excelHojas = workbook.SheetNames;
+
+                if (this.excelHojas.length > 0) {
+                    // 2. Por defecto, seleccionamos la primera hoja
+                    this.seleccionarHoja(this.excelHojas[0]);
+                    // 3. Cambiamos al paso de mapeo
+                    this.importStep = 'mapping';
+                } else {
+                    this.messageService.add({ severity: 'error', summary: 'Error', detail: 'El archivo Excel no contiene hojas.' });
+                }
+            } catch (error) {
+                this.messageService.add({ severity: 'error', summary: 'Error al leer archivo', detail: 'El formato del archivo es inválido.' });
+                console.error("Error al procesar el archivo del asistente:", error);
+            }
+        };
+        reader.readAsArrayBuffer(file);
+    }
+
+    seleccionarHoja(nombreHoja: string) {
+        if (!this.archivoParaImportar) return;
+
+        this.excelHojaSeleccionada = nombreHoja;
+        const reader = new FileReader();
+        reader.onload = (e: any) => {
+            const bstr: ArrayBuffer = e.target.result;
+            const workbook: XLSX.WorkBook = XLSX.read(bstr, { type: 'array' });
+            const worksheet: XLSX.WorkSheet = workbook.Sheets[nombreHoja];
+            
+            // Leemos solo la primera fila para obtener los encabezados
+            const datosParaEncabezados = XLSX.utils.sheet_to_json(worksheet, { header: 1, blankrows: false });
+            
+            if (datosParaEncabezados && datosParaEncabezados.length > 0) {
+                this.excelEncabezados = (datosParaEncabezados[0] as string[]).map(h => String(h).trim());
+                // Inicializamos el objeto de mapeo
+                this.mapeoColumnas = {};
+                this.nuestrosCampos.forEach(c => this.mapeoColumnas[c.campo] = null);
+            } else {
+                this.excelEncabezados = [];
+            }
+        };
+        reader.readAsArrayBuffer(this.archivoParaImportar);
+    }
+
+    previsualizarDatos() {
+        // La validación de campos obligatorios se mantiene igual
+        const camposMapeados = Object.keys(this.mapeoColumnas).filter(key => this.mapeoColumnas[key] !== null);
+        const camposObligatoriosFaltantes = this.nuestrosCampos
+            .filter(nc => nc.obligatorio && !camposMapeados.includes(nc.campo));
+
+        if (camposObligatoriosFaltantes.length > 0) {
+            const nombresCampos = camposObligatoriosFaltantes.map(c => c.campo).join(', ');
+            this.messageService.add({ 
+                severity: 'warn', 
+                summary: 'Campos Requeridos Faltantes', 
+                detail: `Por favor, asigna una columna para los campos: ${nombresCampos}` 
+            });
+            return;
+        }
+
+        if (!this.archivoParaImportar) return;
+
+        const reader = new FileReader();
+        reader.onload = (e: any) => {
+            const bstr: ArrayBuffer = e.target.result;
+            const workbook: XLSX.WorkBook = XLSX.read(bstr, { type: 'array' });
+            const worksheet: XLSX.WorkSheet = workbook.Sheets[this.excelHojaSeleccionada];
+            
+            const todasLasFilasOriginales = XLSX.utils.sheet_to_json(worksheet, { raw: false, blankrows: false });
+
+            // Limpiamos las claves (nombres de columnas) de cada objeto leído del Excel
+            this.todasLasFilasDelExcel = todasLasFilasOriginales.map((fila: any) => {
+                const filaConClavesLimpias: { [key: string]: any } = {};
+                for (const key in fila) {
+                    if (Object.prototype.hasOwnProperty.call(fila, key)) {
+                        filaConClavesLimpias[key.trim()] = fila[key];
+                    }
+                }
+                return filaConClavesLimpias;
+            });
+
+            // Transformamos las primeras 5 filas para la previsualización
+            this.datosPrevisualizacion = this.todasLasFilasDelExcel.slice(0, 5).map((filaOriginal: any) => {
+                const filaTransformada: { [key: string]: any } = {};
+                
+                this.nuestrosCampos.forEach(nuestroCampoInfo => {
+                    const nuestroCampo = nuestroCampoInfo.campo;
+                    const columnaUsuario = this.mapeoColumnas[nuestroCampo];
+                    
+                    if (columnaUsuario) {
+                        // Ahora la búsqueda SÍ funcionará porque ambas claves estarán limpias
+                        filaTransformada[nuestroCampo] = filaOriginal[columnaUsuario] || '';
+                    }
+                });
+
+                return filaTransformada;
+            });
+
+            this.columnasPrevisualizacion = this.nuestrosCampos
+                .map(nc => nc.campo)
+                .filter(campo => this.mapeoColumnas[campo] !== null)
+                .map(campo => ({ field: campo, header: campo }));
+
+            this.importStep = 'preview';
+        };
+        reader.readAsArrayBuffer(this.archivoParaImportar);
+    }
+
+    descargarConFormato() {
+        // Transformamos TODOS los datos usando el mapeo del usuario
+        const datosTransformados = this.todasLasFilasDelExcel.map((filaOriginal: any) => {
+            const filaTransformada: { [key: string]: any } = {};
+            for (const nuestroCampo of this.nuestrosCampos.map(c => c.campo)) {
+                const columnaUsuario = this.mapeoColumnas[nuestroCampo];
+                if (columnaUsuario) {
+                    // Usamos los nombres de nuestros campos como encabezados
+                    filaTransformada[nuestroCampo] = filaOriginal[columnaUsuario];
+                }
+            }
+            return filaTransformada;
+        });
+
+        exportarAExcel(datosTransformados, "Casos_Importados_Con_Formato");
+        this.messageService.add({ severity: 'success', summary: 'Descarga Completa', detail: 'El archivo con el nuevo formato se ha descargado.' });
+    }
+
+    importarDirectamente() {
+        // Reutilizamos la lógica del método 'procederConImportacion' que ya teníamos para la importación rápida
+        // Primero, transformamos TODOS los datos del Excel al formato que espera el backend
+        const casosParaValidar = this.todasLasFilasDelExcel.map((filaOriginal: any) => {
+            const filaTransformada: { [key: string]: any } = {};
+            for (const nuestroCampo in this.mapeoColumnas) {
+                const columnaUsuario = this.mapeoColumnas[nuestroCampo];
+                filaTransformada[nuestroCampo] = columnaUsuario ? filaOriginal[columnaUsuario] : undefined;
+            }
+            return filaTransformada;
+        });
+
+        // Ahora, ejecutamos la misma lógica de validación de duplicados que en la importación manual
+        this.casosValidadosTemporalmente = casosParaValidar;
+        this.accionConfirmada = 'importar'; // Aseguramos que la acción sea la correcta
+        
+        // Llamamos a la lógica de validación de duplicados y envío que ya existe
+        this.procederConImportacion();
     }
 
     async procesarArchivo() {

@@ -118,13 +118,21 @@ export class AppMenu implements OnInit {
                 label: 'Inicio',
                 items: [
                     {
-                        label: 'Dashboard',
+                        label: 'Home',
                         icon: 'pi pi-fw pi-home',
-                        //routerLink: ['/'],
-                        //visible: false // Mantenemos el dashboard oculto como querías
+                        routerLink: ['/'],
+                        visible: true // Mantenemos el dashboard oculto como querías
+                    },
+                    {
+                        label: 'Dashboard',
+                        icon: 'pi pi-fw pi-chart-bar',
+                        routerLink: ['dashboard'],
+                        visible: true // Mantenemos el dashboard oculto como querías
                     }
                 ]
+                
             },
+            
             {
                 label: 'Gestión de Pruebas',
                 items: [

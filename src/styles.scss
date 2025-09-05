@@ -50,3 +50,13 @@
     color: var(--surface-0) !important;
     border-color: var(--surface-700) !important;
 }
+
+//Le da la altura al dashboard
+gridster {
+  min-height: 500px; // dale una altura base
+}
+
+:host ::ng-deep .p-orderlist-list {
+  overflow: hidden;
+}
+

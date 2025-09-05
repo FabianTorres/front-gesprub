@@ -10,7 +10,10 @@ export default [
     //{ path: 'documentation', component: Documentation },
     //{ path: 'crud', component: Crud },
     //{ path: 'empty', component: Empty },
-    
+    { 
+        path: 'dashboard', 
+        loadComponent: () => import('./dashboard/dashboard').then(m => m.Dashboard) 
+    },
     { path: 'gestion/componentes', loadComponent: () => import('./gestion/componentes').then(m => m.ComponentesPage) },
      { path: 'gestion/casos', loadComponent: () => import('./gestion/casos').then(m => m.CasosPage) },
      { path: 'ejecucion/:id', loadComponent: () => import('./ejecucion/ejecucion').then(m => m.EjecucionPage) },

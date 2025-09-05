@@ -1,0 +1,138 @@
+<div>
+    <h2 class="text-2xl font-semibold mb-4">Dashboard del Proyecto</h2>
+
+    <div class="flex flex-wrap items-center gap-4 mb-6 p-4 bg-surface-50 dark:bg-surface-800 border rounded-lg">
+        
+        <div>
+            <label class="block font-bold mb-2">Seleccionar Vista</label>
+            <p-selectButton [options]="opcionesDeVista" 
+                            [(ngModel)]="vistaSeleccionada"
+                            optionLabel="label" 
+                            optionValue="value"
+                            (onChange)="onVistaChange()">
+            </p-selectButton>
+        </div>
+
+        <div *ngIf="vistaSeleccionada() === 'otro-usuario'">
+            <label for="userSelect" class="block font-bold mb-2">Ver datos de</label>
+            
+            <p-select id="userSelect"
+                    [options]="todosLosUsuarios()"
+                    [(ngModel)]="usuarioSeleccionado"
+                    optionLabel="nombreUsuario"
+                    placeholder="Seleccionar un usuario..."
+                    [showClear]="true"
+                    [style]="{ 'min-width': '250px' }">
+            </p-select>
+        </div>
+
+        <div class="ml-auto">
+            <button pButton type="button" icon="pi pi-cog" label="Personalizar" class="p-button-outlined" (click)="abrirPanelConfiguracion()"></button>
+        </div>
+    </div>
+    <div *ngIf="dashboardData() as data; else loadingTemplate">
+        <div style="min-height: 80vh;">
+            <gridster [options]="options">
+                <gridster-item [item]="item" *ngFor="let item of dashboard">
+                    
+                    <ng-container [ngSwitch]="item['type']">
+                        
+                        <ng-container *ngSwitchCase="'kpi'">
+                            <app-kpi-card *ngIf="item['title'] === 'Total Casos'"
+                                        [label]="item['title']"
+                                        [loading]="loading()"
+                                        [value]="data.kpis.totalCasos" 
+                                        icon="pi-briefcase">
+                            </app-kpi-card>
+
+                            <app-kpi-card *ngIf="item['title'] === 'Total Ejecuciones'"
+                                        [label]="item['title']"
+                                        [loading]="loading()"
+                                        [value]="data.kpis.totalEjecuciones" 
+                                        icon="pi-check-square">
+                            </app-kpi-card>
+
+                            <app-kpi-card *ngIf="item['title'] === 'Casos Sin Ejecutar'"
+                                        [label]="item['title']"
+                                        [loading]="loading()"
+                                        [value]="data.kpis.casosSinEjecutar"
+                                        icon="pi-info-circle">
+                            </app-kpi-card>
+
+                            <app-kpi-card *ngIf="item['title'] === 'Promedio Ejecuciones/Día'"
+                                        [label]="item['title']"
+                                        [loading]="loading()"
+                                        [value]="(data.kpis.promedioEjecucionesDiarias | number:'1.0-1') ?? '0.0'"
+                                        icon="pi-chart-line">
+                            </app-kpi-card>
+                        </ng-container>
+                        <ng-container *ngSwitchCase="'chart'">
+                        
+                            <app-chart-widget *ngIf="item['title'] === 'Estado de Ejecuciones'"
+                                            [title]="item['title']"
+                                            type="doughnut"
+                                            [loading]="loading()"
+                                            [data]="data.estadoEjecuciones"
+                                            [options]="doughnutOptions">
+                            </app-chart-widget>
+
+                            <app-chart-widget *ngIf="item['title'] === 'Actividad Semanal'"
+                                            [title]="item['title']"
+                                            type="bar"
+                                            [loading]="loading()"
+                                            [data]="data.actividadSemanal"
+                                            [options]="chartOptions">
+                            </app-chart-widget>
+
+                        </ng-container>
+                        
+                    </ng-container>
+
+                </gridster-item>
+            </gridster>
+            
+        </div>
+    </div>
+    <ng-template #loadingTemplate>
+        <div class="text-center p-4">
+            <i class="pi pi-spin pi-spinner text-3xl text-primary"></i>
+            <p class="mt-2 text-muted-color">Cargando datos del dashboard...</p>
+        </div>
+    </ng-template>
+
+</div>
+
+<p-sidebar [(visible)]="configSidebarVisible" position="right" styleClass="w-full md:w-[30rem]">
+    <ng-template pTemplate="header">
+        <div class="flex items-center gap-2">
+            <i class="pi pi-cog text-xl"></i>
+            <span class="font-bold text-xl">Personalizar Dashboard</span>
+        </div>
+    </ng-template>
+
+    <ng-template pTemplate="content">
+        <p class="text-muted-color mb-4">
+            Arrastra los elementos para reordenarlos. Activa o desactiva los widgets que deseas ver en tu dashboard.
+        </p>
+
+        <p-orderList [value]="widgetsConfig" 
+                     (onReorder)="guardarConfiguracionEnLocalStorage()"
+                     [dragdrop]="true">
+            <ng-template let-widget pTemplate="item">
+                <div class="flex items-center justify-between p-2 w-full">
+                    <div class="flex items-center">
+                        <i class="pi pi-bars text-muted-color mr-3 cursor-grab"></i>
+                        <span>{{ widget.title }}</span>
+                    </div>
+                    <p-inputSwitch [(ngModel)]="widget.visible" 
+                                   (onChange)="guardarConfiguracionEnLocalStorage()">
+                    </p-inputSwitch>
+                </div>
+            </ng-template>
+        </p-orderList>
+    </ng-template>
+
+    <ng-template pTemplate="footer">
+        <button pButton type="button" label="Cerrar" class="p-button-text w-full" (click)="configSidebarVisible = false"></button>
+    </ng-template>
+</p-sidebar>

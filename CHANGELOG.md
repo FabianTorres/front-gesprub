@@ -3,6 +3,11 @@ Todos los cambios significativos en este proyecto se documentarán en este archi
 El formato se basa en [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 y este proyecto adhiere al [Versionado Semántico](https://semver.org/lang/es/).
 
+## [0.7.0] - 2025-09-03
+
+### Added
+-   Se agrega la funcionalidad de Dashboard
+
 ## [0.6.2] - 2025-09-02
 
 ### Added

@@ -6,7 +6,6 @@ import { Observable } from 'rxjs';
 import { environment } from '../../environment/environment';
 import { Caso } from '../models/caso';
 import { CasoConEvidencia } from '../models/casoevidencia';
-import { Evidencia } from '../models/evidencia';
 import { HistorialCaso } from '../models/historial-caso';
 import { Fuente } from '../models/fuente';
 
@@ -54,7 +53,7 @@ export class CasoService {
     updateFuentesDeCaso(idCaso: number, fuentes: Fuente[]): Observable<any> {
         const url = `${this.apiUrl}/${idCaso}/fuentes`;
         
-        // ===== CAMBIO CLAVE =====
+
         // Transformamos el array de objetos Fuente en un array de solo los IDs.
         const idsFuente = fuentes.map(fuente => fuente.id_fuente);
         
@@ -64,5 +63,19 @@ export class CasoService {
 
     importarCasos(casos: any[], idComponente: number): Observable<any> {
         return this.http.post(`${this.apiUrl}/importar?id_componente=${idComponente}`, casos);
+    }
+
+    getCasosParaMuro(componenteId: number): Observable<{ backlog: Caso[], misTareas: Caso[] }> {
+        return this.http.get<{ backlog: Caso[], misTareas: Caso[] }>(`${this.apiUrl}/muro`, {
+            params: { componenteId: componenteId.toString() }
+        });
+    }
+
+    asignarCaso(idCaso: number, idUsuario: number): Observable<any> {
+        return this.http.patch(`${this.apiUrl}/${idCaso}/asignar`, { usuarioId: idUsuario });
+    }
+
+    desasignarCaso(idCaso: number): Observable<any> {
+        return this.http.patch(`${this.apiUrl}/${idCaso}/desasignar`, {});
     }
 }

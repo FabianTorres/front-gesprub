@@ -1,0 +1,94 @@
+// src/app/pages/gestion/muro-tareas/muro-tareas.component.scss
+
+.task-grid-container {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 1rem;
+}
+
+.mini-task-card {
+  // Estilos base de la tarjeta (unificados)
+  background: var(--surface-card);
+  border: 1px solid var(--surface-border);
+  border-radius: 8px;
+  padding: 0.75rem;
+  padding-bottom: 2rem; // Espacio extra abajo para la fuente
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  transition: box-shadow 0.2s, transform 0.2s;
+  position: relative;
+  min-height: 120px; // Aumentamos altura mínima para el nuevo contenido
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  overflow: hidden;
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+
+    // Los botones aparecen al pasar el mouse
+    .quick-assign-button, .quick-remove-button {
+      opacity: 1;
+    }
+  }
+
+  // Contenido principal de la tarjeta
+  & > div:first-child {
+    padding-top: 1.5rem; // Deja espacio para el tag de componente
+  }
+}
+
+// Botones de acción (asignar/desasignar)
+.quick-assign-button, .quick-remove-button {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+// Estilos de los tags y la descripción
+.card-component-tag {
+  position: absolute;
+  top: 0.5rem;
+  left: 0.75rem;
+  font-size: 0.8rem;
+  color: var(--text-color-secondary);
+  background-color: var(--surface-300);
+  padding: 0.1rem 0.3rem;
+  border-radius: 4px;
+  font-weight: bold;
+  z-index: 1;
+  max-width: 85%;
+}
+
+.card-source-tag {
+  position: absolute;
+  bottom: 0.5rem;
+  left: 0.75rem;
+  font-size: 0.65rem;
+  color: var(--text-color-secondary);
+  background-color: var(--surface-200);
+  padding: 0.15rem 0.4rem;
+  border-radius: 4px;
+}
+
+.card-description {
+  font-size: 0.75rem;
+  color: var(--text-color-secondary);
+  margin-top: 0.5rem;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-height: 2.25rem;
+}
+
+.truncate-text {
+  white-space: nowrap;      /* Evita que el texto salte a la siguiente línea */
+  overflow: hidden;         /* Oculta el texto que se desborda */
+  text-overflow: ellipsis;  /* Añade los puntos suspensivos (...) */
+  display: block;           /* Asegura que ocupe todo el ancho disponible */
+}

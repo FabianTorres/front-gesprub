@@ -124,7 +124,7 @@ export class AppMenu implements OnInit {
                         visible: true // Mantenemos el dashboard oculto como querías
                     },
                     {
-                        label: 'Dashboard',
+                        label: 'Tablero',
                         icon: 'pi pi-fw pi-chart-bar',
                         routerLink: ['dashboard'],
                         visible: true // Mantenemos el dashboard oculto como querías
@@ -139,6 +139,12 @@ export class AppMenu implements OnInit {
                     { label: 'Componentes', icon: 'pi pi-fw pi-server', routerLink: ['/pages/gestion/componentes'] },
                     { label: 'Casos de Prueba', icon: 'pi pi-fw pi-file-edit', routerLink: ['/pages/gestion/casos'] },
                     { label: 'Ciclos de Prueba', icon: 'pi pi-fw pi-sync', disabled: true } // Deshabilitado en lugar de comentado
+                ]
+            },
+            {
+                label: 'Gestión de asignaciones',
+                items: [
+                    { label: 'Muro tareas', icon: 'pi pi-fw pi-user', routerLink: ['/pages/gestion/muro-tareas'] }
                 ]
             },
             {

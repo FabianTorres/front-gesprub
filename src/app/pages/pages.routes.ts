@@ -20,8 +20,6 @@ export default [
      { path: 'casos/:id', loadComponent: () => import('./casos/historial/historial').then(m => m.HistorialPage) },
      { path: 'admin/usuarios', 
         loadComponent: () => import('./admin/usuarios').then(m => m.UsuariosPage) },
-        //canActivate: [authGuard],        // 3. Activamos el guardián en esta ruta
-        //data: { rol: 'Administrador' }, // 4. Le decimos al guardián que el rol requerido es 'Administrador'
      {
         path: 'perfil',
         loadComponent: () => import('./perfil/perfil').then(m => m.PerfilPage)
@@ -51,6 +49,15 @@ export default [
     {
         path: 'config/fuentes',
         loadComponent: () => import('./config/fuentes/fuentes.component').then(m => m.FuentesComponent),
+    },
+    {
+        path: 'gestion',
+        children: [
+            //{ path: 'casos', loadComponent: () => import('./gestion/casos').then(m => m.CasosPage) },
+            
+            { path: 'muro-tareas', loadComponent: () => import('./gestion/muro-tareas/muro-tareas.component').then(m => m.MuroTareasComponent) },
+            //{ path: '', redirectTo: 'casos', pathMatch: 'full' }
+        ]
     },
 
 

@@ -1,0 +1,116 @@
+<p-toast></p-toast>
+<div class="card">
+    <h2 class="text-2xl font-semibold mb-4">Muro de Tareas: Asignación de Casos</h2>
+
+    <div class="mb-6">
+        <label class="block font-bold mb-2">Selecciona un Componente para ver su Backlog</label>
+        <p-select [options]="componentes()"
+                  [(ngModel)]="componenteSeleccionadoId"
+                  (onChange)="onComponenteSeleccionado()"
+                  optionLabel="nombre_componente"
+                  optionValue="id_componente"
+                  placeholder="Elegir un Componente..."
+                  styleClass="w-full md:w-1/3">
+        </p-select>
+    </div>
+
+    <div *ngIf="componenteSeleccionadoId" class="grid">
+    
+        <div class="col-12 md:col-6">
+            <div class="p-4 rounded-lg bg-surface-100 dark:bg-surface-800">
+                <h3 class="font-bold text-lg mb-4 text-center">
+                    <i class="pi pi-inbox mr-2"></i>
+                    Backlog del Componente ({{ backlogFiltrado().length }})
+                </h3>
+
+                <div class="mb-4">
+                    <input pInputText type="text" 
+                           placeholder="Buscar en el backlog..." 
+                           class="w-full"
+                           (input)="filtroBacklog.set($any($event.target).value)">
+                </div>
+
+                <div pDroppable="casos" (onDrop)="onDrop('backlog')"
+                     class="min-h-[60vh] p-2 rounded-lg border-2 border-dashed border-surface-300 dark:border-surface-600 transition-colors duration-200">
+                    
+                    <p class="text-center text-muted-color mt-4" *ngIf="backlogFiltrado().length === 0 && !loading()">
+                        ¡Excelente! No hay casos pendientes en el backlog.
+                    </p>
+
+                    <div class="task-grid-container">
+                        <div *ngFor="let caso of backlogFiltrado()"
+                             pDraggable="casos" (onDragStart)="onDragStart(caso)"
+                             class="mini-task-card cursor-grab">
+                            
+                            <div>
+                                <span class="font-bold block text-sm">{{ caso.nombre_caso | slice:0:50 }}</span>
+                                <span class="text-xs text-muted-color">Versión: {{ caso.version }}</span>
+                                <p class="card-description">{{ caso.descripcion_caso | slice:0:100 }}</p>
+                            </div>
+
+                            <span class="card-source-tag" *ngIf="caso.fuentes && caso.fuentes.length > 0">
+                                {{ caso.fuentes[0].nombre_fuente }}
+                            </span>
+
+                            <button pButton type="button" icon="pi pi-plus"
+                                    class="p-button-rounded p-button-text p-button-sm quick-assign-button"
+                                    pTooltip="Asignarme esta tarea"
+                                    (click)="asignarCaso(caso)">
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-12 md:col-6">
+            <div class="p-4 rounded-lg bg-surface-100 dark:bg-surface-800">
+                <h3 class="font-bold text-lg mb-4 text-center">
+                    <i class="pi pi-user mr-2"></i>
+                    Mis Tareas Asignadas ({{ misTareasCasos().length }})
+                </h3>
+                
+                <div pDroppable="casos" (onDrop)="onDrop('misTareas')"
+                    class="min-h-[60vh] p-2 rounded-lg border-2 border-dashed border-surface-300 dark:border-surface-600 transition-colors duration-200">
+                    
+                    <p class="text-center text-muted-color mt-4" *ngIf="misTareasCasos().length === 0 && !loading()">
+                        Aún no tienes casos asignados. ¡Arrastra uno desde el backlog!
+                    </p>
+
+                    <div class="task-grid-container">
+                        <div *ngFor="let caso of misTareasCasos()"
+                            pDraggable="casos" (onDragStart)="onDragStart(caso)"
+                            class="mini-task-card cursor-grab">
+                            <div>
+                                <span class="card-component-tag truncate-text" 
+                                *ngIf="caso.nombre_componente"
+                                [pTooltip]="caso.nombre_componente"
+                                tooltipPosition="top">
+                                    {{ caso.nombre_componente }}
+                                </span>
+                            </div>
+                            <div>
+                                <span class="font-bold block text-sm">{{ caso.nombre_caso | slice:0:50 }}</span>
+                                <span class="text-xs text-muted-color">Versión: {{ caso.version }}</span>
+                                <p class="card-description truncate-text"
+                                [pTooltip]="caso.descripcion_caso"
+                                tooltipPosition="top"
+                                >{{ caso.descripcion_caso | slice:0:100 }}</p>
+                            </div>
+
+                            <span class="card-source-tag" *ngIf="caso.fuentes && caso.fuentes.length > 0">
+                                {{ caso.fuentes[0].nombre_fuente }}
+                            </span>
+
+                            <button pButton type="button" icon="pi pi-minus"
+                                    class="p-button-rounded p-button-danger p-button-text p-button-sm quick-remove-button"
+                                    pTooltip="Devolver al backlog"
+                                    (click)="devolverCasoAlBacklog(caso)">
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

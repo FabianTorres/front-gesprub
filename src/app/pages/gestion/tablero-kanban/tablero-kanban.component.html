@@ -1,0 +1,43 @@
+<div class="card">
+    <h2 class="text-2xl font-semibold mb-4">Tablero Kanban del Proyecto</h2>
+
+    <div class="flex flex-wrap items-center gap-4 mb-6 p-4 bg-surface-50 dark:bg-surface-800 border rounded-lg">
+        <p class="text-muted-color">Área de filtros (Mi Tablero, Por Usuario, etc.) se implementará aquí.</p>
+    </div>
+
+    <div class="flex flex-col md:flex-row gap-4">
+
+    <div class="w-full md:w-1/3">
+        <div class="p-4 rounded-lg bg-surface-100 dark:bg-surface-800 h-full">
+            <h3 class="font-bold text-lg mb-4 text-center text-blue-500">
+                <i class="pi pi-list mr-2"></i>
+                Por Hacer ({{ porHacer().length }})
+            </h3>
+            <div class="min-h-[70vh] p-2 rounded-lg border-2 border-dashed border-surface-300 dark:border-surface-600">
+                </div>
+        </div>
+    </div>
+
+    <div class="w-full md:w-1/3">
+        <div class="p-4 rounded-lg bg-surface-100 dark:bg-surface-800 h-full">
+            <h3 class="font-bold text-lg mb-4 text-center text-green-500">
+                <i class="pi pi-check-circle mr-2"></i>
+                Completado ({{ completado().length }})
+            </h3>
+            <div class="min-h-[70vh] p-2 rounded-lg border-2 border-dashed border-surface-300 dark:border-surface-600">
+                </div>
+        </div>
+    </div>
+
+    <div class="w-full md:w-1/3">
+        <div class="p-4 rounded-lg bg-surface-100 dark:bg-surface-800 h-full">
+            <h3 class="font-bold text-lg mb-4 text-center text-red-500">
+                <i class="pi pi-times-circle mr-2"></i>
+                Con Error ({{ conError().length }})
+            </h3>
+            <div class="min-h-[70vh] p-2 rounded-lg border-2 border-dashed border-surface-300 dark:border-surface-600">
+                </div>
+        </div>
+    </div>
+</div>
+</div>

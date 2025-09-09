@@ -144,7 +144,8 @@ export class AppMenu implements OnInit {
             {
                 label: 'Gestión de asignaciones',
                 items: [
-                    { label: 'Muro tareas', icon: 'pi pi-fw pi-user', routerLink: ['/pages/gestion/muro-tareas'] }
+                    { label: 'Muro tareas', icon: 'pi pi-fw pi-user', routerLink: ['/pages/gestion/muro-tareas'] },
+                    { label: 'Tablero Kanban', icon: 'pi pi-fw pi-table', routerLink: ['/pages/gestion/tablero-kanban'] }
                 ]
             },
             {

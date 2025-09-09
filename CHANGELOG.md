@@ -3,6 +3,16 @@ Todos los cambios significativos en este proyecto se documentarán en este archi
 El formato se basa en [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 y este proyecto adhiere al [Versionado Semántico](https://semver.org/lang/es/).
 
+## [0.8.1] - 2025-09-09
+
+### Added
+-   Se agrega funcionalidad de muro Kanban
+
+## [0.8.0] - 2025-09-08
+
+### Added
+-   Se agrega la funcionalidad de Muro de tareas-asignaciones
+
 ## [0.7.0] - 2025-09-03
 
 ### Added

@@ -259,7 +259,7 @@ export class EjecucionPage implements OnInit {
         this.nuevaEvidencia.usuarioEjecutante = usuarioLogueado; 
         
 
-        // 1. Se crea la evidencia
+        // Se crea la evidencia
         this.evidenciaService.createEvidencia(this.nuevaEvidencia as Evidencia).pipe(
             switchMap(evidenciaCreada => {
                 const idEvidencia = evidenciaCreada.id_evidencia;

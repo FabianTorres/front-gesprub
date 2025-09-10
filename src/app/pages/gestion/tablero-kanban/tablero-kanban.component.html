@@ -1,43 +1,69 @@
 <div class="card">
-    <h2 class="text-2xl font-semibold mb-4">Tablero Kanban del Proyecto</h2>
+    <div class="flex flex-wrap justify-between items-center mb-4">
+        <h2 class="text-2xl font-semibold">Tablero Kanban</h2>
 
-    <div class="flex flex-wrap items-center gap-4 mb-6 p-4 bg-surface-50 dark:bg-surface-800 border rounded-lg">
-        <p class="text-muted-color">Área de filtros (Mi Tablero, Por Usuario, etc.) se implementará aquí.</p>
-    </div>
-
-    <div class="flex flex-col md:flex-row gap-4">
-
-    <div class="w-full md:w-1/3">
-        <div class="p-4 rounded-lg bg-surface-100 dark:bg-surface-800 h-full">
-            <h3 class="font-bold text-lg mb-4 text-center text-blue-500">
-                <i class="pi pi-list mr-2"></i>
-                Por Hacer ({{ porHacer().length }})
-            </h3>
-            <div class="min-h-[70vh] p-2 rounded-lg border-2 border-dashed border-surface-300 dark:border-surface-600">
-                </div>
+        <div class="flex items-center">
+            <label for="userFilter" class="mr-2 font-semibold">Tester:</label>
+            <p-select 
+                [options]="usuarios()" 
+                [(ngModel)]="selectedUsuario" 
+                (onChange)="onUsuarioChange()"
+                optionLabel="nombreUsuario"
+                [showClear]="true"
+                placeholder="Todos los usuarios"
+                styleClass="w-full md:w-14rem">
+            </p-select>
         </div>
     </div>
-
-    <div class="w-full md:w-1/3">
-        <div class="p-4 rounded-lg bg-surface-100 dark:bg-surface-800 h-full">
-            <h3 class="font-bold text-lg mb-4 text-center text-green-500">
-                <i class="pi pi-check-circle mr-2"></i>
-                Completado ({{ completado().length }})
-            </h3>
-            <div class="min-h-[70vh] p-2 rounded-lg border-2 border-dashed border-surface-300 dark:border-surface-600">
-                </div>
-        </div>
+    
+    <div *ngIf="loading(); else kanbanContent" class="flex justify-center items-center min-h-[70vh]">
+        <p-progressSpinner></p-progressSpinner>
     </div>
 
-    <div class="w-full md:w-1/3">
-        <div class="p-4 rounded-lg bg-surface-100 dark:bg-surface-800 h-full">
-            <h3 class="font-bold text-lg mb-4 text-center text-red-500">
-                <i class="pi pi-times-circle mr-2"></i>
-                Con Error ({{ conError().length }})
-            </h3>
-            <div class="min-h-[70vh] p-2 rounded-lg border-2 border-dashed border-surface-300 dark:border-surface-600">
+    <ng-template #kanbanContent>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div class="kanban-column">
+                <div class="p-4 rounded-lg bg-blue-50 dark:bg-surface-800 h-full">
+                    <h3 class="font-bold text-lg mb-4 text-center text-blue-600">
+                        <i class="pi pi-list mr-2"></i>
+                        Por Hacer ({{ porHacer().length }})
+                    </h3>
+                    <div class="kanban-cards-container border-2 border-dashed border-surface-300 dark:border-surface-600 rounded-lg p-2">
+                        <div *ngFor="let caso of porHacer()" class="mb-3">
+                            <p-card [header]="caso.nombre_caso"></p-card>
+                        </div>
+                    </div>
                 </div>
+            </div>
+
+            <div class="kanban-column">
+                <div class="p-4 rounded-lg bg-green-50 dark:bg-surface-800 h-full">
+                    <h3 class="font-bold text-lg mb-4 text-center text-green-600">
+                        <i class="pi pi-check-circle mr-2"></i>
+                        Completado ({{ completado().length }})
+                    </h3>
+                    <div class="kanban-cards-container border-2 border-dashed border-surface-300 dark:border-surface-600 rounded-lg p-2">
+                        <div *ngFor="let caso of completado()" class="mb-3">
+                            <p-card [header]="caso.nombre_caso"></p-card>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="kanban-column">
+                <div class="p-4 rounded-lg bg-red-50 dark:bg-surface-800 h-full">
+                    <h3 class="font-bold text-lg mb-4 text-center text-red-600">
+                        <i class="pi pi-times-circle mr-2"></i>
+                        Con Error ({{ conError().length }})
+                    </h3>
+                    <div class="kanban-cards-container border-2 border-dashed border-surface-300 dark:border-surface-600 rounded-lg p-2">
+                        <div *ngFor="let caso of conError()" class="mb-3">
+                            <p-card [header]="caso.nombre_caso"></p-card>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
         </div>
-    </div>
-</div>
+    </ng-template>
 </div>

@@ -904,6 +904,8 @@ export class CasosPage implements OnInit {
             jp_responsable: usuarioLogueado.idUsuario
         }));
 
+        console.log('Datos finales a enviar al backend:', casosParaEnviar);
+
         if (casosParaEnviar.length === 0) {
             this.messageService.add({ severity: 'info', summary: 'Nada que importar', detail: 'No hay casos válidos para importar.' });
             this.cerrarDialogoAdvertencia();

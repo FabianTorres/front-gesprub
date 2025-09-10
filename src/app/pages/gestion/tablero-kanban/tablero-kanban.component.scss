@@ -1,0 +1,13 @@
+// src/app/pages/gestion/tablero-kanban/tablero-kanban.component.scss
+
+.kanban-column {
+    display: flex;
+    flex-direction: column;
+    // Eliminamos la altura máxima fija para que se ajuste al contenedor
+}
+
+.kanban-cards-container {
+    flex-grow: 1; // Permite que este contenedor crezca y ocupe el espacio disponible
+    overflow-y: auto; // Añade una barra de scroll si las tarjetas superan el alto
+    min-height: 70vh; // Establece una altura mínima para que las columnas se vean altas incluso vacías
+}

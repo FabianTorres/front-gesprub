@@ -1,13 +1,14 @@
 // src/app/services/caso.service.ts
 
 import { Injectable, inject } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../environment/environment';
 import { Caso } from '../models/caso';
 import { CasoConEvidencia } from '../models/casoevidencia';
 import { HistorialCaso } from '../models/historial-caso';
 import { Fuente } from '../models/fuente';
+import { KanbanData } from '../models/kanban-data';
 
 @Injectable({ providedIn: 'root' })
 export class CasoService {
@@ -77,5 +78,16 @@ export class CasoService {
 
     desasignarCaso(idCaso: number): Observable<any> {
         return this.http.patch(`${this.apiUrl}/${idCaso}/desasignar`, {});
+    }
+
+    getCasosKanban(proyectoId: number, usuarioId?: number): Observable<KanbanData> {
+        let params = new HttpParams().set('proyectoId', proyectoId.toString());
+        if (usuarioId) {
+            params = params.set('usuarioId', usuarioId.toString());
+        }
+
+        const url = `${this.apiUrl}/kanban/proyecto`; 
+
+        return this.http.get<KanbanData>(url, { params });
     }
 }

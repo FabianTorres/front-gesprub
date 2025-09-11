@@ -3,6 +3,12 @@ Todos los cambios significativos en este proyecto se documentarán en este archi
 El formato se basa en [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 y este proyecto adhiere al [Versionado Semántico](https://semver.org/lang/es/).
 
+## [0.8.2] - 2025-09-11
+
+### Fixed
+-   Se soluciona un problema al ejecutar nuevo caso, ahora hace el cambio autotmatico en el Muro Kanban.
+-   Se soluciona problema con la importacion de datos
+
 ## [0.8.1] - 2025-09-09
 
 ### Added

@@ -3,6 +3,18 @@ Todos los cambios significativos en este proyecto se documentarán en este archi
 El formato se basa en [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 y este proyecto adhiere al [Versionado Semántico](https://semver.org/lang/es/).
 
+## [1.0.0] - 2025-09-26
+
+### Added
+-   Version inicial para produccion
+
+## [0.8.3] - 2025-09-24
+
+### Fixed
+-   Se soluciona un problema al asignar casos
+### Added
+-   Se agrega funcionalidad donde no permite ejecutar casos sin que esten asignados
+
 ## [0.8.2] - 2025-09-11
 
 ### Fixed

@@ -115,6 +115,9 @@ export class CasosPage implements OnInit {
     todosLosFormularios = signal<number[]>([]);
     sugerenciasFormulario = signal<number[]>([]);
 
+    // Señal nos da el ID del usuario logueado de forma reactiva.
+    usuarioActualId = computed(() => this.authService.usuarioActual()?.idUsuario ?? null);
+
     // Propiedades para el diálogo de advertencia
     advertenciaDialog: boolean = false;
     casosConAdvertencia: any[] = [];

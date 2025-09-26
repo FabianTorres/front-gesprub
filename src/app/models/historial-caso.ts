@@ -9,6 +9,7 @@ export interface HistorialCaso {
   id_estado_modificacion: number;
   num_formulario: number;
   fuentes: Fuente[];
+  id_usuario_asignado?: number; 
   // Se pueden añadir otros campos del caso si los necesitas en esta vista
   historial: Evidencia[];
 }

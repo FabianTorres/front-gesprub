@@ -267,27 +267,20 @@ export class EjecucionPage implements OnInit {
                 // Si se creó la evidencia y hay archivos seleccionados
                 if (idEvidencia && this.archivosParaSubir().length > 0) {
                     
-                    // Creamos un array de observables, uno por cada archivo a registrar
-                    const registroObservables = this.archivosParaSubir().map(file => {
-                        // Creamos el objeto JSON que espera el backend
-                        const archivoData = {
-                            nombre_archivo: file.name,
-                            // Usamos una URL temporal/en duro como solicitaste
-                            url_archivo: `/uploads/temp/${file.name}`
-                        };
-
-                        // Llamamos al método actualizado del servicio
-                        return this.evidenciaService.uploadArchivo(idEvidencia, archivoData).pipe(
+                    // Creamos un array de observables, uno por cada archivo a subir.
+                    const uploadObservables = this.archivosParaSubir().map(file => {
+                        // Llamamos al método actualizado del servicio, pasando el objeto File.
+                        return this.evidenciaService.uploadArchivo(idEvidencia, file).pipe(
                             catchError(err => {
-                                console.error('Error registrando archivo:', file.name, err);
-                                // Devolvemos `of(null)` para que forkJoin no se cancele si un archivo falla
+                                console.error('Error subiendo archivo:', file.name, err);
+                                // Devolvemos of(null) para que forkJoin no se cancele si un archivo falla.
                                 return of(null);
                             })
                         );
                     });
 
                     // forkJoin espera a que todos los archivos se hayan registrado
-                    return forkJoin(registroObservables).pipe(
+                    return forkJoin(uploadObservables).pipe(
                         // Mapeamos de vuelta a la evidencia creada para continuar el flujo
                         map(() => evidenciaCreada)
                     );

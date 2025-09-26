@@ -21,8 +21,24 @@ export class EvidenciaService {
             return this.http.get<Evidencia[]>(this.apiUrl);
     }
 
-    uploadArchivo(idEvidencia: number, archivoData: { nombre_archivo: string; url_archivo: string }): Observable<ArchivoEvidencia> {
-        return this.http.post<ArchivoEvidencia>(`${this.apiUrl}/${idEvidencia}/archivos`, archivoData);
+
+    /**
+     * Sube un archivo de evidencia al backend usando multipart/form-data.
+     * El backend se encarga de almacenarlo en Azure Blob Storage.
+     * @param idEvidencia El ID de la evidencia a la que pertenece el archivo.
+     * @param file El objeto File que se va a subir.
+     * @returns Un Observable con los detalles del archivo guardado.
+     */
+    uploadArchivo(idEvidencia: number, file: File): Observable<ArchivoEvidencia> {
+        // 1. Se crea un objeto FormData, necesario para el formato multipart/form-data.
+        const formData = new FormData();
+
+        // 2. Se añade el archivo. La clave 'file' debe coincidir con la que espera el backend.
+        formData.append('file', file, file.name);
+        
+        // 3. Se realiza la petición POST. HttpClient maneja las cabeceras automáticamente.
+        const url = `${this.apiUrl}/${idEvidencia}/archivos`;
+        return this.http.post<ArchivoEvidencia>(url, formData);
     }
 
     getArchivosPorEvidencia(idEvidencia: number): Observable<ArchivoEvidencia[]> {

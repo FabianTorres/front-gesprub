@@ -1,4 +1,5 @@
 import { Fuente } from "./fuente";
+import { Usuario } from "./usuario";
 
 export interface Caso {
   id_caso?: number;
@@ -17,5 +18,8 @@ export interface Caso {
   anio?: number;
   fuentes?: Fuente[];
   id_usuario_asignado?: number;
+  idUsuarioAsignado?: number; //Se agrega en caso de inconsistencia
   estado_kanban?: string;
+  fechaMovimientoKanban?: string; // o Date
+  usuarioEjecutante?: Usuario;
 }

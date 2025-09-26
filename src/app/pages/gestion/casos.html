@@ -180,8 +180,12 @@
                                     pTooltip="Editar" tooltipPosition="top"></button>
                             <button pButton pRipple icon="pi pi-book" class="p-button-rounded mr-2" [routerLink]="['/pages/casos', item.caso.id_caso]"
                                     pTooltip="Historial" tooltipPosition="top"></button>
-                            <button pButton pRipple icon="pi pi-play" class="p-button-rounded" [routerLink]="['/pages/ejecucion', item.caso.id_caso]"
-                                    pTooltip="Ejecutar" tooltipPosition="top"></button>
+                            <button pButton pRipple icon="pi pi-play" class="p-button-rounded" 
+                                    [routerLink]="['/pages/ejecucion', item.caso.id_caso]"
+                                    pTooltip="Ejecutar" 
+                                    tooltipPosition="top"
+                                    [disabled]="!item.caso.idUsuarioAsignado || item.caso.idUsuarioAsignado !== usuarioActualId()">
+                            </button>
                         </div>
                     </td>
                 </tr>

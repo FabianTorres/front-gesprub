@@ -162,51 +162,26 @@ export class MuroTareasComponent implements OnInit {
     }
 
     devolverCasoAlBacklog(caso: Caso) {
-        // 1. Primero, verificamos si el caso tiene ejecuciones.
-        // Usamos el servicio que ya existe para obtener el historial.
-        this.casoService.getHistorialPorCasoId(caso.id_caso!).subscribe({
-            next: (historialData) => {
-                // 2. Comprobamos si el array de historial tiene elementos.
-                if (historialData && historialData.historial && historialData.historial.length > 0) {
-                    // 3. Si hay evidencias, mostramos un mensaje de advertencia y detenemos la acción.
-                    this.messageService.add({ 
-                        severity: 'warn', 
-                        summary: 'Acción no permitida', 
-                        detail: 'No se puede devolver un caso que ya tiene ejecuciones registradas.' 
-                    });
-                } else {
-                    // 4. Si NO hay evidencias, procedemos con la lógica de desasignación como antes.
-                    this.casoService.desasignarCaso(caso.id_caso!).subscribe({
-                        next: () => {
-                            this.misTareasCasos.update(casos => casos.filter(c => c.id_caso !== caso.id_caso));
-                            // Nos aseguramos de que solo se añada al backlog si el componente actual coincide
-                            if(caso.id_componente === this.componenteSeleccionadoId) {
-                            this.backlogCasos.update(casos => [...casos, caso]);
-                            }
-                            this.messageService.add({ 
-                                severity: 'success', 
-                                summary: 'Éxito', 
-                                detail: `Caso "${caso.nombre_caso}" devuelto al backlog.` 
-                            });
-                        },
-                        error: (err) => {
-                            this.messageService.add({ 
-                                severity: 'error', 
-                                summary: 'Error', 
-                                detail: 'No se pudo devolver el caso al backlog.' 
-                            });
-                            console.error('Error al desasignar caso:', err);
-                        }
-                    });
+        this.casoService.desasignarCaso(caso.id_caso!).subscribe({
+            next: () => {
+                // Esta es la lógica que antes estaba dentro del 'else', ahora se ejecuta siempre.
+                this.misTareasCasos.update(casos => casos.filter(c => c.id_caso !== caso.id_caso));
+                if(caso.id_componente === this.componenteSeleccionadoId) {
+                    this.backlogCasos.update(casos => [...casos, caso]);
                 }
+                this.messageService.add({ 
+                    severity: 'success', 
+                    summary: 'Éxito', 
+                    detail: `Caso "${caso.nombre_caso}" devuelto al backlog.` 
+                });
             },
             error: (err) => {
                 this.messageService.add({ 
                     severity: 'error', 
                     summary: 'Error', 
-                    detail: 'No se pudo verificar el historial del caso.' 
+                    detail: 'No se pudo devolver el caso al backlog.' 
                 });
-                console.error('Error al obtener historial del caso:', err);
+                console.error('Error al desasignar caso:', err);
             }
         });
     }

@@ -66,7 +66,6 @@ export class TableroKanbanComponent implements OnInit {
   // Almacena TODOS los casos que vienen del backend
   private todosLosCasos = signal<KanbanData>({ porHacer: [], completado: [], conError: [] });
 
-  // --- LÓGICA REFACTORIZADA Y SEGURA ---
   // 1. Se crea una señal computada que calcula el rango de fechas del filtro
   private fechasDelFiltro = computed(() => {
     const filtroRapido = this.filtroFechaRapido();
@@ -172,11 +171,15 @@ export class TableroKanbanComponent implements OnInit {
   }
   
   cargarUsuarios(): void {
-    this.usuarioService.getUsuarios().subscribe({
-      next: (usuarios) => this.usuarios.set(usuarios),
-      error: (err) => console.error('Error al cargar los usuarios', err)
-    });
-  }
+      this.usuarioService.getUsuarios().subscribe({
+        next: (usuarios) => {
+          // Filtramos para obtener solo los usuarios cuyo estado es activo (1)
+          const usuariosActivos = usuarios.filter(u => u.activo === 1);
+          this.usuarios.set(usuariosActivos);
+        },
+        error: (err) => console.error('Error al cargar los usuarios', err)
+      });
+    }
 
   onUsuarioChange(): void {
     const proyectoActual = this.proyectoService.proyectoSeleccionado();
@@ -191,7 +194,7 @@ export class TableroKanbanComponent implements OnInit {
   }
 
   onRangoFechasChange(value: Date[] | null): void {
-      // Esta condición es importante: solo desactivamos el filtro rápido
+      // Solo se desactiva el filtro rápido
       // si el usuario realmente ha seleccionado una fecha de inicio.
       if (value && value[0]) {
         this.filtroFechaRapido.set('todos');

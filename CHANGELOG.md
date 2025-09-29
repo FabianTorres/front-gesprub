@@ -3,6 +3,11 @@ Todos los cambios significativos en este proyecto se documentarán en este archi
 El formato se basa en [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 y este proyecto adhiere al [Versionado Semántico](https://semver.org/lang/es/).
 
+## [1.0.1] - 2025-09-26
+
+### Fixed
+-   Se modifica el dashboard para que veamos solo los usuarios activos
+
 ## [1.0.0] - 2025-09-26
 
 ### Added

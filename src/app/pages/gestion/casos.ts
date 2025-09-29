@@ -44,6 +44,8 @@ import { switchMap } from 'rxjs';
 import { SortFuentesPipe } from '../../pipes/sort-fuentes.pipe';
 import { FileUpload } from "primeng/fileupload";
 import * as similarity from 'string-similarity';
+import { Usuario } from '../../models/usuario';
+import { UsuarioService } from '../../services/usuario.service';
 
 
 // Se define una interfaz local para la estructura de los Hitos.
@@ -100,11 +102,14 @@ export class CasosPage implements OnInit {
     importDialog: boolean = false;
     archivoParaImportar: File | null = null;
 
+    private todosLosUsuarios = signal<Usuario[]>([]);
+
     private catalogoService = inject(CatalogoService);
     private estadosEvidencia = this.catalogoService.estadosEvidencia;
 
     private fuenteService = inject(FuenteService); 
     todasLasFuentes = signal<Fuente[]>([]);
+    private usuarioService = inject(UsuarioService);
 
     sugerenciasFuentes = signal<Fuente[]>([]); 
 
@@ -278,7 +283,7 @@ export class CasosPage implements OnInit {
     // Método del ciclo de vida de Angular que se ejecuta al iniciar el componente.
     ngOnInit() {
         
-
+        this.cargarTodosLosUsuarios();
         this.cargarFormularios();
         this.cargarEstadosModificacion();
         this.cargarTodasLasFuentes();
@@ -1001,24 +1006,60 @@ export class CasosPage implements OnInit {
         });
     }
 
+    cargarTodosLosUsuarios() {
+        this.usuarioService.getUsuarios().subscribe(usuarios => {
+            this.todosLosUsuarios.set(usuarios);
+        });
+    }
+
+    findUserNameById(id: number): string {
+        const usuario = this.todosLosUsuarios().find(u => u.idUsuario === id);
+        return usuario ? usuario.nombreUsuario : 'ID no encontrado';
+    }
+
      exportarCasos(formato: string) {
         if (this.casos().length === 0) {
             this.messageService.add({ severity: 'warn', summary: 'No hay datos', detail: 'No hay casos para exportar.' });
             return;
         }
 
-        const datosParaExportar = this.casos().map((item: any) => ({
-            'ID Caso': item.caso.id_caso,
-            'Nombre del Caso': item.caso.nombre_caso,
-            'Descripción': item.caso.descripcion_caso,
-            'Versión': item.caso.version,
-            'Estado Modificación': item.caso.nombre_estado_modificacion,
-            'Último Estado Ejecución': item.nombre_ultimo_estado,
-            'Fuentes': item.caso.fuentes_nombres,
-            'RUTs': item.caso.ruts_concatenados,
-        }));
+        if (formato === 'excel') {
+            const datosParaExportar = this.casos().map((item: CasoConEvidencia) => (console.log('Datos del item para exportar:', item),
+                {
+                'ID Caso': item.caso.id_caso,
+                'Nombre del Caso': item.caso.nombre_caso,
+                'Descripción': item.caso.descripcion_caso,
+                'Versión': item.caso.version,
+                'Estado Modificación': this.findEstadoModificacionNombre(item.caso.id_estado_modificacion),
+                'Precondiciones': item.caso.precondiciones,
+                'Pasos': item.caso.pasos,
+                'Resultado Esperado': item.caso.resultado_esperado,
+                'Fuentes': item.caso.fuentes?.map(f => f.nombre_fuente).join(',\n'),
+                'Activo': item.caso.activo === 1 ? 'Sí' : 'No',
+                'Último Estado Ejecución': item.ultimaEvidencia ? this.findEstadoEvidenciaNombre(item.ultimaEvidencia.id_estado_evidencia) : 'Sin Ejecutar',
+                'Tester Asignado': item.ultimaEvidencia ? this.findUserNameById(item.ultimaEvidencia.id_usuario_ejecutante) : 'No asignado',
+                'Fecha Última Ejecución': this.datePipe.transform(item.ultimaEvidencia?.fecha_evidencia, 'yyyy-MM-dd HH:mm') || 'N/A',  
+                'Descripción Última Evidencia': item.ultimaEvidencia?.descripcion_evidencia || 'N/A',
+                'Último RUT de Prueba': item.ultimaEvidencia?.rut || 'N/A'
+                 
+            }));
+            
+            exportarAExcel(datosParaExportar, "CasosDePrueba");
+        } else if (formato === 'csv') {
+            // Se mantiene la versión simple para el formato CSV
+            const datosParaExportar = this.casos().map((item: any) => ({
+                'ID Caso': item.caso.id_caso,
+                'Nombre del Caso': item.caso.nombre_caso,
+                'Descripción': item.caso.descripcion_caso,
+                'Versión': item.caso.version,
+                'Estado Modificación': item.caso.nombre_estado_modificacion,
+                'Último Estado Ejecución': item.nombre_ultimo_estado,
+                'Fuentes': item.caso.fuentes_nombres,
+                'RUTs': item.caso.ruts_concatenados,
+            }));
+            exportarAExcel(datosParaExportar, "CasosDePrueba");
+        }
         
-        exportarAExcel(datosParaExportar, "CasosDePrueba");
     }
 
     descargarPlantilla() {

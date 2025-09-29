@@ -24,12 +24,27 @@
                             icon="pi pi-plus" 
                             (click)="abrirDialogoNuevo()">
                     </button>
+
+                    <button pButton 
+                            pRipple 
+                            label="Importar" 
+                            icon="pi pi-upload" 
+                            (click)="importarCasos()"
+                            class="p-button-secondary">
+                    </button>
                     
-                    <p-splitButton label="Importar" 
+                    <!-- <p-splitButton label="Importar" 
                                 icon="pi pi-upload" 
                                 (onClick)="importarCasos()" 
                                 [model]="opcionesExportar"
                                 styleClass="p-button-secondary">
+                    </p-splitButton> -->
+
+                    <p-splitButton 
+                        label="Exportar" 
+                        icon="pi pi-download" 
+                        [model]="opcionesExportar"
+                        styleClass="p-button-secondary p-button-outlined">
                     </p-splitButton>
                     
                     <button pButton 

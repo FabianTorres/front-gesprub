@@ -148,7 +148,8 @@ export class Dashboard implements OnInit{
     
     cargarTodosLosUsuarios() {
         this.usuarioService.getUsuarios().subscribe(data => {
-            this.todosLosUsuarios.set(data);
+            const usuariosActivos = data.filter(usuario => usuario.activo === 1);
+            this.todosLosUsuarios.set(usuariosActivos);
         });
     }
     

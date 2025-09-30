@@ -21,6 +21,7 @@ import { SelectModule } from 'primeng/select';
 import { InputNumberModule } from 'primeng/inputnumber';
 import { TooltipModule } from 'primeng/tooltip';
 import { SplitButtonModule } from 'primeng/splitbutton';
+import { SelectButtonModule } from 'primeng/selectbutton';
 import { FieldsetModule } from 'primeng/fieldset';
 import { Caso } from '../../models/caso';
 import { CasoService } from '../../services/caso.service';
@@ -59,16 +60,42 @@ interface Hito {
     imports: [
     IconFieldModule, FileUpload, SortFuentesPipe, AutoCompleteModule, SplitButtonModule, FieldsetModule, InputIconModule, TooltipModule, CommonModule, FormsModule, TableModule, ButtonModule, ToolbarModule, DialogModule,
     RouterModule, TruncatePipe, ChipsModule, TagModule, InputTextModule, TextareaModule, SelectModule, InputSwitchModule, ConfirmDialogModule, ToastModule, InputNumberModule, VersionFormatDirective,
-    FileUpload
+    FileUpload, SelectButtonModule
 ],
     providers: [MessageService, ConfirmationService, DatePipe],
     templateUrl: './casos.html'
 })
 export class CasosPage implements OnInit {
     // Señal (Signal) que almacena la lista de casos a mostrar en la tabla.
-    casos = signal<CasoConEvidencia[]>([]);
+    //casos = signal<CasoConEvidencia[]>([]);
+    //Modificacion preliminar
+    casos = computed(() => {
+        const todos = this.todosLosCasosMaestros();
+        const filtroActivo = this.filtroMisCasosActivo();
+        const miId = this.usuarioActualId();
+
+        if (filtroActivo && miId) {
+        // Ahora filtramos verificando AMBAS propiedades para el ID de usuario asignado.
+        return todos.filter(c => 
+            c.caso.id_usuario_asignado === miId || c.caso.idUsuarioAsignado === miId
+        );
+
+    }
+        
+        // Por defecto, o si el filtro está inactivo, se devuelven todos los casos.
+        return todos;
+    });
+
+
+
+
+
     // Señal que almacena la lista completa de componentes para los desplegables.
     componentes = signal<Componente[]>([]);
+
+    // Señal guarda TODOS los casos del componente, sin filtrar.
+    private todosLosCasosMaestros = signal<CasoConEvidencia[]>([]);
+    filtroMisCasosActivo = signal<boolean>(false);
     // Objeto que representa el caso que se está creando o editando en el diálogo.
     caso!: Partial<Caso>;
     // Controla la visibilidad del diálogo emergente.
@@ -183,6 +210,13 @@ export class CasosPage implements OnInit {
     private datePipe = inject(DatePipe);
     private authService = inject(AutenticacionService);
 
+    // Opciones y estado para el nuevo filtro de asignación.
+    opcionesFiltroAsignacion = [
+        { label: 'Todos los Casos', value: 'todos' },
+        { label: 'Mis Casos Asignados', value: 'misCasos' }
+    ];
+    filtroAsignacion = signal<'todos' | 'misCasos'>('todos');
+
 
     constructor() {
         // Se crea un 'effect' que reacciona a los cambios en la señal 'hitoSeleccionado'.
@@ -211,8 +245,9 @@ export class CasosPage implements OnInit {
             const proyectoActual = this.proyectoService.proyectoSeleccionado();
             // Cada vez que el proyecto global cambia, se limpian las selecciones
             this.componenteSeleccionadoId = null;
-            this.casos.set([]);
-            
+            //this.casos.set([]);
+            //Modificacion preliminar
+            this.todosLosCasosMaestros.set([]);
             if (proyectoActual) {
                 this.cargarComponentes(proyectoActual.id_proyecto);
             } else {
@@ -362,7 +397,9 @@ export class CasosPage implements OnInit {
         }
 
 
-        this.casos.set([]);
+        //this.casos.set([]);
+        //Modificacion preliminar
+        this.todosLosCasosMaestros.set([]);
         if (this.componenteSeleccionadoId) {
             this.cargandoCasos.set(true);
             this.casoService.getCasosPorComponente(this.componenteSeleccionadoId)
@@ -394,7 +431,9 @@ export class CasosPage implements OnInit {
                     // Se devuelve el objeto completo con el 'caso' ya actualizado.
                         return { ...item, caso: casoActualizado, ultimoEstadoId: ultimoEstadoId };
                     });
-                    this.casos.set(casosEnriquecidos as any);
+                    //this.casos.set(casosEnriquecidos as any);
+                    //Modificacion preliminar
+                    this.todosLosCasosMaestros.set(casosEnriquecidos as any);
                     this.cargandoCasos.set(false);
                 });
         }
@@ -490,33 +529,43 @@ export class CasosPage implements OnInit {
         const nombreCasoNuevo = this.caso.nombre_caso!;
         const nombreNormalizadoNuevo = this.normalizarNombreCaso(nombreCasoNuevo);
 
+
+        
         // Si estamos editando, excluimos el caso actual de la lista de comparación
         const otrosCasos = this.editando 
             ? this.casos().filter(c => c.caso.id_caso !== this.caso.id_caso) 
             : this.casos();
 
-        const nombresExistentes = otrosCasos.map(c => c.caso.nombre_caso);
+        const nombresExistentes = otrosCasos
+            .map(c => c.caso.nombre_caso)
+            .filter((nombre): nombre is string => typeof nombre === 'string' && nombre.trim() !== '');
+
+        //const nombresExistentes = otrosCasos.map(c => c.caso.nombre_caso);
 
         // 2. Validación de duplicados exactos
-        if (nombresExistentes.some(nombre => this.normalizarNombreCaso(nombre) === nombreNormalizadoNuevo)) {
+        if (nombresExistentes.length > 0 && nombresExistentes.some(nombre => this.normalizarNombreCaso(nombre) === nombreNormalizadoNuevo)) {
             this.messageService.add({ severity: 'error', summary: 'Error', detail: 'Ya existe un caso con un nombre idéntico en este componente.' });
             return;
         }
 
         // 3. Validación de duplicados similares
-        const umbralSimilitud = 0.5; // 50%
-        const coincidencias = similarity.findBestMatch(nombreNormalizadoNuevo, nombresExistentes.map(n => this.normalizarNombreCaso(n)));
+        if (nombresExistentes.length > 0) {
+            const umbralSimilitud = 0.5; // 50%
+            const coincidencias = similarity.findBestMatch(nombreNormalizadoNuevo, nombresExistentes.map(n => this.normalizarNombreCaso(n)));
 
-        if (coincidencias.ratings.length > 0 && coincidencias.bestMatch.rating > umbralSimilitud) {
-            this.casosConAdvertencia = [{
-                nombreNuevo: nombreCasoNuevo,
-                nombreExistente: nombresExistentes[coincidencias.bestMatchIndex],
-                similitud: Math.round(coincidencias.bestMatch.rating * 100)
-            }];
-            this.accionConfirmada = 'guardarManual'; // Configuramos la acción para la confirmación
-            this.advertenciaDialog = true; // Mostramos la advertencia
-        } else {
-            // Si no hay duplicados ni advertencias, guardamos directamente
+            if (coincidencias.ratings.length > 0 && coincidencias.bestMatch.rating > umbralSimilitud) {
+                this.casosConAdvertencia = [{
+                    nombreNuevo: nombreCasoNuevo,
+                    nombreExistente: nombresExistentes[coincidencias.bestMatchIndex],
+                    similitud: Math.round(coincidencias.bestMatch.rating * 100)
+                }];
+                this.accionConfirmada = 'guardarManual'; // Configuramos la acción para la confirmación
+                this.advertenciaDialog = true; // Mostramos la advertencia
+            } else {
+                // Si no hay duplicados ni advertencias, guardamos directamente
+                this.procederConGuardadoManual();
+            }
+        }else{
             this.procederConGuardadoManual();
         }
     }
@@ -1079,5 +1128,9 @@ export class CasosPage implements OnInit {
     exportarPlanDePruebas() {
         // Lógica futura para el informe
         this.messageService.add({ severity: 'info', summary: 'Próximamente', detail: 'La generación del Plan de Pruebas estará disponible en el futuro.' });
+    }
+
+    toggleFiltroMisCasos() {
+        this.filtroMisCasosActivo.update(value => !value);
     }
 }

@@ -3,7 +3,16 @@ Todos los cambios significativos en este proyecto se documentarán en este archi
 El formato se basa en [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 y este proyecto adhiere al [Versionado Semántico](https://semver.org/lang/es/).
 
-## [1.0.1] - 2025-09-26
+## [1.0.2] - 2025-09-30
+
+### Added
+-   Se agrega un filtro para ver "mis casos de prueba asignados"
+### Changed
+-   Ahora al agregar una evidencia, se bloquea el botón Guardar Evidencia hasta que se logre subir correctamente o falle
+### Fixed
+-   Se soluciona un error que impedia crear casos cuando el componente estaba vacio
+
+## [1.0.1] - 2025-09-29
 
 ### Fixed
 -   Se modifica el dashboard para que veamos solo los usuarios activos

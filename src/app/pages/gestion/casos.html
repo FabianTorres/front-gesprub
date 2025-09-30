@@ -54,6 +54,15 @@
                             class="p-button-outlined"
                             (click)="exportarPlanDePruebas()">
                     </button>
+
+
+                    <p-button 
+                        label="Mis Casos Asignados" 
+                        icon="pi pi-user"
+                        (click)="toggleFiltroMisCasos()"
+                        [outlined]="!filtroMisCasosActivo()"
+                        styleClass="ml-2">
+                    </p-button>
                     
                     </div>
             </ng-template>

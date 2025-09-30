@@ -48,6 +48,7 @@ export class EjecucionPage implements OnInit {
     nuevaEvidencia: Partial<Evidencia> = {};
     jiraInput: string | null = null;
     archivosParaSubir = signal<File[]>([]); 
+    guardandoEvidencia = signal<boolean>(false);
 
     @ViewChild('rutInput') rutInputControl!: NgModel;
 
@@ -177,6 +178,11 @@ export class EjecucionPage implements OnInit {
         const estadoSeleccionado = this.listaEstadosEvidencia().find(e => e.id_estado_evidencia === this.nuevaEvidencia.id_estado_evidencia);
         const usuarioLogueado = this.authService.usuarioActual();
 
+        // Si ya se está guardando, no hacemos nada para evitar duplicados.
+        if (this.guardandoEvidencia()) {
+            return;
+        }
+        
         
         if (!estadoSeleccionado) {
             this.messageService.add({ severity: 'warn', summary: 'Atención', detail: 'Debe seleccionar un resultado para la prueba.' });
@@ -259,6 +265,9 @@ export class EjecucionPage implements OnInit {
         this.nuevaEvidencia.usuarioEjecutante = usuarioLogueado; 
         
 
+        // Activamos el estado de "guardando" justo antes de empezar la operación.
+        this.guardandoEvidencia.set(true);
+
         // Se crea la evidencia
         this.evidenciaService.createEvidencia(this.nuevaEvidencia as Evidencia).pipe(
             switchMap(evidenciaCreada => {
@@ -301,9 +310,14 @@ export class EjecucionPage implements OnInit {
         ).subscribe({
             next: () => {
                 this.messageService.add({ severity: 'success', summary: 'Éxito', detail: 'Evidencia y archivos guardados correctamente.' });
+                this.guardandoEvidencia.set(false);
                 setTimeout(() => this.router.navigate(['/pages/casos', this.nuevaEvidencia.id_caso]), 1500);
             },
-            error: (err) => this.messageService.add({ severity: 'error', summary: 'Error', detail: 'No se pudo guardar la evidencia.' })
+            error: (err) => {
+            this.guardandoEvidencia.set(false);
+
+            this.messageService.add({ severity: 'error', summary: 'Error', detail: 'No se pudo guardar la evidencia.' });
+        }
         });
     }
 

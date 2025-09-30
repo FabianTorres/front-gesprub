@@ -187,7 +187,9 @@
                         class="p-button-secondary" 
                         routerLink="/pages/gestion/casos"></button>
                 <button pButton type="button" label="Guardar Evidencia" icon="pi pi-save" 
-                        (click)="guardarEvidencia()"></button>
+                        (click)="guardarEvidencia()"
+                        [loading]="guardandoEvidencia()"
+                        [disabled]="guardandoEvidencia()"></button>
             </div>
         </div>
     </p-card>

@@ -25,20 +25,15 @@
                             (click)="abrirDialogoNuevo()">
                     </button>
 
-                    <button pButton 
-                            pRipple 
-                            label="Importar" 
-                            icon="pi pi-upload" 
-                            (click)="importarCasos()"
-                            class="p-button-secondary">
-                    </button>
+
+                    <p-splitButton 
+                        label="Importar" 
+                        icon="pi pi-plus" 
                     
-                    <!-- <p-splitButton label="Importar" 
-                                icon="pi pi-upload" 
-                                (onClick)="importarCasos()" 
-                                [model]="opcionesExportar"
-                                styleClass="p-button-secondary">
-                    </p-splitButton> -->
+                        [model]="opcionesImportar" 
+                        styleClass="p-button-secondary" 
+                        *ngIf="componenteSeleccionadoId">
+                    </p-splitButton>
 
                     <p-splitButton 
                         label="Exportar" 
@@ -447,6 +442,79 @@
     </ng-template>
 </p-dialog>
 
+
+<p-dialog header="Modificar Casos Existentes" [(visible)]="importModificarDialog" [modal]="true" [style]="{width: '500px'}" (onHide)="onClearFiles()">
+    <div class="confirmation-content text-center">
+        <i class="pi pi-pencil text-5xl text-yellow-500 mb-3"></i>
+        <p>Para modificar casos masivamente, primero debe <strong>exportar los casos</strong> desde la tabla principal.</p>
+        <p class="mb-4">Luego, modifique el archivo Excel y súbalo aquí. Los cambios se previsualizarán automáticamente.</p>
+        
+        <p-fileUpload mode="basic"
+                      chooseLabel="Elegir Archivo"
+                      chooseIcon="pi pi-folder-open"
+                      [auto]="true"
+                      [customUpload]="true"
+                      (uploadHandler)="onArchivoSeleccionado($event); procesarArchivoModificacion()"
+                      accept=".xlsx"
+                      maxFileSize="1000000">
+        </p-fileUpload>
+    </div>
+    <ng-template pTemplate="footer">
+        <button pButton pRipple label="Cerrar" icon="pi pi-times" class="p-button-text" (click)="cerrarDialogoImportarModificar()"></button>
+    </ng-template>
+</p-dialog>
+
+<p-dialog header="Previsualización de Cambios" [(visible)]="previsualizacionDialog" [modal]="true" [style]="{width: '80vw', 'max-width': '1200px'}">
+    <ng-template pTemplate="content">
+        <p class="mb-4">Se han detectado los siguientes cambios. Por favor, revísalos antes de confirmar.</p>
+
+        <p-fieldset legend="Casos a Modificar ({{casosConCambios.length}})" [toggleable]="true" *ngIf="casosConCambios.length > 0">
+            <div class="max-h-[400px] overflow-y-auto">
+                <div *ngFor="let item of casosConCambios" class="mb-3 p-3 border rounded-lg bg-surface-50 dark:bg-surface-800">
+                    <p class="font-bold text-lg m-0">
+                        <i class="pi pi-file-edit mr-2 text-primary"></i>
+                        {{ item.casoOriginal.caso.nombre_caso }} <span class="text-sm font-normal text-surface-500">(ID: {{item.casoOriginal.caso.id_caso}})</span>
+                    </p>
+                    <div class="pl-5 mt-2">
+                        <table class="w-full text-sm">
+                            <thead>
+                                <tr class="text-left">
+                                    <th class="p-2 w-1/4">Campo</th>
+                                    <th class="p-2 w-2/5">Valor Anterior</th>
+                                    <th class="p-2 w-2/5">Valor Nuevo</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr *ngFor="let cambio of item.cambios" class="border-t">
+                                    <td class="p-2 font-semibold">{{ cambio.campo }}</td>
+                                    <td class="p-2"><span class="line-through text-red-500">{{ cambio.valorAnterior }}</span></td>
+                                    <td class="p-2"><span class="font-bold text-green-500">{{ cambio.valorNuevo }}</span></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </p-fieldset>
+
+        <p-fieldset legend="Nuevos Casos a Crear ({{casosParaCrearDetectados.length}})" [toggleable]="true" class="mt-4" *ngIf="casosParaCrearDetectados.length > 0">
+             <div class="max-h-[200px] overflow-y-auto">
+                <ul class="list-none p-0 m-0">
+                    <li *ngFor="let caso of casosParaCrearDetectados" class="p-2 border-b">
+                        <i class="pi pi-plus-circle mr-2 text-green-500"></i>
+                        {{ caso['Nombre del Caso'] }}
+                    </li>
+                </ul>
+            </div>
+        </p-fieldset>
+
+    </ng-template>
+    <ng-template pTemplate="footer">
+        <button pButton pRipple label="Cancelar" icon="pi pi-times" class="p-button-text" (click)="previsualizacionDialog = false"></button>
+        <button pButton pRipple label="Confirmar y Aplicar Cambios" icon="pi pi-check" (click)="confirmarCambios()"></button>
+    </ng-template>
+</p-dialog>
+
 <p-dialog [(visible)]="advertenciaDialog" 
           header="Advertencia de Posibles Duplicados" 
           [modal]="true" 
@@ -475,5 +543,21 @@
     <ng-template pTemplate="footer">
         <button pButton pRipple label="Cancelar" icon="pi pi-times" class="p-button-text" (click)="cerrarDialogoAdvertencia()"></button>
         <button pButton pRipple label="Continuar de todas formas" icon="pi pi-check" class="p-button-warning" (click)="confirmarAdvertencia()"></button>
+    </ng-template>
+</p-dialog>
+
+<p-dialog header="Resumen de Importación" [(visible)]="resumenImportacionDialog" [modal]="true" [style]="{width: '500px'}">
+    <div class="confirmation-content text-center">
+        <i class="pi pi-info-circle text-6xl text-primary-500"></i>
+        <p class="text-xl my-4">Se aplicarán los siguientes cambios:</p>
+        <div class="text-left mx-auto inline-block">
+            <p class="text-lg flex align-items-center"><i class="pi pi-plus-circle text-green-500 mr-2"></i><strong>Nuevos Casos a Crear:</strong> <span class="ml-2 font-bold">{{ loteParaProcesar.casosParaCrear.length }}</span></p>
+            <p class="text-lg flex align-items-center"><i class="pi pi-pencil text-yellow-500 mr-2"></i><strong>Casos a Modificar:</strong> <span class="ml-2 font-bold">{{ loteParaProcesar.casosParaActualizar.length }}</span></p>
+        </div>
+        <p class="mt-4">¿Estás seguro de que deseas continuar?</p>
+    </div>
+    <ng-template pTemplate="footer">
+        <button pButton pRipple icon="pi pi-times" label="Cancelar" class="p-button-text" (click)="resumenImportacionDialog = false"></button>
+        <button pButton pRipple icon="pi pi-check" label="Confirmar" (click)="confirmarProcesarLote()"></button>
     </ng-template>
 </p-dialog>

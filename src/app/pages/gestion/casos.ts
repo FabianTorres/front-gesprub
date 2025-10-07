@@ -49,6 +49,13 @@ import { Usuario } from '../../models/usuario';
 import { UsuarioService } from '../../services/usuario.service';
 
 
+// Define la estructura de un cambio detectado para la previsualización.
+interface CambioDetectado {
+    campo: string;
+    valorAnterior: any;
+    valorNuevo: any;
+}
+
 // Se define una interfaz local para la estructura de los Hitos.
 interface Hito {
     id: number;
@@ -86,8 +93,7 @@ export class CasosPage implements OnInit {
         return todos;
     });
 
-
-
+    opcionesImportar: MenuItem[];
 
 
     // Señal que almacena la lista completa de componentes para los desplegables.
@@ -117,6 +123,13 @@ export class CasosPage implements OnInit {
     // Almacena las opciones para el filtro de estado en la tabla.
     //opcionesFiltroEstado: any[];
 
+    // Propiedades para el flujo de importación
+    resumenImportacionDialog: boolean = false;
+    loteParaProcesar = {
+        casosParaCrear: [] as any[],
+        casosParaActualizar: [] as any[]
+    };
+
     // Señal para las opciones del filtro de versión
     opcionesFiltroVersion = signal<any[]>([]);
     // Propiedad para controlar el switch de la fuente
@@ -139,6 +152,12 @@ export class CasosPage implements OnInit {
     private usuarioService = inject(UsuarioService);
 
     sugerenciasFuentes = signal<Fuente[]>([]); 
+
+    // Diálogos y datos para el nuevo flujo de modificación
+    importModificarDialog: boolean = false;
+    previsualizacionDialog: boolean = false;
+    casosConCambios: { casoOriginal: CasoConEvidencia, cambios: CambioDetectado[], datosParaEnviar: any }[] = [];
+    casosParaCrearDetectados: any[] = []; // Para los nuevos casos en el mismo archivo de modificación
 
 
     estadosModificacion = signal<EstadoModificacion[]>([]);
@@ -181,10 +200,6 @@ export class CasosPage implements OnInit {
     datosPrevisualizacion: any[] = [];
     columnasPrevisualizacion: { field: string, header: string }[] = [];
     private todasLasFilasDelExcel: any[] = [];
-
-
-    
-
 
     // Almacena las opciones para el filtro de activo en la tabla.
     opcionesFiltroActivo: any[];
@@ -295,6 +310,24 @@ export class CasosPage implements OnInit {
                 icon: 'pi pi-file',
                 command: () => {
                     this.exportarCasos('csv');
+                }
+            }
+        ];
+
+        // Definimos las opciones para el nuevo botón desplegable de importación.
+        this.opcionesImportar = [
+            {
+                label: 'Casos Nuevos',
+                icon: 'pi pi-plus',
+                command: () => {
+                    this.abrirDialogoImportarNuevos();
+                }
+            },
+            {
+                label: 'Modificar Casos',
+                icon: 'pi pi-pencil',
+                command: () => {
+                    this.abrirDialogoImportarModificar();
                 }
             }
         ];
@@ -691,7 +724,9 @@ export class CasosPage implements OnInit {
 
     cerrarDialogoImportar() {
         this.importDialog = false;
+        this.onClearFiles();
     }
+
     cerrarDialogoAdvertencia() {
         this.advertenciaDialog = false;
         this.casosConAdvertencia = [];
@@ -939,6 +974,221 @@ export class CasosPage implements OnInit {
         }
     }
 
+    /**
+     * Lógica para el flujo de Modificación: lee el Excel, separa los casos y muestra el resumen.
+     */
+    async procesarArchivoModificacion() {
+        if (!this.archivoParaImportar) {
+            this.messageService.add({ severity: 'warn', summary: 'Atención', detail: 'Por favor, seleccione un archivo.' });
+            return;
+        }
+
+        try {
+            const casosLeidosDelExcel = await leerYValidarExcel(this.archivoParaImportar, this.messageService);
+            if (!casosLeidosDelExcel) return;
+
+            this.casosConCambios = [];
+            this.casosParaCrearDetectados = [];
+            const erroresDeValidacion: string[] = [];
+            const casosActuales = this.todosLosCasosMaestros();
+
+            const normalizarEstado = (texto: string): string => {
+                const t = String(texto || '').toLowerCase().trim();
+                if (['modificado', 'mod.', 'mod', 'modificada', 'modificados'].includes(t)) return 'Modificado';
+                if (['sin cambios', 'sin cambio', 's/ cambios', 's cambios'].includes(t)) return 'Sin cambios';
+                if (['eliminado', 'eliminada'].includes(t)) return 'Eliminado';
+                if (['nuevo', 'nueva', 'nuevos', 'nuevas'].includes(t)) return 'Nuevo';
+                return String(texto || '').trim(); // Devolver original si no coincide
+            };
+
+            casosLeidosDelExcel.forEach((filaExcel: any, index: number) => {
+                const idCasoExcel = filaExcel['ID Caso'];
+
+                if (idCasoExcel && !isNaN(Number(idCasoExcel)) && Number(idCasoExcel) > 0) {
+                    const casoOriginal = casosActuales.find(c => c.caso.id_caso === Number(idCasoExcel));
+                    if (!casoOriginal) return;
+
+                    const cambiosDetectados: CambioDetectado[] = [];
+                    const datosParaEnviar: any = { id_caso: Number(idCasoExcel) };
+
+                    const camposAComparar = [
+                        { excel: 'Nombre del Caso', modelo: 'nombre_caso', ui: 'Nombre' },
+                        { excel: 'Descripción', modelo: 'descripcion_caso', ui: 'Descripción' },
+                        { excel: 'Precondiciones', modelo: 'precondiciones', ui: 'Precondiciones' },
+                        { excel: 'Pasos', modelo: 'pasos', ui: 'Pasos' },
+                        { excel: 'Resultado Esperado', modelo: 'resultado_esperado', ui: 'Resultado Esperado' }
+                    ];
+
+                    camposAComparar.forEach(campo => {
+                        if (filaExcel.hasOwnProperty(campo.excel)) {
+                            const valorExcel = this.normalizarValor(filaExcel[campo.excel]);
+                            const valorActual = this.normalizarValor((casoOriginal.caso as any)[campo.modelo]);
+                            if (valorExcel !== valorActual) {
+                                cambiosDetectados.push({ campo: campo.ui, valorAnterior: valorActual, valorNuevo: valorExcel });
+                                datosParaEnviar[campo.modelo] = filaExcel[campo.excel];
+                            }
+                        }
+                    });
+
+                    // --- NUEVA LÓGICA DE VALIDACIÓN Y COMPARACIÓN PARA CAMPOS ESPECIALES ---
+
+                    // 1. Validación para Versión
+                    if (filaExcel.hasOwnProperty('Versión')) {
+                        const valorVersionExcel = this.normalizarValor(filaExcel['Versión']);
+                        const valorVersionActual = this.normalizarValor(casoOriginal.caso.version);
+                        if (valorVersionExcel !== valorVersionActual) {
+                            const versionRegex = /^\d+\.\d+$/;
+                            if (!versionRegex.test(valorVersionExcel)) {
+                                erroresDeValidacion.push(`Fila ${index + 2} (ID: ${idCasoExcel}): El formato de la nueva versión '${valorVersionExcel}' no es válido (ej: 1.0).`);
+                            } else {
+                                cambiosDetectados.push({ campo: 'Versión', valorAnterior: valorVersionActual, valorNuevo: valorVersionExcel });
+                                datosParaEnviar.version = filaExcel['Versión'];
+                            }
+                        }
+                    }
+
+                    // 2. Comparación para Fuentes
+                    if (filaExcel.hasOwnProperty('Fuentes')) {
+                        const valorFuentesExcel = (filaExcel['Fuentes'] || '').split(';').map((f: string) => f.trim()).filter(Boolean).sort().join(';');
+                        const valorFuentesActual = (casoOriginal.caso.fuentes || []).map(f => f.nombre_fuente.trim()).sort().join(';');
+                        if (valorFuentesExcel !== valorFuentesActual) {
+                            cambiosDetectados.push({ campo: 'Fuentes', valorAnterior: valorFuentesActual.replace(/;/g, '; '), valorNuevo: valorFuentesExcel.replace(/;/g, '; ') });
+                            datosParaEnviar.nombres_fuentes = filaExcel['Fuentes'];
+                        }
+                    }
+
+                    // 3. Comparación para Activo
+                    if (filaExcel.hasOwnProperty('Activo')) {
+                        const valorActivoExcel = ['si', 'sí'].includes(String(filaExcel['Activo'] || '').toLowerCase().trim());
+                        const valorActivoActual = casoOriginal.caso.activo === 1;
+                        if (valorActivoExcel !== valorActivoActual) {
+                            cambiosDetectados.push({ campo: 'Activo', valorAnterior: valorActivoActual ? 'Sí' : 'No', valorNuevo: valorActivoExcel ? 'Sí' : 'No' });
+                            datosParaEnviar.activo = valorActivoExcel ? 1 : 0;
+                        }
+                    }
+
+                    // 4. Comparación para Estado Modificación
+                    if (filaExcel.hasOwnProperty('Estado Modificación')) {
+                        const valorEstadoExcel = this.normalizarValor(filaExcel['Estado Modificación']);
+                        if (valorEstadoExcel) { // Solo comparar si no está en blanco
+                            const valorEstadoActual = this.normalizarValor(this.findEstadoModificacionNombre(casoOriginal.caso.id_estado_modificacion));
+                            if (normalizarEstado(valorEstadoExcel) !== normalizarEstado(valorEstadoActual)) {
+                                cambiosDetectados.push({ campo: 'Estado Modificación', valorAnterior: valorEstadoActual, valorNuevo: valorEstadoExcel });
+                                datosParaEnviar.nombre_estado_modificacion = filaExcel['Estado Modificación'];
+                            }
+                        }
+                    }
+
+                    if (cambiosDetectados.length > 0) {
+                        this.casosConCambios.push({ casoOriginal, cambios: cambiosDetectados, datosParaEnviar });
+                    }
+                } else {
+                    this.casosParaCrearDetectados.push(filaExcel);
+                }
+            });
+            
+            // Si encontramos errores de validación, los mostramos y detenemos el proceso.
+            if (erroresDeValidacion.length > 0) {
+                this.messageService.add({ severity: 'error', summary: 'Errores de Validación en el Archivo', detail: 'Por favor, corrija los siguientes errores antes de continuar.', sticky: true });
+                erroresDeValidacion.forEach(error => {
+                    this.messageService.add({ severity: 'warn', summary: error, sticky: true, life: 10000 });
+                });
+                return;
+            }
+
+            if (this.casosConCambios.length > 0 || this.casosParaCrearDetectados.length > 0) {
+                this.previsualizacionDialog = true;
+            } else {
+                this.messageService.add({ severity: 'info', summary: 'Sin Cambios', detail: 'No se detectaron modificaciones en el archivo.' });
+            }
+        } catch (error) {
+            console.error("Fallo al procesar el archivo de modificación:", error);
+        }
+    }
+
+    confirmarCambios() {
+        const usuarioLogueado = this.authService.usuarioActual();
+        if (!usuarioLogueado) {
+            this.messageService.add({ severity: 'error', summary: 'Error de Sesión', detail: 'No se pudo identificar al usuario.' });
+            return;
+        }
+    
+        const loteFinal = {
+            casosParaCrear: this.casosParaCrearDetectados.map(fila => ({
+                nombre_caso: String(fila['Nombre del Caso'] || ''),
+                descripcion_caso: String(fila['Descripción'] || ''),
+                version: String(fila['Versión'] || '').replace(',', '.'),
+                id_componente: this.componenteSeleccionadoId!,
+                id_usuario_creador: usuarioLogueado.idUsuario,
+                jp_responsable: usuarioLogueado.idUsuario,
+                nombre_estado_modificacion: String(fila['Estado Modificación'] || 'Nuevo'),
+                precondiciones: String(fila['Precondiciones'] || ''),
+                pasos: String(fila['Pasos'] || ''),
+                resultado_esperado: String(fila['Resultado Esperado'] || ''),
+            })),
+            casosParaActualizar: this.casosConCambios.map(c => c.datosParaEnviar)
+        };
+    
+        this.casoService.procesarLoteCasos(loteFinal).subscribe({
+            next: (res) => {
+                this.messageService.add({ severity: 'success', summary: 'Éxito', detail: res.mensaje || 'Lote procesado correctamente.' });
+                this.previsualizacionDialog = false;
+                this.cerrarDialogoImportarModificar();
+                this.onComponenteSeleccionado();
+            },
+            error: (err) => {
+                this.messageService.add({ severity: 'error', summary: 'Error al procesar', detail: err.error?.mensaje || 'No se pudo procesar el lote.' });
+            }
+        });
+    }
+
+    validarSimilitudYProceder(casosACrear: any[]) {
+        this.casosConAdvertencia = [];
+        const errores: string[] = [];
+        const nombresCasosExistentes = this.casos().map(c => c.caso.nombre_caso).filter(Boolean) as string[];
+        const nombresEnArchivo = new Set<string>();
+        const umbralSimilitud = 0.5;
+
+        casosACrear.forEach((fila: any, index: number) => {
+            const nombreCasoActual = fila['Nombre del Caso'];
+            if (nombreCasoActual) {
+                const nombreNormalizado = this.normalizarNombreCaso(nombreCasoActual);
+                if (nombresEnArchivo.has(nombreNormalizado)) {
+                    errores.push(`Fila ${index + 2}: El caso "${nombreCasoActual}" está duplicado en el archivo.`);
+                } else {
+                    nombresEnArchivo.add(nombreNormalizado);
+                }
+                if (nombresCasosExistentes.length > 0) {
+                    const coincidencias = similarity.findBestMatch(nombreNormalizado, nombresCasosExistentes.map(n => this.normalizarNombreCaso(n)));
+                    if (coincidencias.bestMatch.rating === 1) {
+                        errores.push(`Fila ${index + 2}: El caso "${nombreCasoActual}" ya existe en este componente.`);
+                    } else if (coincidencias.bestMatch.rating > umbralSimilitud) {
+                        this.casosConAdvertencia.push({
+                            nombreNuevo: nombreCasoActual,
+                            nombreExistente: nombresCasosExistentes[coincidencias.bestMatchIndex],
+                            similitud: Math.round(coincidencias.bestMatch.rating * 100)
+                        });
+                    }
+                }
+            }
+        });
+
+        if (errores.length > 0) {
+            this.messageService.add({ severity: 'error', summary: 'Errores de Importación', detail: 'Se encontraron errores que impiden la importación.', sticky: true });
+            errores.slice(0, 5).forEach(error => this.messageService.add({ severity: 'warn', summary: error, sticky: true, life: 10000 }));
+            return;
+        }
+
+        this.accionConfirmada = 'importar';
+        if (this.casosConAdvertencia.length > 0) {
+            this.advertenciaDialog = true;
+        } else {
+            this.procederConImportacion();
+        }
+    }
+
+    
+
     procederConImportacion() {
         const usuarioLogueado = this.authService.usuarioActual();
         if (!usuarioLogueado) {
@@ -1073,7 +1323,7 @@ export class CasosPage implements OnInit {
         }
 
         if (formato === 'excel') {
-            const datosParaExportar = this.casos().map((item: CasoConEvidencia) => (console.log('Datos del item para exportar:', item),
+            const datosParaExportar = this.casos().map((item: CasoConEvidencia) => (console.log(''),
                 {
                 'ID Caso': item.caso.id_caso,
                 'Nombre del Caso': item.caso.nombre_caso,
@@ -1083,7 +1333,7 @@ export class CasosPage implements OnInit {
                 'Precondiciones': item.caso.precondiciones,
                 'Pasos': item.caso.pasos,
                 'Resultado Esperado': item.caso.resultado_esperado,
-                'Fuentes': item.caso.fuentes?.map(f => f.nombre_fuente).join(',\n'),
+                'Fuentes': item.caso.fuentes?.map(f => f.nombre_fuente).join(';\n'),
                 'Activo': item.caso.activo === 1 ? 'Sí' : 'No',
                 'Último Estado Ejecución': item.ultimaEvidencia ? this.findEstadoEvidenciaNombre(item.ultimaEvidencia.id_estado_evidencia) : 'Sin Ejecutar',
                 'Tester Asignado': item.ultimaEvidencia ? this.findUserNameById(item.ultimaEvidencia.id_usuario_ejecutante) : 'No asignado',
@@ -1132,5 +1382,119 @@ export class CasosPage implements OnInit {
 
     toggleFiltroMisCasos() {
         this.filtroMisCasosActivo.update(value => !value);
+    }
+
+
+    validarSimilitudYNuevoFlujo(casosACrear: any[]) {
+        this.casosConAdvertencia = [];
+        // Filtramos para evitar errores con casos que no tienen nombre
+        const nombresCasosExistentes = this.casos()
+            .map(c => c.caso.nombre_caso)
+            .filter((nombre): nombre is string => typeof nombre === 'string' && nombre.trim() !== '');
+
+        const umbralSimilitud = 0.5;
+
+        casosACrear.forEach((fila: any) => {
+            const nombreCasoActual = fila['Nombre del Caso'];
+            if (nombreCasoActual && nombresCasosExistentes.length > 0) {
+                const nombreNormalizado = this.normalizarNombreCaso(nombreCasoActual);
+                const coincidencias = similarity.findBestMatch(nombreNormalizado, nombresCasosExistentes.map(n => this.normalizarNombreCaso(n)));
+                if (coincidencias.bestMatch.rating > umbralSimilitud) {
+                    this.casosConAdvertencia.push({
+                        nombreNuevo: nombreCasoActual,
+                        nombreExistente: nombresCasosExistentes[coincidencias.bestMatchIndex],
+                        similitud: Math.round(coincidencias.bestMatch.rating * 100)
+                    });
+                }
+            }
+        });
+
+        if (this.casosConAdvertencia.length > 0) {
+            this.advertenciaDialog = true;
+        } else {
+            this.procederConImportacion(); // Llama al método de importación original
+        }
+    }
+
+    confirmarProcesarLote() {
+        const usuarioLogueado = this.authService.usuarioActual();
+        if (!usuarioLogueado) {
+            this.messageService.add({ severity: 'error', summary: 'Error de Sesión', detail: 'No se pudo identificar al usuario.' });
+            return;
+        }
+
+        const loteFinal = {
+            casosParaCrear: this.loteParaProcesar.casosParaCrear.map(fila => ({
+                nombre_caso: String(fila['Nombre del Caso'] || ''),
+                descripcion_caso: String(fila['Descripción'] || ''),
+                version: String(fila['Versión'] || '').replace(',', '.'),
+                id_componente: this.componenteSeleccionadoId!,
+                id_usuario_creador: usuarioLogueado.idUsuario,
+                jp_responsable: usuarioLogueado.idUsuario,
+                nombre_estado_modificacion: String(fila['Estado Modificación'] || ''),
+                nombres_fuentes: String(fila['Fuentes'] || '').replace(/;/g, ','),
+                precondiciones: String(fila['Precondiciones'] || ''),
+                pasos: String(fila['Pasos'] || ''),
+                resultado_esperado: String(fila['Resultado Esperado'] || ''),
+            })),
+            casosParaActualizar: this.loteParaProcesar.casosParaActualizar.map(fila => {
+                const casoActualizado: any = { id_caso: Number(fila['ID Caso']) };
+                if (fila['Nombre del Caso']) casoActualizado.nombre_caso = String(fila['Nombre del Caso']);
+                if (fila['Descripción']) casoActualizado.descripcion_caso = String(fila['Descripción']);
+                if (fila['Versión']) casoActualizado.version = String(fila['Versión']).replace(',', '.');
+                if (fila['Estado Modificación']) casoActualizado.nombre_estado_modificacion = String(fila['Estado Modificación']);
+                if (fila['Fuentes']) casoActualizado.nombres_fuentes = String(fila['Fuentes']).replace(/;/g, ',');
+                if (fila['Precondiciones']) casoActualizado.precondiciones = String(fila['Precondiciones']);
+                if (fila['Pasos']) casoActualizado.pasos = String(fila['Pasos']);
+                if (fila['Resultado Esperado']) casoActualizado.resultado_esperado = String(fila['Resultado Esperado']);
+                return casoActualizado;
+            })
+        };
+
+        this.casoService.procesarLoteCasos(loteFinal).subscribe({
+            next: (res) => {
+                this.messageService.add({ severity: 'success', summary: 'Éxito', detail: res.mensaje || 'Lote procesado correctamente.' });
+                this.resumenImportacionDialog = false;
+                this.cerrarDialogoImportar();
+                this.onComponenteSeleccionado();
+            },
+            error: (err) => {
+                this.messageService.add({ severity: 'error', summary: 'Error al procesar', detail: err.error?.mensaje || 'No se pudo procesar el lote.' });
+                this.resumenImportacionDialog = false;
+            }
+        });
+    }
+
+    onClearFiles() {
+        this.archivoParaImportar = null;
+    }
+
+
+    /**
+     * Abre el diálogo para la importación de SÓLO casos nuevos.
+     */
+    abrirDialogoImportarNuevos() {
+        this.importDialog = true;
+        this.archivoParaImportar = null;
+    }
+
+    /**
+     * Abre el diálogo para la modificación masiva de casos.
+     */
+    abrirDialogoImportarModificar() {
+        this.importModificarDialog = true;
+        this.archivoParaImportar = null; // Usaremos la misma variable de archivo
+    }
+
+    /**
+     * Cierra el diálogo de modificación y limpia la selección de archivo.
+     */
+    cerrarDialogoImportarModificar() {
+        this.importModificarDialog = false;
+        this.onClearFiles();
+    }
+
+    normalizarValor(valor: any): string {
+        return String(valor || '').trim();
     }
 }

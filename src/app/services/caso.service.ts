@@ -90,4 +90,12 @@ export class CasoService {
 
         return this.http.get<KanbanData>(url, { params });
     }
+
+     /**
+     * Envía un lote de casos para ser creados y/o actualizados en el backend.
+     * @param lote Un objeto que contiene dos arrays: casosParaCrear y casosParaActualizar.
+     */
+    procesarLoteCasos(lote: { casosParaCrear: any[], casosParaActualizar: any[] }): Observable<any> {
+        return this.http.post(`${this.apiUrl}/procesar-lote`, lote);
+    }
 }

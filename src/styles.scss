@@ -51,12 +51,31 @@
     border-color: var(--surface-700) !important;
 }
 
-//Le da la altura al dashboard
-gridster {
-  min-height: 500px; // dale una altura base
+
+/* * Variables de color personalizadas para los gráficos del dashboard.
+ * Esto nos independiza de los nombres de color específicos del tema de PrimeNG
+ * y nos da control total sobre la apariencia en modo claro y oscuro.
+ */
+:root {
+  --color-ok: #22c55e;
+  --color-fallo: #ef4444;
+  --color-na: #6b7280;
+
+  /* Colores atenuados para el efecto hover */
+  --color-ok-hover: #79d199;
+  --color-fallo-hover: #e67979;
+  --color-na-hover: #5f6369;
 }
 
-:host ::ng-deep .p-orderlist-list {
-  overflow: hidden;
+.app-dark {
+  /* Versiones ligeramente más brillantes para el modo oscuro */
+  --color-ok: #4ade80;
+  --color-fallo: #f87171;
+  --color-na: #9ca3af;
+
+  /* Colores atenuados para el hover en modo oscuro */
+  --color-ok-hover: #79d199;
+  --color-fallo-hover: #e67979;
+  --color-na-hover: #5f6369;
 }
 

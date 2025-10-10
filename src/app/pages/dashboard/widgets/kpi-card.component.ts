@@ -2,25 +2,24 @@
 
 import { Component, Input } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { SkeletonModule } from 'primeng/skeleton';
+import { CardModule } from 'primeng/card';
 
 @Component({
   selector: 'app-kpi-card',
   standalone: true,
-  imports: [CommonModule, SkeletonModule],
+  imports: [CommonModule, CardModule],
   template: `
-    <div class="card !p-0 h-full flex flex-col" style="position: relative; z-index: 1;">
-      <div class="flex justify-between p-4">
+        <div class="p-3 rounded-lg shadow-md bg-surface-card border border-surface-200 dark:border-surface-700">
+      <div class="flex justify-between items-start">
         <div>
-          <span class="block text-muted-color font-medium">{{ label }}</span>
-          <div class="text-surface-900 dark:text-surface-0 font-bold text-3xl mt-2">
-            <p-skeleton width="6rem" height="2rem" *ngIf="loading; else valueTpl"></p-skeleton>
-            <ng-template #valueTpl>{{ value }}</ng-template>
-          </div>
+          <h3 class="font-semibold m-0 text-surface-700 dark:text-surface-200">{{ titulo }}</h3>
         </div>
-        <div class="flex items-center justify-center bg-primary-100 dark:bg-primary-900/40 rounded-full w-16 h-16">
-          <i [class]="'pi text-3xl text-primary-600 dark:text-primary-300 ' + icon"></i>
+        <div class="p-2 rounded-md" [ngClass]="color">
+          <i [class]="'pi ' + icono + ' text-xl text-white'"></i>
         </div>
+      </div>
+      <div class="text-left mt-2">
+        <span class="text-3xl font-bold text-surface-900 dark:text-surface-0">{{ valor | number:'1.0-2' }}{{ unidad }}</span>
       </div>
     </div>
   `
@@ -30,4 +29,11 @@ export class KpiCardComponent {
   @Input() value: string | number = '';
   @Input() icon: string = '';
   @Input() loading: boolean = true;
+
+  // --- AÑADIR los decoradores @Input() ---
+  @Input() titulo: string = '';
+  @Input() valor: number = 0;
+  @Input() icono: string = '';
+  @Input() unidad: string = '';
+  @Input() color: string = 'bg-primary-500';
 }

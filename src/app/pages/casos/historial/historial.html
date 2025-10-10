@@ -92,6 +92,14 @@
                                 pTooltip="Mover ejecución a otro caso" tooltipPosition="top">
                         </button>
 
+                        <button pButton 
+                                type="button" 
+                                icon="pi pi-pencil" 
+                                [disabled]="evento.activo === 0"
+                                class="p-button-rounded p-button-text p-button-secondary"
+                                (click)="abrirDialogoEditar(evento)"
+                                pTooltip="Corregir RUT o Jira" tooltipPosition="top">
+                        </button>
                        
                            
                         <p-tag [value]="findEstadoEvidenciaNombre(evento.id_estado_evidencia)" [severity]="getSeverityForEstado(findEstadoEvidenciaNombre(evento.id_estado_evidencia))"></p-tag>
@@ -218,3 +226,43 @@
 </p-dialog>
 
 <p-confirmDialog [style]="{width: '450px'}"></p-confirmDialog>
+
+<p-dialog [(visible)]="editarDialogVisible" 
+          header="Corregir Datos de la Ejecución" 
+          [modal]="true" 
+          [style]="{width: '500px'}" 
+          (onHide)="cerrarDialogoEditar()">
+    <div class="p-fluid flex flex-col gap-4">
+        <div class="field">
+            <label for="rut" class="font-bold block mb-2">RUT</label>
+            <input  id="rut" 
+                    type="text" 
+                    pInputText 
+                    [(ngModel)]="evidenciaEditada.rut" 
+                    placeholder="Ej: 12345678-9" 
+                    appRutValidator 
+                    #rutInput="ngModel"
+                    class="w-full"/>
+                    <small class="p-error" *ngIf="rutInput.invalid && (rutInput.dirty || rutInput.touched)">
+                        El RUT ingresado no es válido.
+                    </small>
+            
+        </div>
+
+        <div class="field">
+            <label for="jira" class="font-bold block mb-2">Ticket de Jira</label>
+            <input id="jira" class="w-full" type="text" pInputText [(ngModel)]="evidenciaEditada.id_jira" placeholder="Ej: 99 o CERTRTA26-99" />
+            <small class="text-surface-500">Puedes ingresar solo el número o el ID completo.</small>
+        </div>
+
+        <div class="field">
+            <label for="descripcionCorreccion" class="font-bold block mb-2">Motivo de la corrección (Opcional)</label>
+            <textarea id="descripcionCorreccion" pTextarea [(ngModel)]="motivoCorreccion" rows="2" placeholder="Ej: Se corrige RUT por dato erróneo." class="w-full" ></textarea>
+        </div>
+    </div>
+
+    <ng-template pTemplate="footer">
+        <button pButton pRipple label="Cancelar" icon="pi pi-times" class="p-button-text" (click)="cerrarDialogoEditar()"></button>
+        <button pButton pRipple label="Guardar Corrección" icon="pi pi-check" (click)="guardarCorreccion()"></button>
+    </ng-template>
+</p-dialog>

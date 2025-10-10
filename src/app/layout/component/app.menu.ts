@@ -123,12 +123,20 @@ export class AppMenu implements OnInit {
                         routerLink: ['/'],
                         visible: true // Mantenemos el dashboard oculto como querías
                     },
+                    // {
+                    //     label: 'Tablero',
+                    //     icon: 'pi pi-fw pi-chart-bar',
+                    //     routerLink: ['dashboard'],
+                    //     visible: true // Mantenemos el dashboard oculto como querías
+                    // },
                     {
-                        label: 'Tablero',
+                        label: 'Reportes y Análisis',
                         icon: 'pi pi-fw pi-chart-bar',
-                        routerLink: ['dashboard'],
-                        visible: true // Mantenemos el dashboard oculto como querías
-                    }
+                        items: [
+                            { label: 'General', icon: 'pi pi-fw pi-chart-bar', routerLink: ['/pages/dashboard'] },
+                            { label: 'Avance por Componente', icon: 'pi pi-fw pi-chart-bar', routerLink: ['/pages/dashboard/avance-componente'] },
+                        ]
+                    },
                 ]
                 
             },

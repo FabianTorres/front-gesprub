@@ -35,7 +35,6 @@ import { ProyectoService } from '../../services/proyecto.service';
 import { AutenticacionService } from '../../services/autenticacion.service';
 import { leerYValidarExcel, descargarPlantillaCasos, exportarAExcel } from '../../utils/excel.utils';
 import * as XLSX from 'xlsx';
-import { saveAs } from 'file-saver';
 import { EstadoModificacion } from '../../models/estado-modificacion';
 import { EstadoModificacionService } from '../../services/estado-modificacion.service';
 import { CatalogoService } from '../../services/catalogo.service';
@@ -129,6 +128,12 @@ export class CasosPage implements OnInit {
         casosParaCrear: [] as any[],
         casosParaActualizar: [] as any[]
     };
+
+    /**
+     * Señal que almacena la clave única para guardar/restaurar el estado de la tabla.
+     * Cambia dinámicamente según el componente seleccionado.
+     */
+    tableStateKey = signal<string>('estado-tabla-casos-sin-seleccion');
 
     // Señal para las opciones del filtro de versión
     opcionesFiltroVersion = signal<any[]>([]);
@@ -427,6 +432,10 @@ export class CasosPage implements OnInit {
         if (this.componenteSeleccionadoId && proyectoActual) {
             const key = `ultimoComponente_${proyectoActual.id_proyecto}`;
             localStorage.setItem(key, this.componenteSeleccionadoId.toString());
+
+            this.tableStateKey.set(`estado-tabla-casos-componente-${this.componenteSeleccionadoId}`);
+        }else{
+            this.tableStateKey.set('estado-tabla-casos-sin-seleccion');
         }
 
 
@@ -448,6 +457,10 @@ export class CasosPage implements OnInit {
 
                     const rutsParaBuscar = item.rutsUnicos?.join(' ') || '';
 
+                    const jiraIdParaFiltro = item.ultimaEvidencia?.id_jira ?? '';
+
+                    const ultimoEstadoNombre = this.findEstadoEvidenciaNombre(item.ultimaEvidencia?.id_estado_evidencia)
+
                    
                     // Se crea una nueva versión del objeto 'caso' que incluye el nombre.
                     const casoActualizado = { 
@@ -455,7 +468,9 @@ export class CasosPage implements OnInit {
                         nombre_estado_modificacion: nombreEstado,
                         version: item.caso.version || '',
                         fuentes_nombres: nombresFuentes,
-                        ruts_concatenados: rutsParaBuscar
+                        ruts_concatenados: rutsParaBuscar,
+                        jira_id_filter: jiraIdParaFiltro,
+                        ultimoEstadoNombreFilter: ultimoEstadoNombre
                          
                     };
 
@@ -703,7 +718,8 @@ export class CasosPage implements OnInit {
 
     // Limpia todos los filtros aplicados en la tabla.
     clear(table: Table) {
-        table.clear();
+        localStorage.removeItem(this.tableStateKey());
+        table.reset();
         if (this.filterInput) {
             this.filterInput.nativeElement.value = '';
         }
@@ -1335,6 +1351,7 @@ export class CasosPage implements OnInit {
                 'Resultado Esperado': item.caso.resultado_esperado,
                 'Fuentes': item.caso.fuentes?.map(f => f.nombre_fuente).join(';\n'),
                 'Activo': item.caso.activo === 1 ? 'Sí' : 'No',
+                'Jira ID': item.ultimaEvidencia?.id_jira || '',
                 'Último Estado Ejecución': item.ultimaEvidencia ? this.findEstadoEvidenciaNombre(item.ultimaEvidencia.id_estado_evidencia) : 'Sin Ejecutar',
                 'Tester Asignado': item.ultimaEvidencia ? this.findUserNameById(item.ultimaEvidencia.id_usuario_ejecutante) : 'No asignado',
                 'Fecha Última Ejecución': this.datePipe.transform(item.ultimaEvidencia?.fecha_evidencia, 'yyyy-MM-dd HH:mm') || 'N/A',  
@@ -1354,7 +1371,16 @@ export class CasosPage implements OnInit {
                 'Estado Modificación': item.caso.nombre_estado_modificacion,
                 'Último Estado Ejecución': item.nombre_ultimo_estado,
                 'Fuentes': item.caso.fuentes_nombres,
+                'Precondiciones': item.caso.precondiciones,
+                'Pasos': item.caso.pasos,
+                'Resultado Esperado': item.caso.resultado_esperado,
                 'RUTs': item.caso.ruts_concatenados,
+                'Activo': item.caso.activo === 1 ? 'Sí' : 'No',
+                'Jira ID': item.ultimaEvidencia?.id_jira || '',
+                'Tester Asignado': item.ultimaEvidencia ? this.findUserNameById(item.ultimaEvidencia.id_usuario_ejecutante) : 'No asignado',
+                'Fecha Última Ejecución': this.datePipe.transform(item.ultimaEvidencia?.fecha_evidencia, 'yyyy-MM-dd HH:mm') || 'N/A',  
+                'Descripción Última Evidencia': item.ultimaEvidencia?.descripcion_evidencia || 'N/A',
+                'Último RUT de Prueba': item.ultimaEvidencia?.rut || 'N/A'
             }));
             exportarAExcel(datosParaExportar, "CasosDePrueba");
         }
@@ -1496,5 +1522,26 @@ export class CasosPage implements OnInit {
 
     normalizarValor(valor: any): string {
         return String(valor || '').trim();
+    }
+
+
+    /**
+     * Se ejecuta cuando la tabla restaura su estado desde localStorage.
+     * Sincroniza el valor del filtro global con el campo de búsqueda de texto.
+     * @param state El objeto de estado restaurado por la tabla.
+     */
+    onStateRestore(state: any) {
+        // Hacemos un check para asegurarnos de que la referencia al input (#filterInput) exista
+        if (this.filterInput && this.filterInput.nativeElement) {
+            
+            // Verificamos si en el estado guardado existe un filtro global con un valor
+            if (state && state.filters && state.filters.global) {
+                // Asignamos el valor del filtro guardado al input de búsqueda
+                this.filterInput.nativeElement.value = state.filters.global.value || '';
+            } else {
+                // Si no hay filtro global guardado, nos aseguramos de que el input esté vacío
+                this.filterInput.nativeElement.value = '';
+            }
+        }
     }
 }

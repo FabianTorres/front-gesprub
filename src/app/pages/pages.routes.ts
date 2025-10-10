@@ -14,6 +14,10 @@ export default [
         path: 'dashboard', 
         loadComponent: () => import('./dashboard/dashboard').then(m => m.Dashboard) 
     },
+    { 
+        path: 'dashboard/avance-componente', 
+        loadComponent: () => import('./dashboard/avance-componente').then(m => m.AvanceComponenteComponent) 
+    },
     { path: 'gestion/componentes', loadComponent: () => import('./gestion/componentes').then(m => m.ComponentesPage) },
      { path: 'gestion/casos', loadComponent: () => import('./gestion/casos').then(m => m.CasosPage) },
      { path: 'ejecucion/:id', loadComponent: () => import('./ejecucion/ejecucion').then(m => m.EjecucionPage) },

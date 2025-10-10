@@ -1,4 +1,4 @@
-import { Component, OnInit, effect, inject, signal, computed  } from '@angular/core';
+import { Component, OnInit, effect, inject, signal, computed, ViewChild  } from '@angular/core';
 import { CommonModule, DatePipe, Location  } from '@angular/common';
 import { ActivatedRoute,Router, RouterModule } from '@angular/router';
 import { ConfirmationService, MessageService } from 'primeng/api';
@@ -9,9 +9,12 @@ import { TagModule } from 'primeng/tag';
 import { ToastModule } from 'primeng/toast';
 import { DialogModule } from 'primeng/dialog'; 
 import { SelectModule } from 'primeng/select'; 
-import { FormsModule } from '@angular/forms';
+import { FormsModule, NgModel } from '@angular/forms';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { TooltipModule } from 'primeng/tooltip';
+import { InputTextModule } from 'primeng/inputtext';
+import { TextareaModule } from 'primeng/textarea';
+import { RutValidatorDirective } from '../../../directives/rut-validator.directive'; 
 
 import { Caso } from '../../../models/caso';
 import { Evidencia } from '../../../models/evidencia';
@@ -43,7 +46,7 @@ interface Hito {
 @Component({
     standalone: true,
     imports: [
-        CommonModule,
+        CommonModule, InputTextModule, TextareaModule, RutValidatorDirective, 
         RouterModule,
         ButtonModule,
         CardModule,
@@ -97,6 +100,13 @@ export class HistorialPage implements OnInit {
     hitos = signal<Hito[]>([]);
     componentesFiltrados = signal<Componente[]>([]);
     hitoSeleccionadoId: number | null = null;
+
+    //Propiedades para el cuadro de edicion
+    editarDialogVisible = signal<boolean>(false);
+    evidenciaParaEditar = signal<Evidencia | null>(null);
+    evidenciaEditada: Partial<Evidencia> = {};
+    motivoCorreccion: string = '';
+    @ViewChild('rutInput') rutInputControl!: NgModel;
 
 
     // Se inyecta el nuevo servicio estado modificacion
@@ -478,6 +488,119 @@ export class HistorialPage implements OnInit {
         }
         // Concatena la URL base del entorno con el ID de la incidencia
         return `${environment.jiraBaseUrl}${jiraId}`;
+    }
+
+
+    /**
+     * Abre el diálogo de edición y clona la evidencia seleccionada.
+     * @param evidencia La evidencia original que se va a corregir.
+     */
+    abrirDialogoEditar(evidencia: Evidencia) {
+        this.evidenciaParaEditar.set(evidencia);
+        // Creamos una copia para editar, para no modificar la original en la vista.
+        this.evidenciaEditada = { ...evidencia }; 
+        this.motivoCorreccion = ''; // Limpiamos el motivo
+        this.editarDialogVisible.set(true);
+    }
+
+    /**
+     * Cierra el diálogo de edición y resetea las variables.
+     */
+    cerrarDialogoEditar() {
+        this.editarDialogVisible.set(false);
+        this.evidenciaParaEditar.set(null);
+        this.evidenciaEditada = {};
+    }
+
+    /**
+     * Procesa y guarda la corrección como una nueva evidencia.
+     */
+    guardarCorreccion() {
+        const original = this.evidenciaParaEditar();
+        const usuario = this.authService.usuarioActual();
+        const datosDelHistorial = this.datosHistorial();
+
+        if (!original || !usuario || !datosDelHistorial) {
+            this.messageService.add({ severity: 'error', summary: 'Error', detail: 'No se puede procesar la solicitud.' });
+            return;
+        }
+
+        if (this.evidenciaEditada.rut && this.rutInputControl && this.rutInputControl.invalid) {
+            this.messageService.add({ 
+                severity: 'warn', 
+                summary: 'Atención', 
+                detail: 'El RUT ingresado no es válido. Por favor, corríjalo.' 
+            });
+            return; // Detenemos la ejecución
+        }
+
+        // 1. Preparamos el objeto para la nueva evidencia (la réplica).
+        const nuevaEvidenciaReplica: Partial<Evidencia> = {
+            ...original, // Copiamos todos los datos originales
+            id_evidencia: undefined,
+
+            id_caso: datosDelHistorial?.id_caso,
+            
+            // 2. Sobrescribimos con los datos modificados del diálogo
+            rut: this.evidenciaEditada.rut || undefined, // Si está vacío, lo dejamos como undefined
+            id_jira: this.parseJiraInput(this.evidenciaEditada.id_jira),
+
+            // 3. Actualizamos los metadatos de la nueva ejecución
+            id_usuario_ejecutante: undefined!,
+            usuarioEjecutante: usuario,
+            fecha_evidencia: new Date().toISOString(), // La fecha y hora actual
+            
+            // 4. Creamos una descripción que refleje la corrección
+            descripcion_evidencia: this.generarDescripcionCorreccion(original)
+        };
+
+        console.log('Nuevos datos que se enviarán al backend:', nuevaEvidenciaReplica);
+        
+        // 5. Llamamos al servicio para crear la nueva evidencia
+        this.evidenciaService.createEvidencia(nuevaEvidenciaReplica as Evidencia).subscribe({
+            next: () => {
+                this.messageService.add({ severity: 'success', summary: 'Éxito', detail: 'La corrección se ha guardado como una nueva ejecución.' });
+                this.cerrarDialogoEditar();
+                this.ngOnInit(); // Recargamos el historial para ver el nuevo registro
+            },
+            error: (err) => {
+                console.error("Error al guardar la corrección:", err);
+                this.messageService.add({ severity: 'error', summary: 'Error', detail: 'No se pudo guardar la corrección.' });
+            }
+        });
+    }
+
+    /**
+     * Genera un texto descriptivo para la nueva evidencia de corrección.
+     */
+    private generarDescripcionCorreccion(original: Evidencia): string {
+        const fechaOriginal = new Date(original.fecha_evidencia!).toLocaleString('es-CL');
+        let descripcion = `[CORRECCIÓN] `;
+        
+        if (this.motivoCorreccion) {
+            descripcion += `\nMotivo: ${this.motivoCorreccion}`;
+        }
+        
+        // Añadimos la descripción original si existía
+        if (original.descripcion_evidencia) {
+            descripcion += `\n\nOriginal:\n${original.descripcion_evidencia}`;
+        }
+
+        return descripcion;
+    }
+
+    /**
+     * Extrae solo el número de un ID de Jira (ej. "CERTRTA26-99" -> 99).
+     */
+    private parseJiraInput(jiraInput: any): number | undefined {
+        if (!jiraInput) return undefined;
+        
+        const jiraString = String(jiraInput);
+        const parts = jiraString.split('-');
+        const lastPart = parts[parts.length - 1];
+        
+        const numero = parseInt(lastPart, 10);
+        return isNaN(numero) ? undefined : numero;
     }
 
    

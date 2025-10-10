@@ -73,8 +73,13 @@
                                             'caso.version', 
                                             'caso.fuentes_nombres', 
                                             'caso.nombre_ultimo_estado',
-                                            'caso.ruts_concatenados']"
-                     [loading]="cargandoCasos()" class="p-datatable-gridlines">
+                                            'caso.ruts_concatenados',
+                                            'caso.jira_id_filter',
+                                            'caso.ultimoEstadoNombreFilter']"
+                     [loading]="cargandoCasos()" class="p-datatable-gridlines"
+                     [stateKey]="tableStateKey()"
+                     stateStorage="local"
+                     (onStateRestore)="onStateRestore($event)">
             
             <ng-template pTemplate="caption">
                 <div class="flex justify-between items-center">
@@ -136,6 +141,15 @@
                             </p-columnFilter>
                         </div>
                     </th>
+
+                    <th pSortableColumn="caso.jira_id_filter">
+                        <div class="flex justify-between items-center">
+                            Jira
+                            <p-columnFilter type="text" field="caso.jira_id_filter" display="menu">
+                                
+                            </p-columnFilter>
+                        </div>
+                    </th>
                     <th pSortableColumn="caso.activo" >
                         <div class="flex justify-between items-center">
                             <p-columnFilter field="caso.activo" matchMode="equals" display="menu" [showMatchModes]="false">
@@ -183,6 +197,12 @@
                             [severity]="getSeverityForEstado(findEstadoEvidenciaNombre(item.ultimoEstadoId))">
                         </p-tag>
                     </td>
+
+                    <td class="text-center">
+                        <ng-container *ngIf="findEstadoEvidenciaNombre(item.ultimoEstadoId) === 'NK' && item.ultimaEvidencia && item.ultimaEvidencia.id_jira">
+                            <p-tag severity="secondary" [value]="item.ultimaEvidencia.id_jira"></p-tag>
+                        </ng-container>
+                    </td>
                     <td class="text-center">
                         <i class="pi text-xl" 
                            [ngClass]="{
@@ -216,6 +236,11 @@
                 </tr>
             </ng-template>
         </p-table>
+        <div *ngIf="casos().length > 0" class="flex justify-end mt-2 pr-2">
+            <span class="text-sm font-semibold text-surface-600 dark:text-surface-400">
+                Mostrando {{ (dt.filteredValue ? dt.filteredValue.length : casos().length) }} de {{ casos().length }} casos
+            </span>
+        </div>
     </div>
 </div>
 

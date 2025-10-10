@@ -3,7 +3,20 @@ Todos los cambios significativos en este proyecto se documentarán en este archi
 El formato se basa en [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 y este proyecto adhiere al [Versionado Semántico](https://semver.org/lang/es/).
 
-## [1.1.0] - 2025-10-01
+## [1.2.0] - 2025-10-08
+
+### Added
+-   Se agrega al dashboard la vista general del proyecto
+-   Se agrega al dashboard la vista por componente
+-   Se agrega columna "Jira" a la vista de casos y al exportar a Excel
+-   Se agrega un contador de casos en la vista de casos.
+-   Ahora guarda los filtros seleccionados incluso aunque cambie de pagina
+
+### Changed
+-   Ahora en la busqueda de casos, tambien se puede buscar por estado de la ultima evidencia
+-   En el historial ahora se puede editar el rut y el jira, pero se agregara como ejecucion nueva
+
+## [1.1.0] - 2025-10-03
 
 ### Added
 -   Se agrega una actualizacion masiva para casos de prueba

@@ -1,270 +1,169 @@
-import { ChangeDetectorRef, Component, effect, inject, OnInit, signal, NgZone } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { FormsModule } from '@angular/forms';
-// --- PrimeNG ---
-import { AutoCompleteModule  } from 'primeng/autocomplete'; 
-import { ButtonModule } from 'primeng/button';
-import { SelectButtonModule } from 'primeng/selectbutton'; 
-import { ChartModule } from 'primeng/chart'; 
-import { SidebarModule } from 'primeng/sidebar'; 
-import { OrderListModule } from 'primeng/orderlist';
-import { InputSwitchModule } from 'primeng/inputswitch';
+import { Component, OnInit, inject, signal, effect, OnDestroy } from '@angular/core';
+import { CommonModule, DatePipe } from '@angular/common';
+import { ChartModule } from 'primeng/chart';
+import { TableModule } from 'primeng/table';
+import { CardModule } from 'primeng/card';
+import { TagModule } from 'primeng/tag';
+import { Subscription } from 'rxjs';
 import { SelectModule } from 'primeng/select';
+import { FormsModule } from '@angular/forms';
 
-import { GridsterConfig, GridsterItem, GridsterModule, GridsterComponentInterface  } from 'angular-gridster2';
-import { Usuario } from '../../models/usuario';
-import { UsuarioService } from '../../services/usuario.service';
-import { AutenticacionService } from '../../services/autenticacion.service';
-
-import { DashboardData } from '../../models/dashboard';
-import { ProyectoService } from '../../services/proyecto.service';
 import { DashboardService } from '../../services/dashboard.service';
-
-//Dashboard
-import { KpiCardComponent } from './widgets/kpi-card.component';
-import { ChartWidgetComponent } from './widgets/chart-widget.component';
+import { ProyectoService } from '../../services/proyecto.service';
+import { DashboardData } from '../../models/dashboard-data';
+import { KpiCardComponent } from '../dashboard/widgets/kpi-card.component'; 
+import { RouterModule } from '@angular/router';
+import { ComponenteService } from '../../services/componente.service';
+import { Componente } from '../../models/componente';
 
 @Component({
     standalone: true,
-    selector: 'app-dashboard',
-    imports: [CommonModule,
-                FormsModule, 
-                ButtonModule,
-                GridsterModule,
-                AutoCompleteModule, 
-                SelectButtonModule,
-                ChartModule,
-                KpiCardComponent,
-                ChartWidgetComponent,
-                SidebarModule,
-                OrderListModule,   
-                InputSwitchModule ,
-                SelectModule 
-            
-            ],
-    templateUrl: './dashboard.html'
+    imports: [ CommonModule, SelectModule , FormsModule , ChartModule, CardModule, TableModule, TagModule, KpiCardComponent, RouterModule ],
+    providers: [DatePipe],
+    templateUrl: './dashboard.html',
+    styles: [`
+        :host .card {
+            background: var(--surface-card);
+            color: var(--text-color);
+            border-radius: 12px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+    `]
 })
-export class Dashboard implements OnInit{
-    private usuarioService = inject(UsuarioService); 
-    private authService = inject(AutenticacionService);
-    private proyectoService = inject(ProyectoService); 
+export class Dashboard implements OnInit, OnDestroy {
+    
+    // Inyección de servicios
     private dashboardService = inject(DashboardService);
-    private cdr = inject(ChangeDetectorRef);
-    private zone = inject(NgZone); 
+    private proyectoService = inject(ProyectoService);
+    private componenteService = inject(ComponenteService);
+    private datePipe = inject(DatePipe);
 
+    // Señales para el estado del componente
+    dashboardData = signal<DashboardData | null>(null);
+    cargando = signal<boolean>(true);
 
-  
-    opcionesDeVista: any[] = [
-        { label: 'Vista General', value: 'general' },
-        { label: 'Mi Vista', value: 'personal' },
-        { label: 'Otro Usuario', value: 'otro-usuario' }
-    ];
-    vistaSeleccionada = signal<'general' | 'personal' | 'otro-usuario'>('general');
+    // Señales para el grafico
+    componentes = signal<Componente[]>([]);
+    componenteSeleccionadoId = signal<number | null>(null);
 
-    
-
-    todosLosUsuarios = signal<Usuario[]>([]);
-    usuarioSeleccionado = signal<Usuario | null>(null);
-
-    usuarioActual = this.authService.usuarioActual;
-
-    // Opciones para los Gráficos ---
+    // Propiedades para los gráficos
+    chartData: any;
     chartOptions: any;
-    doughnutOptions: any;
 
+    private subscriptions = new Subscription();
 
-    // --- Estado de los Datos del Dashboard ---
-    dashboardData = signal<DashboardData | null>(null); 
-    loading = signal(true); 
-
-    // --- Configuración de Gridster2 ---
-    options!: GridsterConfig;      
-    dashboard!: Array<GridsterItem>; 
-
-    configSidebarVisible: boolean = false;
-    // Esta será la lista que se muestra y se manipula en el panel de configuración
-    widgetsConfig: any[] = []; 
-    
     constructor() {
-
-        // Este effect se re-ejecutará automáticamente cada vez que cambie
-        // el proyecto, la vista o el usuario seleccionado.
+        // Effect 1: Gestiona la lista de componentes. Se ejecuta solo cuando cambia el proyecto.
         effect(() => {
             const proyecto = this.proyectoService.proyectoSeleccionado();
-            const vista = this.vistaSeleccionada();
-            const usuarioLogueado = this.usuarioActual();
-            const otroUsuario = this.usuarioSeleccionado();
-
-            if (!proyecto) return; // Si no hay proyecto, no hacemos nada
-
-            this.loading.set(true);
-            let usuarioIdParaApi: number | undefined = undefined;
-
-
-            // --- LÓGICA DE VISTAS MEJORADA ---
-            if (vista === 'personal' && usuarioLogueado) {
-                usuarioIdParaApi = usuarioLogueado.idUsuario;
-            } else if (vista === 'otro-usuario' && otroUsuario) {
-                usuarioIdParaApi = otroUsuario.idUsuario;
+            if (proyecto) {
+                this.cargarComponentes(proyecto.id_proyecto);
+                // Al cambiar de proyecto, reseteamos el filtro de componente
+                this.componenteSeleccionadoId.set(null); 
+            } else {
+                this.componentes.set([]);
+                this.componenteSeleccionadoId.set(null);
             }
-            // Si la vista es 'general', usuarioIdParaApi se queda como undefined, lo cual es correcto.
-            
-            // Solo llamamos a la API si tenemos los datos necesarios
-            if ( (vista === 'personal' && usuarioIdParaApi) || 
-                (vista === 'otro-usuario' && usuarioIdParaApi) ||
-                vista === 'general' ) {
-                this.cargarDashboardData(proyecto.id_proyecto, usuarioIdParaApi);
-            }
-
-            
         });
 
-
-        
-         effect(() => {
-            if (this.usuarioActual() && !this.usuarioSeleccionado()) {
-                this.usuarioSeleccionado.set(this.usuarioActual());
+        // Effect 2: Carga los datos del dashboard. Se ejecuta cuando cambia el proyecto O el filtro de componente.
+        effect(() => {
+            const proyecto = this.proyectoService.proyectoSeleccionado();
+            if (proyecto) {
+                const componenteId = this.componenteSeleccionadoId();
+                this.cargarDashboard(proyecto.id_proyecto, componenteId);
+            } else {
+                // Si no hay proyecto, nos aseguramos de limpiar los datos
+                this.dashboardData.set(null);
             }
         });
     }
 
-    ngOnInit(): void {
-        this.cargarTodosLosUsuarios();
-        this.configurarLayout(); 
-        this.configurarOpcionesGraficos();
-    
+    ngOnInit() {
+        this.initChartOptions();
     }
 
-    cargarDashboardData(proyectoId: number, usuarioId?: number) {
-        this.loading.set(true);
-        this.dashboardService.getDashboardData(proyectoId, usuarioId).subscribe(data => {
-            this.dashboardData.set(data);
-            this.loading.set(false);
-            
-           this.cdr.detectChanges(); 
-            
+    cargarComponentes(proyectoId: number) {
+        const sub = this.componenteService.getComponentesPorProyecto(proyectoId).subscribe(data => {
+            this.componentes.set(data);
         });
-    }
-    
-    cargarTodosLosUsuarios() {
-        this.usuarioService.getUsuarios().subscribe(data => {
-            const usuariosActivos = data.filter(usuario => usuario.activo === 1);
-            this.todosLosUsuarios.set(usuariosActivos);
-        });
-    }
-    
-    onVistaChange() {
-        // Si el usuario cambia a una vista que no es "Por Usuario",
-        // limpiamos la selección para evitar confusiones.
-        if (this.vistaSeleccionada() !== 'otro-usuario') {
-            this.usuarioSeleccionado.set(null);
-        }
+        this.subscriptions.add(sub);
     }
 
-    configurarLayout() {
-        // Definimos todos los widgets disponibles y su configuración por defecto
-        const layoutPorDefecto = [
-            { cols: 3, rows: 1, y: 0, x: 0, type: 'kpi', title: 'Total Casos', visible: true },
-            { cols: 3, rows: 1, y: 0, x: 3, type: 'kpi', title: 'Total Ejecuciones', visible: true },
-            { cols: 3, rows: 1, y: 0, x: 6, type: 'kpi', title: 'Casos Sin Ejecutar', visible: true },
-            { cols: 3, rows: 1, y: 0, x: 9, type: 'kpi', title: 'Promedio Ejecuciones/Día', visible: true },
-            { cols: 6, rows: 2, y: 1, x: 0, type: 'chart', title: 'Estado de Ejecuciones', visible: true },
-            { cols: 6, rows: 2, y: 1, x: 6, type: 'chart', title: 'Actividad Semanal', visible: true }
-        ];
-
-        // Intentamos cargar la configuración guardada del usuario desde localStorage
-        const layoutGuardado = localStorage.getItem('dashboard-layout');
-        if (layoutGuardado) {
-            this.widgetsConfig = JSON.parse(layoutGuardado);
-        } else {
-            this.widgetsConfig = layoutPorDefecto;
-        }
-
-        this.actualizarDashboardDesdeConfig();
-        this.configurarOpcionesGridster(); 
-    }
-
-    actualizarDashboardDesdeConfig() {
-        // Filtramos solo los widgets que el usuario quiere ver
-        this.dashboard = this.widgetsConfig.filter(widget => widget.visible);
-    }
-
-    abrirPanelConfiguracion() {
-        // Clonamos la configuración para no afectar el dashboard principal mientras editamos
-        this.widgetsConfig = JSON.parse(JSON.stringify(this.widgetsConfig));
-        this.configSidebarVisible = true;
-    }
-
-    guardarConfiguracionEnLocalStorage() {
-        // Guardamos la configuración (orden y visibilidad) en localStorage
-        localStorage.setItem('dashboard-layout', JSON.stringify(this.widgetsConfig));
-        this.actualizarDashboardDesdeConfig();
-    }
-
-    private configurarOpcionesGridster() {
-        this.options = {
-            gridType: 'fit',
-            draggable: { enabled: true },
-            resizable: { enabled: true },
-            minCols: 12,
-            maxCols: 12,
-            minRows: 3,
-            mobileBreakpoint: 640,
-            margin: 10,
-            // La API es la forma correcta de interactuar
-            api: {
-                optionsChanged: () => {},
+    cargarDashboard(proyectoId: number, componenteId: number | null = null) {
+        this.cargando.set(true);
+        const sub = this.dashboardService.getDashboardGeneral(proyectoId, componenteId).subscribe({
+            next: (data) => {
+                this.dashboardData.set(data);
+                this.actualizarGrafico(data);
+                this.cargando.set(false);
             },
+            error: (err) => {
+                console.error('Error al cargar datos del dashboard:', err);
+                this.dashboardData.set(null); // Limpiar datos en caso de error
+                this.cargando.set(false);
+            }
+        });
+        this.subscriptions.add(sub);
+    }
+
+    actualizarGrafico(data: DashboardData) {
+        const documentStyle = getComputedStyle(document.documentElement);
+        
+        this.chartData = {
+            labels: ['OK', 'NK', 'No Aplica (N/A)'],
+            datasets: [
+                {
+                    data: [data.distribucionEstados.ok, data.distribucionEstados.nk, data.distribucionEstados.na],
+                    backgroundColor: [
+                        documentStyle.getPropertyValue('--color-ok'),
+                        documentStyle.getPropertyValue('--color-fallo'),
+                        documentStyle.getPropertyValue('--color-na')
+                    ],
+                    hoverBackgroundColor: [
+                        documentStyle.getPropertyValue('--color-ok-hover'),
+                        documentStyle.getPropertyValue('--color-fallo-hover'),
+                        documentStyle.getPropertyValue('--color-na-hover')
+                    ]
+                }
+            ]
         };
     }
 
-    private configurarOpcionesGraficos() {
+    initChartOptions() {
         const documentStyle = getComputedStyle(document.documentElement);
         const textColor = documentStyle.getPropertyValue('--text-color');
-        const textColorSecondary = documentStyle.getPropertyValue('--text-color-secondary');
-        const surfaceBorder = documentStyle.getPropertyValue('--surface-border');
-
-        this.doughnutOptions = {
-            cutout: '60%',
-            plugins: {
-                legend: {
-                    position: 'bottom',
-                    labels: {
-                        color: textColor
-                    }
-                }
-            }
-        };
 
         this.chartOptions = {
             plugins: {
                 legend: {
                     labels: {
+                        usePointStyle: true,
                         color: textColor
-                    }
-                }
-            },
-            scales: {
-                y: {
-                    beginAtZero: true,
-                    ticks: {
-                        color: textColorSecondary
-                    },
-                    grid: {
-                        color: surfaceBorder
-                    }
-                },
-                x: {
-                    ticks: {
-                        color: textColorSecondary
-                    },
-                    grid: {
-                        color: surfaceBorder
                     }
                 }
             }
         };
     }
 
+    // Devuelve la severidad para el tag de estado
+    getSeverityForEstado(estado: string): string {
+        switch (estado) {
+            case 'OK': return 'success';
+            case 'NK': return 'danger';
+            case 'N/A': return 'secondary';
+            default: return 'info';
+        }
+    }
 
+    // Formatea la fecha para mostrarla de forma amigable
+    formatRelativeTime(fecha: string): string {
+        const date = new Date(fecha);
+        return this.datePipe.transform(date, 'medium') || '';
+    }
+
+    ngOnDestroy() {
+        // Buena práctica: desuscribirse para evitar fugas de memoria
+        this.subscriptions.unsubscribe();
+    }
 }

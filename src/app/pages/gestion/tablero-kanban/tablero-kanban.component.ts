@@ -1,8 +1,9 @@
 // src/app/pages/gestion/tablero-kanban/tablero-kanban.component.ts
 
 import { Component, OnInit, inject, signal, effect, computed } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { CommonModule, DatePipe} from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { RouterModule } from '@angular/router';
 
 // --- IMPORTS DE PRIMENG ---
 import { DatePickerModule } from 'primeng/datepicker';
@@ -11,6 +12,7 @@ import { SelectModule } from 'primeng/select';
 import { CardModule } from 'primeng/card';
 import { ProgressSpinnerModule } from 'primeng/progressspinner';
 import { TooltipModule } from 'primeng/tooltip';
+import { TagModule } from 'primeng/tag';
 
 // --- PIPES, SERVICIOS Y MODELOS ---
 import { TruncatePipe } from '../../../pipes/truncate.pipe';
@@ -22,6 +24,7 @@ import { Usuario } from '../../../models/usuario';
 import { Caso } from '../../../models/caso';
 import { Fuente } from '../../../models/fuente';
 import { KanbanData } from '../../../models/kanban-data';
+import { CatalogoService } from '../../../services/catalogo.service';
 
 @Component({
   selector: 'app-tablero-kanban',
@@ -35,8 +38,12 @@ import { KanbanData } from '../../../models/kanban-data';
     TooltipModule,
     TruncatePipe,
     DatePickerModule,
-    SelectButtonModule
+    SelectButtonModule,
+    RouterModule,
+    TagModule,
+    DatePipe
   ],
+  providers: [DatePipe],
   templateUrl: './tablero-kanban.component.html',
   styleUrls: ['./tablero-kanban.component.scss']
 })
@@ -46,12 +53,15 @@ export class TableroKanbanComponent implements OnInit {
   private casoService = inject(CasoService);
   private authService = inject(AutenticacionService);
   private usuarioService = inject(UsuarioService);
+  private catalogoService = inject(CatalogoService);
+  private datePipe = inject(DatePipe);
 
   loading = signal(true);
 
   // --- SEÑALES PARA FILTROS ---
   usuarios = signal<Usuario[]>([]);
   selectedUsuario: Usuario | null = null;
+  criticidades = this.catalogoService.criticidades;
   
   opcionesFecha = [
     { label: 'Todos', value: 'todos' },
@@ -211,4 +221,46 @@ export class TableroKanbanComponent implements OnInit {
     if (!fuentes || fuentes.length === 0) return 'No hay fuentes asignadas';
     return fuentes.map(f => f.nombre_fuente).join('<br>');
   }
+
+
+  /**
+     * Busca el nombre de una criticidad a partir de su ID.
+     */
+    findCriticidadNombre(id: number | undefined): string | undefined {
+        if (!id) return undefined;
+        return this.criticidades().find(c => c.id_criticidad === id)?.nombre_criticidad;
+    }
+
+    /**
+     * Devuelve la severidad (color) de PrimeNG para un nombre de criticidad.
+     */
+    getSeverityForCriticidad(nombreCriticidad: string | undefined): string {
+        if (!nombreCriticidad) return 'secondary';
+        switch (nombreCriticidad.toLowerCase()) {
+            case 'leve': return 'info';
+            case 'medio': return 'warn';
+            case 'grave': return 'danger';
+            case 'crítico': return 'contrast';
+            default: return 'secondary';
+        }
+    }
+
+    /**
+     * Determina si una tarea está "envejecida" (más de 2 días sin moverse).
+     */
+    isStale(fechaMovimiento: string | undefined): boolean {
+        if (!fechaMovimiento) return false;
+
+        const umbralDias = 2; // Puedes ajustar este valor
+        const fechaTarea = new Date(fechaMovimiento);
+        const hoy = new Date();
+        
+        fechaTarea.setHours(0, 0, 0, 0);
+        hoy.setHours(0, 0, 0, 0);
+
+        const diffTiempo = hoy.getTime() - fechaTarea.getTime();
+        const diffDias = Math.floor(diffTiempo / (1000 * 3600 * 24));
+
+        return diffDias >= umbralDias;
+    }
 }

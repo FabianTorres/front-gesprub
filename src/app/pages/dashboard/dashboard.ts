@@ -80,7 +80,7 @@ export class Dashboard implements OnInit, OnDestroy {
     }
 
     ngOnInit() {
-        this.initChartOptions();
+        //this.initChartOptions();
     }
 
     cargarComponentes(proyectoId: number) {
@@ -94,9 +94,12 @@ export class Dashboard implements OnInit, OnDestroy {
         this.cargando.set(true);
         const sub = this.dashboardService.getDashboardGeneral(proyectoId, componenteId).subscribe({
             next: (data) => {
+                console.log('Datos para los KPIs (Avance General):', data.kpis);
+                console.log('Datos para el Gráfico (Distribución de Estados):', data.distribucionEstados);
                 this.dashboardData.set(data);
                 this.actualizarGrafico(data);
                 this.cargando.set(false);
+                this.initChartOptions();
             },
             error: (err) => {
                 console.error('Error al cargar datos del dashboard:', err);
@@ -134,12 +137,89 @@ export class Dashboard implements OnInit, OnDestroy {
         const documentStyle = getComputedStyle(document.documentElement);
         const textColor = documentStyle.getPropertyValue('--text-color');
 
+        // Los datos para el gráfico principal no cambian
+        const kpis = this.dashboardData()?.kpis;
+        const data = this.dashboardData()?.distribucionEstados;
+        
+        if (!data) return;
+
+        if (!kpis || !data) {
+            this.chartData = null;
+            return;
+        }
+
+        const casosConEstado = data.ok + (data.nk ? data.nk.total : 0) + data.na;
+
+        // 2. Restamos esa suma del total de casos para obtener los pendientes.
+        //    Usamos Math.max(0, ...) para evitar números negativos si hay alguna inconsistencia.
+        const sinEjecutarCalculado = Math.max(0, kpis.totalCasos - casosConEstado);
+
+
+        const nkValue = data.nk ? data.nk.total : 0;
+        const dataArray = [data.ok, nkValue, data.na, sinEjecutarCalculado];
+
+        console.log('Valores finales para el gráfico:', dataArray);
+
+        this.chartData = {
+            labels: ['OK', 'NK', 'N/A', 'Sin Ejecutar'],
+            datasets: [
+                {
+                   
+                    data: dataArray,
+                    backgroundColor: [
+                        documentStyle.getPropertyValue('--color-ok'),
+                        documentStyle.getPropertyValue('--color-fallo'),
+                        documentStyle.getPropertyValue('--color-na'),
+                        documentStyle.getPropertyValue('--color-sin-ejecutar')
+                    ],
+                    hoverBackgroundColor: [
+                        documentStyle.getPropertyValue('--color-ok-hover'),
+                        documentStyle.getPropertyValue('--color-fallo-hover'),
+                        documentStyle.getPropertyValue('--color-na-hover'),
+                        documentStyle.getPropertyValue('--color-sin-ejecutar-hover')
+                    ]
+                }
+            ]
+        };
+
         this.chartOptions = {
             plugins: {
                 legend: {
                     labels: {
                         usePointStyle: true,
                         color: textColor
+                    }
+                },
+                tooltip: {
+                    callbacks: {
+                        label: (context: any) => {
+                            const label = context.label || '';
+                            const value = context.raw || 0;
+                            
+                            // Usamos un array para construir el tooltip línea por línea
+                            let tooltipLines = [`${label}: ${value}`];
+
+                            // Si estamos sobre la sección 'NK' y hay un desglose, lo añadimos
+                            if (label === 'NK' && data.nk && data.nk.total > 0) {
+                                const nkData = data.nk;
+                                
+                                // Función interna para añadir detalle solo si es mayor que cero
+                                const addDetail = (criticidad: string, valor: number) => {
+                                    if (valor > 0) {
+                                        // Añade la línea con indentación
+                                        tooltipLines.push(`  - ${criticidad}: ${valor}`);
+                                    }
+                                };
+                                
+                                addDetail('Leve', nkData.leve);
+                                addDetail('Medio', nkData.medio);
+                                addDetail('Grave', nkData.grave);
+                                addDetail('Crítico', nkData.critico);
+                            }
+
+                            // Devolvemos el array de líneas. Chart.js lo unirá con saltos de línea.
+                            return tooltipLines;
+                        }
                     }
                 }
             }

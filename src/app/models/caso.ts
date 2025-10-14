@@ -22,4 +22,6 @@ export interface Caso {
   estado_kanban?: string;
   fechaMovimientoKanban?: string; // o Date
   usuarioEjecutante?: Usuario;
+  idCriticidad?: number;
+  fechaUltimaEvidencia?: string;
 }

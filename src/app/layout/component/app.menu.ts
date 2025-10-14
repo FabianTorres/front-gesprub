@@ -135,6 +135,7 @@ export class AppMenu implements OnInit {
                         items: [
                             { label: 'General', icon: 'pi pi-fw pi-chart-bar', routerLink: ['/pages/dashboard'] },
                             { label: 'Avance por Componente', icon: 'pi pi-fw pi-chart-bar', routerLink: ['/pages/dashboard/avance-componente'] },
+                            { label: 'Productividad y Carga', icon: 'pi pi-fw pi-users', routerLink: ['/pages/dashboard/productividad'] },
                         ]
                     },
                 ]

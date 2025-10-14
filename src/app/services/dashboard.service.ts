@@ -1,8 +1,9 @@
 import { inject, Injectable } from '@angular/core';
-import { HttpClient} from '@angular/common/http';
+import { HttpClient, HttpParams} from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../environment/environment';
 import { DashboardData } from '../models/dashboard-data';
+import { ProductividadData } from '../models/productividad-data';
 
 
 export interface AvanceComponenteData {
@@ -10,8 +11,16 @@ export interface AvanceComponenteData {
     nombreComponente: string;
     totalCasos: number;
     casosOk: number;
-    casosNk: number;
+    casosNk: CasosNkDesglose;
     casosSinEjecutar: number;
+}
+
+export interface CasosNkDesglose {
+    total: number;
+    leve: number;
+    medio: number;
+    grave: number;
+    critico: number;
 }
 
 @Injectable({
@@ -57,6 +66,14 @@ export class DashboardService {
         }
 
         return this.http.get<AvanceComponenteData[]>(`${this.apiUrl}/avance-por-componente`, { params });
+    }
+
+    getProductividad(proyectoId: number, periodo: string): Observable<ProductividadData> {
+        let params = new HttpParams()
+            .set('proyectoId', proyectoId.toString())
+            .set('periodo', periodo);
+        
+        return this.http.get<ProductividadData>(`${this.apiUrl}/productividad`, { params });
     }
 
 }

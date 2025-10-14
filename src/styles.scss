@@ -59,23 +59,42 @@
 :root {
   --color-ok: #22c55e;
   --color-fallo: #ef4444;
-  --color-na: #6b7280;
+  --color-na: #adb5bd;
 
   /* Colores atenuados para el efecto hover */
   --color-ok-hover: #79d199;
   --color-fallo-hover: #e67979;
-  --color-na-hover: #5f6369;
+  --color-na-hover: #9fa8b0;
+
+   --color-criticidad-leve: #76a0bd;     // Azul
+   --color-criticidad-medio: #e67e22;    // Amarillo
+   --color-criticidad-grave: #c0392b;    // Naranja
+   --color-criticidad-critico: #661f17;  // Rojo Oscuro
+
+   // Este es el gris oscuro para los casos pendientes, como en tu Foto 1.
+    --color-sin-ejecutar: #6c757d; 
+    --color-sin-ejecutar-hover: #98999b;
+
+
 }
 
 .app-dark {
   /* Versiones ligeramente más brillantes para el modo oscuro */
   --color-ok: #4ade80;
   --color-fallo: #f87171;
-  --color-na: #9ca3af;
+  --color-na: #adb5bd;
 
   /* Colores atenuados para el hover en modo oscuro */
   --color-ok-hover: #79d199;
   --color-fallo-hover: #e67979;
-  --color-na-hover: #5f6369;
+  --color-na-hover: #9fa8b0;
+
+  --color-criticidad-leve: #76a0bd;     // Azul
+   --color-criticidad-medio: #e67e22;    // Amarillo
+   --color-criticidad-grave: #c0392b;    // Naranja
+   --color-criticidad-critico: #661f17;  // Rojo Oscuro
+
+    --color-sin-ejecutar: #6c757d; 
+    --color-sin-ejecutar-hover: #98999b;
 }
 

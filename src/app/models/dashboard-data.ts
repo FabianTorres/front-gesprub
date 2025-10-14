@@ -15,8 +15,9 @@ export interface Kpis {
 
 export interface DistribucionEstados {
     ok: number;
-    nk: number;
+    nk: NkDesglose;
     na: number;
+    sinEjecutar: number;
 }
 
 export interface ActividadReciente {
@@ -25,4 +26,12 @@ export interface ActividadReciente {
     estado: 'OK' | 'NK' | 'N/A';
     nombreTester: string;
     fechaEjecucion: string; // Formato ISO 8601
+}
+
+export interface NkDesglose {
+    total: number;
+    leve: number;
+    medio: number;
+    grave: number;
+    critico: number;
 }

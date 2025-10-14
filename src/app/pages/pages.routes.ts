@@ -18,6 +18,11 @@ export default [
         path: 'dashboard/avance-componente', 
         loadComponent: () => import('./dashboard/avance-componente').then(m => m.AvanceComponenteComponent) 
     },
+    {
+        path: 'dashboard/productividad',
+        //title: 'Productividad y Carga',
+        loadComponent: () => import('./dashboard/productividad').then(m => m.ProductividadComponent)
+    },
     { path: 'gestion/componentes', loadComponent: () => import('./gestion/componentes').then(m => m.ComponentesPage) },
      { path: 'gestion/casos', loadComponent: () => import('./gestion/casos').then(m => m.CasosPage) },
      { path: 'ejecucion/:id', loadComponent: () => import('./ejecucion/ejecucion').then(m => m.EjecucionPage) },

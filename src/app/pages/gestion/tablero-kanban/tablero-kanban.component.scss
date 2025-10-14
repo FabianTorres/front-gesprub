@@ -11,3 +11,21 @@
     overflow-y: auto; // Añade una barra de scroll si las tarjetas superan el alto
     min-height: 70vh; // Establece una altura mínima para que las columnas se vean altas incluso vacías
 }
+
+// ::ng-deep .stale-card {
+//     .p-card {
+//         // Un borde izquierdo de advertencia bien visible
+//         border-left: 5px solid var(--yellow-500) !important;
+//         // Un fondo sutil para que resalte
+//         background-color: var(--yellow-50) !important;
+//         transition: all 0.3s ease;
+//     }
+
+//     // Estilo adaptado para el modo oscuro
+//     .dark & {
+//         .p-card {
+//             background-color: rgba(var(--yellow-500-rgb), 0.1) !important;
+//             border-left-color: var(--yellow-400) !important;
+//         }
+//     }
+// }

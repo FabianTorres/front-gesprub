@@ -1,6 +1,19 @@
 <div class="card">
     <div class="flex justify-between items-center mb-4 flex-wrap gap-2">
         <h2 class="text-2xl font-semibold m-0">Avance por Componente</h2>
+
+        <div class="flex items-center gap-2">
+        <div *ngIf="ambitos().length > 0">
+                <p-select [options]="ambitos()"
+                            [ngModel]="ambitoSeleccionadoId()"
+                            (ngModelChange)="ambitoSeleccionadoId.set($event)"
+                            optionLabel="nombre_ambito"
+                            optionValue="id_ambito"
+                            placeholder="Filtrar por Ámbito..."
+                            [showClear]="true"
+                            styleClass="w-full md:w-15rem">
+                </p-select>
+            </div>
         
         <div *ngIf="hitos().length > 0">
             <p-select [options]="hitos()"
@@ -12,6 +25,7 @@
                       [showClear]="true"
                       styleClass="w-full md:w-15rem">
             </p-select>
+        </div>
         </div>
     </div>
 
@@ -26,5 +40,12 @@
     
     <div *ngIf="!cargando() && chartData" class="chart-container" style="position: relative; height: 60vh;">
         <p-chart type="bar" [data]="chartData" [options]="chartOptions"></p-chart>
+    </div>
+
+    <div *ngIf="totalRecords() > pageSize" class="mt-4">
+        <p-paginator (onPageChange)="onPageChange($event)" 
+                     [rows]="pageSize" 
+                     [totalRecords]="totalRecords()">
+        </p-paginator>
     </div>
 </div>

@@ -32,7 +32,7 @@ import { Componente } from '../../../models/componente';
 import { CasoConEvidencia } from '../../../models/casoevidencia';
 import { SortFuentesPipe } from '../../../pipes/sort-fuentes.pipe';
 import { AutenticacionService } from '../../../services/autenticacion.service';
-import { ArchivoService } from '../../../services/archivo.service'; 
+//import { ArchivoService } from '../../../services/archivo.service'; 
 import { ArchivoEvidencia } from '../../../models/archivo-evidencia';
 import { environment } from '../../../../environment/environment';
 
@@ -59,7 +59,7 @@ interface Hito {
 })
 export class HistorialPage implements OnInit {
 
-    
+    apiBaseUrl = environment.apiUrl;
     caso = signal<Caso | null>(null);
     historial = signal<Evidencia[]>([]);
     datosHistorial = signal<HistorialCaso | null>(null);
@@ -68,7 +68,7 @@ export class HistorialPage implements OnInit {
     private catalogoService = inject(CatalogoService); 
     private estadosEvidencia = this.catalogoService.estadosEvidencia;
     private criticidades = this.catalogoService.criticidades;
-    private archivoService = inject(ArchivoService);
+    //private archivoService = inject(ArchivoService);
 
     private messageService = inject(MessageService);
     private confirmationService = inject(ConfirmationService);
@@ -453,29 +453,29 @@ export class HistorialPage implements OnInit {
     }
 
 
-    descargarArchivoSeguro(archivo: ArchivoEvidencia) {
-        this.messageService.add({ 
-            severity: 'info', 
-            summary: 'Preparando Descarga', 
-            detail: `Solicitando acceso para "${archivo.nombre_archivo}"...`,
-            life: 2000 // El mensaje dura 2 segundos
-        });
+    // descargarArchivoSeguro(archivo: ArchivoEvidencia) {
+    //     this.messageService.add({ 
+    //         severity: 'info', 
+    //         summary: 'Preparando Descarga', 
+    //         detail: `Solicitando acceso para "${archivo.nombre_archivo}"...`,
+    //         life: 2000 // El mensaje dura 2 segundos
+    //     });
 
-        this.archivoService.getSecureDownloadUrl(archivo.id_archivo).subscribe({
-            next: (response) => {
-                // 2. Al recibir la URL segura, la abrimos en una nueva pestaña.
-                window.open(response.url, '_blank');
-            },
-            error: (err) => {
-                console.error('Error al obtener la URL segura:', err);
-                this.messageService.add({ 
-                    severity: 'error', 
-                    summary: 'Error de Descarga', 
-                    detail: 'No se pudo obtener el permiso para descargar el archivo.' 
-                });
-            }
-        });
-    }
+    //     this.archivoService.getSecureDownloadUrl(archivo.id_archivo).subscribe({
+    //         next: (response) => {
+    //             // 2. Al recibir la URL segura, la abrimos en una nueva pestaña.
+    //             window.open(response.url, '_blank');
+    //         },
+    //         error: (err) => {
+    //             console.error('Error al obtener la URL segura:', err);
+    //             this.messageService.add({ 
+    //                 severity: 'error', 
+    //                 summary: 'Error de Descarga', 
+    //                 detail: 'No se pudo obtener el permiso para descargar el archivo.' 
+    //             });
+    //         }
+    //     });
+    // }
 
     /**
      * Construye la URL completa para una incidencia de Jira.

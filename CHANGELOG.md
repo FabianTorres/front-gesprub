@@ -3,6 +3,11 @@ Todos los cambios significativos en este proyecto se documentarán en este archi
 El formato se basa en [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 y este proyecto adhiere al [Versionado Semántico](https://semver.org/lang/es/).
 
+## [1.2.2] - 2025-11-13
+
+### Fixed
+-   Se arregla la descarga de archivos
+
 ## [1.2.1] - 2025-10-10
 
 ### Added
@@ -11,8 +16,8 @@ y este proyecto adhiere al [Versionado Semántico](https://semver.org/lang/es/).
 -   Se mejora la visualizacion de los reportes existentes y se agrega la posibilidad de ver por criticidad
 -   Se mejora el tablero Kanban con mas informacion
 ### Fixed
--   Se soluciona problema de visualizacion de dashboard de vista por componente.
--   Se soluciona error de calculo en la vista general.
+-   Se soluciona problema de visualizacion de dashboard de vista por componente que mostraba muy juntos cada linea cuando eran muchos componentes
+-   Se soluciona error de calculo en el dashboard de vista general.
 
 ## [1.2.0] - 2025-10-08
 

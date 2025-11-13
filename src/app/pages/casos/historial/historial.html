@@ -137,14 +137,13 @@
                         
                         <div *ngIf="evento.archivos && evento.archivos.length > 0" class="font-semibold text-sm mb-1"></div>
                         <a *ngFor="let archivo of evento.archivos"
-                           (click)="descargarArchivoSeguro(archivo)"
-                           (keydown.enter)="descargarArchivoSeguro(archivo)"
-                           role="button"
-                           tabindex="0"
-                           class="text-primary hover:underline text-sm flex items-center gap-2 cursor-pointer"
-                           [ngClass]="{ 'flex-row-reverse': evento.posicion === 'left' }">
-                            <i class="pi pi-download"></i>
-                            <span>{{ archivo.nombre_archivo }}</span>
+                            [href]="apiBaseUrl + '/archivos/stream/' + archivo.id_archivo"
+                            target="_blank"
+                            [download]="archivo.nombre_archivo"
+                            class="text-primary hover:underline text-sm flex items-center gap-2"
+                            [ngClass]="{ 'flex-row-reverse': evento.posicion === 'left' }">
+                                <i class="pi pi-download"></i>
+                                <span>{{ archivo.nombre_archivo }}</span>
                         </a>
                         <a *ngIf="evento.id_jira" 
                             [href]="getJiraUrl(evento.id_jira)" 

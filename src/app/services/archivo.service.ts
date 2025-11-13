@@ -22,4 +22,17 @@ export class ArchivoService {
     getSecureDownloadUrl(idArchivo: number): Observable<SecureUrlResponse> {
         return this.http.get<SecureUrlResponse>(`${this.apiUrl}/${idArchivo}/descargar`);
     }
+
+    // --- AÑADIR ESTE NUEVO MÉTODO ---
+    /**
+     * Descarga el archivo como un stream (blob) desde el backend.
+     * Este método SÍ envía el token de autenticación gracias al AuthInterceptor.
+     * @param idArchivo El ID del archivo a descargar.
+     * @returns Un Observable que emite el Blob del archivo.
+     */
+    descargarArchivoStream(idArchivo: number): Observable<Blob> {
+        return this.http.get(`${this.apiUrl}/stream/${idArchivo}`, {
+            responseType: 'blob' // ¡Esto es crucial! Le dice a HttpClient que espere un archivo.
+        });
+    }
 }

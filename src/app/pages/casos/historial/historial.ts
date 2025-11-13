@@ -32,7 +32,7 @@ import { Componente } from '../../../models/componente';
 import { CasoConEvidencia } from '../../../models/casoevidencia';
 import { SortFuentesPipe } from '../../../pipes/sort-fuentes.pipe';
 import { AutenticacionService } from '../../../services/autenticacion.service';
-//import { ArchivoService } from '../../../services/archivo.service'; 
+import { ArchivoService } from '../../../services/archivo.service'; 
 import { ArchivoEvidencia } from '../../../models/archivo-evidencia';
 import { environment } from '../../../../environment/environment';
 
@@ -68,7 +68,7 @@ export class HistorialPage implements OnInit {
     private catalogoService = inject(CatalogoService); 
     private estadosEvidencia = this.catalogoService.estadosEvidencia;
     private criticidades = this.catalogoService.criticidades;
-    //private archivoService = inject(ArchivoService);
+    private archivoService = inject(ArchivoService);
 
     private messageService = inject(MessageService);
     private confirmationService = inject(ConfirmationService);
@@ -453,29 +453,44 @@ export class HistorialPage implements OnInit {
     }
 
 
-    // descargarArchivoSeguro(archivo: ArchivoEvidencia) {
-    //     this.messageService.add({ 
-    //         severity: 'info', 
-    //         summary: 'Preparando Descarga', 
-    //         detail: `Solicitando acceso para "${archivo.nombre_archivo}"...`,
-    //         life: 2000 // El mensaje dura 2 segundos
-    //     });
+    
+    descargarArchivoSeguro(archivo: ArchivoEvidencia) {
+        this.messageService.add({ 
+            severity: 'info', 
+            summary: 'Preparando Descarga', 
+            detail: `Solicitando "${archivo.nombre_archivo}"...`,
+            life: 2000 // El mensaje dura 2 segundos
+        });
 
-    //     this.archivoService.getSecureDownloadUrl(archivo.id_archivo).subscribe({
-    //         next: (response) => {
-    //             // 2. Al recibir la URL segura, la abrimos en una nueva pestaña.
-    //             window.open(response.url, '_blank');
-    //         },
-    //         error: (err) => {
-    //             console.error('Error al obtener la URL segura:', err);
-    //             this.messageService.add({ 
-    //                 severity: 'error', 
-    //                 summary: 'Error de Descarga', 
-    //                 detail: 'No se pudo obtener el permiso para descargar el archivo.' 
-    //             });
-    //         }
-    //     });
-    // }
+        // Llamamos al NUEVO método del servicio
+        this.archivoService.descargarArchivoStream(archivo.id_archivo).subscribe({
+            next: (blob) => {
+                // 1. Crear una URL local en el navegador para el Blob (el archivo)
+                const url = window.URL.createObjectURL(blob);
+                
+                // 2. Crear un enlace <a> temporal en la memoria
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = archivo.nombre_archivo; // Asignar el nombre original
+                
+                // 3. Añadir el enlace al DOM y simular un clic
+                document.body.appendChild(a); 
+                a.click();
+                
+                // 4. Limpiar: quitar el enlace del DOM y liberar la memoria
+                document.body.removeChild(a); 
+                window.URL.revokeObjectURL(url);
+            },
+            error: (err) => {
+                console.error('Error al descargar el archivo:', err);
+                this.messageService.add({ 
+                    severity: 'error', 
+                    summary: 'Error de Descarga', 
+                    detail: 'No se pudo descargar el archivo. Verifique los permisos o inténtelo más tarde.' 
+                });
+            }
+        });
+    }
 
     /**
      * Construye la URL completa para una incidencia de Jira.

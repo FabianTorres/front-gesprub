@@ -3,6 +3,16 @@ Todos los cambios significativos en este proyecto se documentarán en este archi
 El formato se basa en [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 y este proyecto adhiere al [Versionado Semántico](https://semver.org/lang/es/).
 
+## [1.2.3] - 2025-11-20
+
+### Added
+-   Se agrega la funcionalidad de mostrar solo casos activos
+-   Se agrega funcionalidad para exportar Plan de Prueba a Excel
+
+### Changed
+-   Se cambia de lugar el botón de Exportar Plan de prueba
+-   Se mejora la logica de versiones para que muestre correctamente el estado de los casos ejecutados cuando la version del caso es mayor a la ejecutada
+
 ## [1.2.2] - 2025-11-13
 
 ### Fixed

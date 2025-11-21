@@ -13,7 +13,7 @@ import { KanbanData } from '../models/kanban-data';
 @Injectable({ providedIn: 'root' })
 export class CasoService {
     private http = inject(HttpClient);
-    private apiUrl = `${environment.apiUrl}/caso`; 
+    private apiUrl = `${environment.apiUrl}/caso`;
 
     getCasos(): Observable<CasoConEvidencia[]> {
         return this.http.get<CasoConEvidencia[]>(`${this.apiUrl}/evidencia`);
@@ -42,7 +42,7 @@ export class CasoService {
     }
 
     getCasosPorComponente(id_componente: number): Observable<CasoConEvidencia[]> {
-        
+
         return this.http.get<CasoConEvidencia[]>(`${this.apiUrl}/evidenciacomp`, { params: { componenteId: id_componente } });
     }
 
@@ -53,11 +53,11 @@ export class CasoService {
 
     updateFuentesDeCaso(idCaso: number, fuentes: Fuente[]): Observable<any> {
         const url = `${this.apiUrl}/${idCaso}/fuentes`;
-        
+
 
         // Transformamos el array de objetos Fuente en un array de solo los IDs.
         const idsFuente = fuentes.map(fuente => fuente.id_fuente);
-        
+
         // Enviamos el array de IDs en el cuerpo de la petición PUT.
         return this.http.put(url, idsFuente);
     }
@@ -86,16 +86,25 @@ export class CasoService {
             params = params.set('usuarioId', usuarioId.toString());
         }
 
-        const url = `${this.apiUrl}/kanban/proyecto`; 
+        const url = `${this.apiUrl}/kanban/proyecto`;
 
         return this.http.get<KanbanData>(url, { params });
     }
 
-     /**
-     * Envía un lote de casos para ser creados y/o actualizados en el backend.
-     * @param lote Un objeto que contiene dos arrays: casosParaCrear y casosParaActualizar.
-     */
+    /**
+    * Envía un lote de casos para ser creados y/o actualizados en el backend.
+    * @param lote Un objeto que contiene dos arrays: casosParaCrear y casosParaActualizar.
+    */
     procesarLoteCasos(lote: { casosParaCrear: any[], casosParaActualizar: any[] }): Observable<any> {
         return this.http.post(`${this.apiUrl}/procesar-lote`, lote);
+    }
+
+    /**
+     * Obtiene los detalles consolidados para el Plan de Pruebas filtrado por IDs.
+     * @param idsCasos Lista de IDs de los casos que se quieren exportar.
+     */
+    getDetallesPlanPruebas(idsCasos: number[]): Observable<any[]> {
+        const url = `${environment.apiUrl}/reportes/plan-pruebas/detalles`;
+        return this.http.post<any[]>(url, { ids_casos: idsCasos });
     }
 }

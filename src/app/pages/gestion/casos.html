@@ -4,13 +4,9 @@
 
     <div class="mb-4">
         <label class="block font-bold mb-2">Seleccione un Componente</label>
-        <p-select [options]="componentes()"
-                  [(ngModel)]="componenteSeleccionadoId"
-                  (onChange)="onComponenteSeleccionado()"
-                  optionLabel="nombre_componente"
-                  optionValue="id_componente"
-                  placeholder="Elegir un Componente..."
-                  styleClass="w-full md:w-1/3">
+        <p-select [options]="componentes()" [(ngModel)]="componenteSeleccionadoId"
+            (onChange)="onComponenteSeleccionado()" optionLabel="nombre_componente" optionValue="id_componente"
+            placeholder="Elegir un Componente..." styleClass="w-full md:w-1/3">
         </p-select>
     </div>
 
@@ -18,56 +14,33 @@
         <p-toolbar styleClass="my-4">
             <ng-template pTemplate="left">
                 <div class="flex gap-2">
-                    <button pButton 
-                            pRipple 
-                            label="Nuevo Caso" 
-                            icon="pi pi-plus" 
-                            (click)="abrirDialogoNuevo()">
+                    <button pButton pRipple label="Nuevo Caso" icon="pi pi-plus" (click)="abrirDialogoNuevo()">
                     </button>
 
 
-                    <p-splitButton 
-                        label="Importar" 
-                        icon="pi pi-plus" 
-                    
-                        [model]="opcionesImportar" 
-                        styleClass="p-button-secondary" 
-                        *ngIf="componenteSeleccionadoId">
+                    <p-splitButton label="Importar" icon="pi pi-plus" [model]="opcionesImportar"
+                        styleClass="p-button-secondary" *ngIf="componenteSeleccionadoId">
                     </p-splitButton>
 
-                    <p-splitButton 
-                        label="Exportar" 
-                        icon="pi pi-download" 
-                        [model]="opcionesExportar"
+                    <p-splitButton label="Exportar" icon="pi pi-download" [model]="opcionesExportar"
                         styleClass="p-button-secondary p-button-outlined">
                     </p-splitButton>
-                    
-                    <button pButton 
-                            pRipple 
-                            label="Exportar Plan de Pruebas" 
-                            icon="pi pi-file-pdf" 
-                            class="p-button-outlined"
-                            (click)="exportarPlanDePruebas()">
-                    </button>
 
-
-                    <p-button 
-                        label="Mis Casos Asignados" 
-                        icon="pi pi-user"
-                        (click)="toggleFiltroMisCasos()"
-                        [outlined]="!filtroMisCasosActivo()"
-                        styleClass="ml-2">
+                    <p-button label="Solo Activos" icon="pi pi-check-circle" (click)="toggleFiltroSoloActivos()"
+                        [outlined]="!filtroSoloActivos()" styleClass="ml-2">
                     </p-button>
-                    
-                    </div>
+
+
+                    <p-button label="Mis Casos Asignados" icon="pi pi-user" (click)="toggleFiltroMisCasos()"
+                        [outlined]="!filtroMisCasosActivo()" styleClass="ml-2">
+                    </p-button>
+
+                </div>
             </ng-template>
         </p-toolbar>
 
-        <p-table #dt [value]="casos()" 
-                     [rows]="10" [paginator]="true" 
-                     responsiveLayout="scroll" 
-                     dataKey="caso.id_caso"
-                     [globalFilterFields]="['caso.nombre_estado_modificacion',
+        <p-table #dt [value]="casos()" [rows]="10" [paginator]="true" responsiveLayout="scroll" dataKey="caso.id_caso"
+            [globalFilterFields]="['caso.nombre_estado_modificacion',
                                             'caso.nombre_caso', 
                                             'caso.descripcion_caso', 
                                             'caso.version', 
@@ -75,19 +48,19 @@
                                             'caso.nombre_ultimo_estado',
                                             'caso.ruts_concatenados',
                                             'caso.jira_id_filter',
-                                            'caso.ultimoEstadoNombreFilter']"
-                     [loading]="cargandoCasos()" class="p-datatable-gridlines"
-                     [stateKey]="tableStateKey()"
-                     stateStorage="local"
-                     (onStateRestore)="onStateRestore($event)">
-            
+                                            'caso.ultimoEstadoNombreFilter']" [loading]="cargandoCasos()"
+            class="p-datatable-gridlines" [stateKey]="tableStateKey()" stateStorage="local"
+            (onStateRestore)="onStateRestore($event)">
+
             <ng-template pTemplate="caption">
                 <div class="flex justify-between items-center">
-                    <button pButton label="Limpiar Filtros" class="p-button-outlined" icon="pi pi-filter-slash" (click)="clear(dt)"></button>
-                    
+                    <button pButton label="Limpiar Filtros" class="p-button-outlined" icon="pi pi-filter-slash"
+                        (click)="clear(dt)"></button>
+
                     <p-iconfield>
                         <p-inputicon styleClass="pi pi-search" />
-                        <input #filterInput pInputText type="text" (input)="onGlobalFilter(dt, $event)" placeholder="Buscar caso..." style="width: 300px;" />
+                        <input #filterInput pInputText type="text" (input)="onGlobalFilter(dt, $event)"
+                            placeholder="Buscar caso..." style="width: 300px;" />
                     </p-iconfield>
                 </div>
             </ng-template>
@@ -97,9 +70,11 @@
                     <th pSortableColumn="caso.id_estado_modificacion" style="width:10%">
                         <div class="flex justify-between items-center">
                             Tipo de actualización
-                            <p-columnFilter field="caso.id_estado_modificacion" matchMode="equals" display="menu" [showMatchModes]="false">
+                            <p-columnFilter field="caso.id_estado_modificacion" matchMode="equals" display="menu"
+                                [showMatchModes]="false">
                                 <ng-template pTemplate="filter" let-value let-filter="filterCallback">
-                                    <p-select [ngModel]="value" [options]="opcionesFiltroModificacion" (onChange)="filter($event.value)" placeholder="Cualquiera"></p-select>
+                                    <p-select [ngModel]="value" [options]="opcionesFiltroModificacion"
+                                        (onChange)="filter($event.value)" placeholder="Cualquiera"></p-select>
                                 </ng-template>
                             </p-columnFilter>
                         </div>
@@ -119,24 +94,29 @@
                     <th pSortableColumn="caso.fuentes_nombres" style="width:15%">
                         <div class="flex justify-between items-center">
                             Fuentes
-                             <p-columnFilter type="text" field="caso.fuentes_nombres" display="menu"></p-columnFilter>
+                            <p-columnFilter type="text" field="caso.fuentes_nombres" display="menu"></p-columnFilter>
                         </div>
                     </th>
                     <th pSortableColumn="caso.version" style="width:5%">
                         <div class="flex justify-between items-center">
                             Ver.
-                            <p-columnFilter field="caso.version" matchMode="equals" display="menu" [showMatchModes]="false">
+                            <p-columnFilter field="caso.version" matchMode="equals" display="menu"
+                                [showMatchModes]="false">
                                 <ng-template pTemplate="filter" let-value let-filter="filterCallback">
-                                    <p-select [ngModel]="value" [options]="opcionesFiltroVersion()" (onChange)="filter($event.value)" placeholder="Cualquiera"></p-select>
+                                    <p-select [ngModel]="value" [options]="opcionesFiltroVersion()"
+                                        (onChange)="filter($event.value)" placeholder="Cualquiera"></p-select>
                                 </ng-template>
                             </p-columnFilter>
                         </div>
                     </th>
-                    <th pSortableColumn="ultimoEstadoId"> <div class="flex justify-between items-center">
+                    <th pSortableColumn="ultimoEstadoId">
+                        <div class="flex justify-between items-center">
                             Estado
-                            <p-columnFilter field="ultimoEstadoId" matchMode="equals" display="menu" [showMatchModes]="false">
+                            <p-columnFilter field="ultimoEstadoId" matchMode="equals" display="menu"
+                                [showMatchModes]="false">
                                 <ng-template pTemplate="filter" let-value let-filter="filterCallback">
-                                    <p-select [ngModel]="value" [options]="opcionesFiltroEstado()" (onChange)="filter($event.value)"></p-select>
+                                    <p-select [ngModel]="value" [options]="opcionesFiltroEstado()"
+                                        (onChange)="filter($event.value)"></p-select>
                                 </ng-template>
                             </p-columnFilter>
                         </div>
@@ -146,15 +126,17 @@
                         <div class="flex justify-between items-center">
                             Jira
                             <p-columnFilter type="text" field="caso.jira_id_filter" display="menu">
-                                
+
                             </p-columnFilter>
                         </div>
                     </th>
-                    <th pSortableColumn="caso.activo" >
+                    <th pSortableColumn="caso.activo">
                         <div class="flex justify-between items-center">
-                            <p-columnFilter field="caso.activo" matchMode="equals" display="menu" [showMatchModes]="false">
+                            <p-columnFilter field="caso.activo" matchMode="equals" display="menu"
+                                [showMatchModes]="false">
                                 <ng-template pTemplate="filter" let-value let-filter="filterCallback">
-                                    <p-select [ngModel]="value" [options]="opcionesFiltroActivo" (onChange)="filter($event.value)" placeholder="Cualquiera"></p-select>
+                                    <p-select [ngModel]="value" [options]="opcionesFiltroActivo"
+                                        (onChange)="filter($event.value)" placeholder="Cualquiera"></p-select>
                                 </ng-template>
                             </p-columnFilter>
                         </div>
@@ -162,74 +144,69 @@
                     <th>Acciones</th>
                 </tr>
             </ng-template>
-            
+
             <ng-template pTemplate="body" let-item>
                 <tr>
                     <td>
-                        <p-tag [value]="findEstadoModificacionNombre(item.caso.id_estado_modificacion)" 
-                                [severity]="getSeverityForModificacion(findEstadoModificacionNombre(item.caso.id_estado_modificacion))"></p-tag>
+                        <p-tag [value]="findEstadoModificacionNombre(item.caso.id_estado_modificacion)"
+                            [severity]="getSeverityForModificacion(findEstadoModificacionNombre(item.caso.id_estado_modificacion))"></p-tag>
                     </td>
                     <td>{{item.caso.nombre_caso}}</td>
-                    <td [pTooltip]="item.caso.descripcion_caso" 
-                        tooltipPosition="bottom" tooltipStyleClass="custom-tooltip-wide">
+                    <td [pTooltip]="item.caso.descripcion_caso" tooltipPosition="bottom"
+                        tooltipStyleClass="custom-tooltip-wide">
                         {{item.caso.descripcion_caso | truncate:60}}
                     </td>
-                   
+
                     <td class="text-center">
                         <div class="flex flex-wrap gap-1 justify-center items-center">
                             <p-tag *ngFor="let fuente of (item.caso.fuentes | sortFuentes)?.slice(0, 1)"
-                                [pTooltip]="fuente.nombre_fuente"
-                                tooltipPosition="top"
+                                [pTooltip]="fuente.nombre_fuente" tooltipPosition="top"
                                 [tooltipDisabled]="fuente.nombre_fuente.length <= 5"
                                 [value]="fuente.nombre_fuente | truncate:5">
                             </p-tag>
                             <p-tag *ngIf="item.caso.fuentes && item.caso.fuentes.length > 1"
-                                [value]="'+' + (item.caso.fuentes.length - 1) + ' más'"
-                                severity="secondary"
-                                [pTooltip]="getFuentesRestantesTooltip(item.caso.fuentes)"
-                                tooltipPosition="top">
+                                [value]="'+' + (item.caso.fuentes.length - 1) + ' más'" severity="secondary"
+                                [pTooltip]="getFuentesRestantesTooltip(item.caso.fuentes)" tooltipPosition="top">
                             </p-tag>
                         </div>
                     </td>
                     <td class="text-center">{{item.caso.version}}</td>
                     <td>
-                        <p-tag [value]="findEstadoEvidenciaNombre(item.ultimoEstadoId)" 
+                        <p-tag [value]="findEstadoEvidenciaNombre(item.ultimoEstadoId)"
                             [severity]="getSeverityForEstado(findEstadoEvidenciaNombre(item.ultimoEstadoId))">
                         </p-tag>
                     </td>
 
                     <td class="text-center">
-                        <ng-container *ngIf="findEstadoEvidenciaNombre(item.ultimoEstadoId) === 'NK' && item.ultimaEvidencia && item.ultimaEvidencia.id_jira">
+                        <ng-container
+                            *ngIf="findEstadoEvidenciaNombre(item.ultimoEstadoId) === 'NK' && item.ultimaEvidencia && item.ultimaEvidencia.id_jira">
                             <p-tag severity="secondary" [value]="item.ultimaEvidencia.id_jira"></p-tag>
                         </ng-container>
                     </td>
                     <td class="text-center">
-                        <i class="pi text-xl" 
-                           [ngClass]="{
+                        <i class="pi text-xl" [ngClass]="{
                                'pi-check-circle text-green-500': item.caso.activo === 1, 
                                'pi-ban text-red-500': item.caso.activo !== 1
-                           }"
-                           [pTooltip]="item.caso.activo === 1 ? 'Activo' : 'Inactivo'" 
-                           tooltipPosition="top">
+                           }" [pTooltip]="item.caso.activo === 1 ? 'Activo' : 'Inactivo'" tooltipPosition="top">
                         </i>
                     </td>
                     <td>
-                        <div class="flex flex-nowrap"> 
-                            <button pButton pRipple icon="pi pi-pencil" class="p-button-rounded mr-2" (click)="editarCaso(item)"
-                                    pTooltip="Editar" tooltipPosition="top"></button>
-                            <button pButton pRipple icon="pi pi-book" class="p-button-rounded mr-2" [routerLink]="['/pages/casos', item.caso.id_caso]"
-                                    pTooltip="Historial" tooltipPosition="top"></button>
-                            <button pButton pRipple icon="pi pi-play" class="p-button-rounded" 
-                                    [routerLink]="['/pages/ejecucion', item.caso.id_caso]"
-                                    pTooltip="Ejecutar" 
-                                    tooltipPosition="top"
-                                    [disabled]="!item.caso.idUsuarioAsignado || item.caso.idUsuarioAsignado !== usuarioActualId()">
+                        <div class="flex flex-nowrap">
+                            <button pButton pRipple icon="pi pi-pencil" class="p-button-rounded mr-2"
+                                (click)="editarCaso(item)" pTooltip="Editar" tooltipPosition="top"></button>
+                            <button pButton pRipple icon="pi pi-book" class="p-button-rounded mr-2"
+                                [routerLink]="['/pages/casos', item.caso.id_caso]" pTooltip="Historial"
+                                tooltipPosition="top"></button>
+                            <button pButton pRipple icon="pi pi-play" class="p-button-rounded"
+                                [routerLink]="['/pages/ejecucion', item.caso.id_caso]" pTooltip="Ejecutar"
+                                tooltipPosition="top"
+                                [disabled]="!item.caso.idUsuarioAsignado || item.caso.idUsuarioAsignado !== usuarioActualId()">
                             </button>
                         </div>
                     </td>
                 </tr>
             </ng-template>
-            
+
             <ng-template #empty>
                 <tr>
                     <td colspan="6" class="text-center">No se encontraron casos de prueba para este componente.</td>
@@ -238,34 +215,36 @@
         </p-table>
         <div *ngIf="casos().length > 0" class="flex justify-end mt-2 pr-2">
             <span class="text-sm font-semibold text-surface-600 dark:text-surface-400">
-                Mostrando {{ (dt.filteredValue ? dt.filteredValue.length : casos().length) }} de {{ casos().length }} casos
+                Mostrando {{ (dt.filteredValue ? dt.filteredValue.length : casos().length) }} de {{ casos().length }}
+                casos
             </span>
         </div>
     </div>
 </div>
 
-<p-dialog [(visible)]="casoDialog" [style]="{width: '750px'}" [header]="editando ? 'Editar Caso de Prueba' : 'Nuevo Caso de Prueba'" [modal]="true" class="p-fluid">
+<p-dialog [(visible)]="casoDialog" [style]="{width: '750px'}"
+    [header]="editando ? 'Editar Caso de Prueba' : 'Nuevo Caso de Prueba'" [modal]="true" class="p-fluid">
     <ng-template pTemplate="content">
         <div class="flex flex-col gap-4">
-            
+
             <div>
                 <label class="block font-bold mb-2">Hito</label>
-                <p-select [options]="hitos()" [(ngModel)]="hitoSeleccionado" optionLabel="nombre" optionValue="id" placeholder="Selecciona un Hito" styleClass="w-full"></p-select>
+                <p-select [options]="hitos()" [(ngModel)]="hitoSeleccionado" optionLabel="nombre" optionValue="id"
+                    placeholder="Selecciona un Hito" styleClass="w-full"></p-select>
             </div>
-            
+
             <div>
                 <label class="block font-bold mb-2">Componente Asociado</label>
-                <p-select [options]="componentesFiltrados()" [(ngModel)]="caso.id_componente" optionLabel="nombre_componente" optionValue="id_componente" placeholder="Selecciona un componente" [disabled]="!hitoSeleccionado()" styleClass="w-full"></p-select>
+                <p-select [options]="componentesFiltrados()" [(ngModel)]="caso.id_componente"
+                    optionLabel="nombre_componente" optionValue="id_componente" placeholder="Selecciona un componente"
+                    [disabled]="!hitoSeleccionado()" styleClass="w-full"></p-select>
             </div>
 
             <div>
                 <label for="estado_modificacion" class="block font-bold mb-2">Estado Modificación</label>
-                <p-select [options]="estadosModificacion()" 
-                        [(ngModel)]="caso.id_estado_modificacion"
-                        optionLabel="nombre" 
-                        optionValue="id_estado_modificacion" 
-                        placeholder="Seleccionar estado"
-                        styleClass="w-full">
+                <p-select [options]="estadosModificacion()" [(ngModel)]="caso.id_estado_modificacion"
+                    optionLabel="nombre" optionValue="id_estado_modificacion" placeholder="Seleccionar estado"
+                    styleClass="w-full">
                 </p-select>
             </div>
 
@@ -275,59 +254,57 @@
             </div>
 
             <div>
-                    <label for="version" class="block font-bold mb-2">Versión</label>
-                    <input type="text" pInputText id="version" [(ngModel)]="caso.version" class="w-full"
-                        placeholder="Ej: 1.0"
-                        appVersionFormat
-                        #version="ngModel" />
-                    <small class="p-error" *ngIf="version.invalid && version.touched">
-                        Formato inválido. Debe ser número.número (ej: 1.15).
-                    </small>
-                </div>
-                <div>
-                    <label for="anio" class="block font-bold mb-2">Año</label>
-                    <p-inputNumber id="anio" [(ngModel)]="caso.anio" [useGrouping]="false" styleClass="w-full" [max]="9999"></p-inputNumber>
-                </div>
-            
+                <label for="version" class="block font-bold mb-2">Versión</label>
+                <input type="text" pInputText id="version" [(ngModel)]="caso.version" class="w-full"
+                    placeholder="Ej: 1.0" appVersionFormat #version="ngModel" />
+                <small class="p-error" *ngIf="version.invalid && version.touched">
+                    Formato inválido. Debe ser número.número (ej: 1.15).
+                </small>
+            </div>
+            <div>
+                <label for="anio" class="block font-bold mb-2">Año</label>
+                <p-inputNumber id="anio" [(ngModel)]="caso.anio" [useGrouping]="false" styleClass="w-full"
+                    [max]="9999"></p-inputNumber>
+            </div>
+
             <div>
                 <label for="descripcion" class="block font-bold mb-2">Descripción</label>
-                <textarea id="descripcion" pTextarea [(ngModel)]="caso.descripcion_caso" rows="3" [autoResize]="true" class="w-full"></textarea>
+                <textarea id="descripcion" pTextarea [(ngModel)]="caso.descripcion_caso" rows="3" [autoResize]="true"
+                    class="w-full"></textarea>
             </div>
             <div>
                 <div class="field">
                     <label for="fuentes" class="block font-bold mb-2">Fuentes de Información</label>
-                    <p-autoComplete id="fuentes"
-                                    [(ngModel)]="caso.fuentes"
-                                    [suggestions]="sugerenciasFuentes()"
-                                    (completeMethod)="filtrarFuentes($event)"
-                                    field="nombre_fuente"
-                                    [multiple]="true"
-                                    placeholder="Buscar fuentes existentes..."
-                                    styleClass="w-full"
-                                    emptyMessage="No se encontró la fuente ingresada.">
+                    <p-autoComplete id="fuentes" [(ngModel)]="caso.fuentes" [suggestions]="sugerenciasFuentes()"
+                        (completeMethod)="filtrarFuentes($event)" field="nombre_fuente" [multiple]="true"
+                        placeholder="Buscar fuentes existentes..." styleClass="w-full"
+                        emptyMessage="No se encontró la fuente ingresada.">
                     </p-autoComplete>
                 </div>
             </div>
 
             <p-fieldset legend="Detalles Adicionales" [toggleable]="true" [(collapsed)]="detallesAvanzadosColapsados">
                 <div class="flex flex-col gap-4">
-            
+
                     <div>
                         <label for="precondiciones" class="block font-bold mb-2">Precondiciones</label>
-                        <textarea id="precondiciones" pTextarea [(ngModel)]="caso.precondiciones" rows="2" [autoResize]="true" class="w-full"></textarea>
+                        <textarea id="precondiciones" pTextarea [(ngModel)]="caso.precondiciones" rows="2"
+                            [autoResize]="true" class="w-full"></textarea>
                     </div>
 
                     <div>
                         <label for="pasos" class="block font-bold mb-2">Pasos a seguir</label>
-                        <textarea id="pasos" pTextarea [(ngModel)]="caso.pasos" rows="4" [autoResize]="true" class="w-full"></textarea>
-                    </div>
-                    
-                    <div>
-                        <label for="resultado" class="block font-bold mb-2">Resultado Esperado</label>
-                        <input type="text" pInputText id="resultado" [(ngModel)]="caso.resultado_esperado" class="w-full" />
+                        <textarea id="pasos" pTextarea [(ngModel)]="caso.pasos" rows="4" [autoResize]="true"
+                            class="w-full"></textarea>
                     </div>
 
-             </div>
+                    <div>
+                        <label for="resultado" class="block font-bold mb-2">Resultado Esperado</label>
+                        <input type="text" pInputText id="resultado" [(ngModel)]="caso.resultado_esperado"
+                            class="w-full" />
+                    </div>
+
+                </div>
             </p-fieldset>
 
             <div class="flex items-center mt-2">
@@ -338,16 +315,15 @@
     </ng-template>
 
     <ng-template pTemplate="footer">
-        <button pButton pRipple label="Cancelar" icon="pi pi-times" class="p-button-text" (click)="cerrarDialogo()"></button>
-        <button pButton pRipple label="Guardar" icon="pi pi-check" class="p-button-text" (click)="guardarCaso()"></button>
+        <button pButton pRipple label="Cancelar" icon="pi pi-times" class="p-button-text"
+            (click)="cerrarDialogo()"></button>
+        <button pButton pRipple label="Guardar" icon="pi pi-check" class="p-button-text"
+            (click)="guardarCaso()"></button>
     </ng-template>
 </p-dialog>
 
-<p-dialog [(visible)]="importDialog" 
-          header="Importar Casos de Prueba" 
-          [modal]="true" 
-          [style]="{width: '80vw', 'max-width': '950px'}" 
-          (onHide)="cerrarDialogoImportar()">
+<p-dialog [(visible)]="importDialog" header="Importar Casos de Prueba" [modal]="true"
+    [style]="{width: '80vw', 'max-width': '950px'}" (onHide)="cerrarDialogoImportar()">
 
     <div *ngIf="importStep === 'selection'">
         <div class="grid">
@@ -356,17 +332,15 @@
                     <div class="flex flex-col items-center text-center p-4">
                         <i class="pi pi-file-excel text-4xl text-green-500 mb-3"></i>
                         <p class="font-bold">La forma más sencilla y recomendada.</p>
-                        <p class="text-muted-color">Descarga nuestra plantilla, rellénala con tus datos y súbela aquí para una importación automática.</p>
+                        <p class="text-muted-color">Descarga nuestra plantilla, rellénala con tus datos y súbela aquí
+                            para una importación automática.</p>
                         <div class="flex gap-2 mt-4">
-                            <button pButton pRipple type="button" label="Descargar Plantilla" icon="pi pi-download" class="p-button-outlined" (click)="descargarPlantilla()"></button>
-                            <p-fileUpload #plantillaUploader
-                                          mode="basic"
-                                          chooseLabel="Subir Plantilla"
-                                          chooseIcon="pi pi-upload"
-                                          [auto]="true"
-                                          [customUpload]="true"
-                                          (uploadHandler)="onArchivoSeleccionado($event); procesarArchivo() "
-                                          accept=".xlsx, .xls">
+                            <button pButton pRipple type="button" label="Descargar Plantilla" icon="pi pi-download"
+                                class="p-button-outlined" (click)="descargarPlantilla()"></button>
+                            <p-fileUpload #plantillaUploader mode="basic" chooseLabel="Subir Plantilla"
+                                chooseIcon="pi pi-upload" [auto]="true" [customUpload]="true"
+                                (uploadHandler)="onArchivoSeleccionado($event); procesarArchivo() "
+                                accept=".xlsx, .xls">
                             </p-fileUpload>
                         </div>
                     </div>
@@ -378,16 +352,11 @@
                     <div class="flex flex-col items-center text-center p-4">
                         <i class="pi pi-sliders-h text-4xl text-blue-500 mb-3"></i>
                         <p class="font-bold">¿Ya tienes tu propio archivo Excel?</p>
-                        <p class="text-muted-color">Sube tu archivo y te guiaremos paso a paso para que nos digas qué significa cada columna. No necesitas cambiar tu archivo.</p>
-                        <p-fileUpload #asistenteUploader
-                                      mode="basic"
-                                      chooseLabel="Subir Archivo Propio"
-                                      chooseIcon="pi pi-folder-open"
-                                      [auto]="true"
-                                      [customUpload]="true"
-                                      (uploadHandler)="onArchivoAsistenteSeleccionado($event)"
-                                      accept=".xlsx, .xls"
-                                      class="mt-4">
+                        <p class="text-muted-color">Sube tu archivo y te guiaremos paso a paso para que nos digas qué
+                            significa cada columna. No necesitas cambiar tu archivo.</p>
+                        <p-fileUpload #asistenteUploader mode="basic" chooseLabel="Subir Archivo Propio"
+                            chooseIcon="pi pi-folder-open" [auto]="true" [customUpload]="true"
+                            (uploadHandler)="onArchivoAsistenteSeleccionado($event)" accept=".xlsx, .xls" class="mt-4">
                         </p-fileUpload>
                     </div>
                 </p-fieldset>
@@ -399,11 +368,8 @@
     <div *ngIf="importStep === 'mapping'">
         <div class="mb-4">
             <label for="hojaSelect" class="block font-bold mb-2">Paso 1: Selecciona la hoja con los datos</label>
-            <p-select id="hojaSelect"
-                      [options]="excelHojas"
-                      [(ngModel)]="excelHojaSeleccionada"
-                      (onChange)="seleccionarHoja($event.value)"
-                      styleClass="w-full md:w-1/3">
+            <p-select id="hojaSelect" [options]="excelHojas" [(ngModel)]="excelHojaSeleccionada"
+                (onChange)="seleccionarHoja($event.value)" styleClass="w-full md:w-1/3">
             </p-select>
         </div>
 
@@ -415,10 +381,8 @@
                     <span *ngIf="campo.obligatorio" class="text-red-500">*</span>
                 </label>
                 <div class="col-12 md:col-8">
-                    <p-select [options]="excelEncabezados" 
-                              [(ngModel)]="mapeoColumnas[campo.campo]"
-                              placeholder="-- Ignorar esta columna --" 
-                              [showClear]="true">
+                    <p-select [options]="excelEncabezados" [(ngModel)]="mapeoColumnas[campo.campo]"
+                        placeholder="-- Ignorar esta columna --" [showClear]="true">
                     </p-select>
                 </div>
             </div>
@@ -428,7 +392,8 @@
     <div *ngIf="importStep === 'preview'">
         <h3 class="font-bold mt-2 mb-3">Paso 3: Revisa tus datos transformados</h3>
         <p class="text-muted-color mb-4">
-            A continuación se muestran las primeras 5 filas de tu archivo con el formato final. Si todo es correcto, puedes proceder a importar.
+            A continuación se muestran las primeras 5 filas de tu archivo con el formato final. Si todo es correcto,
+            puedes proceder a importar.
         </p>
 
         <p-table [value]="datosPrevisualizacion" responsiveLayout="scroll">
@@ -446,7 +411,8 @@
             </ng-template>
             <ng-template pTemplate="emptymessage">
                 <tr>
-                    <td [attr.colspan]="columnasPrevisualizacion.length" class="text-center">No hay datos para previsualizar.</td>
+                    <td [attr.colspan]="columnasPrevisualizacion.length" class="text-center">No hay datos para
+                        previsualizar.</td>
                 </tr>
             </ng-template>
         </p-table>
@@ -454,51 +420,60 @@
 
 
     <ng-template pTemplate="footer">
-        <button pButton pRipple label="Cerrar" icon="pi pi-times" class="p--text" (click)="cerrarDialogoImportar()"></button>
-        
-        <button pButton pRipple label="Atrás" icon="pi pi-arrow-left" class="p-button-secondary" *ngIf="importStep === 'mapping'" (click)="importStep = 'selection'"></button>
-        <button pButton pRipple label="Atrás" icon="pi pi-arrow-left" class="p-button-secondary" *ngIf="importStep === 'preview'" (click)="importStep = 'mapping'"></button>
-        <button pButton pRipple label="Previsualizar Datos" icon="pi pi-eye" *ngIf="importStep === 'mapping'" (click)="previsualizarDatos()"></button>
-        
+        <button pButton pRipple label="Cerrar" icon="pi pi-times" class="p--text"
+            (click)="cerrarDialogoImportar()"></button>
+
+        <button pButton pRipple label="Atrás" icon="pi pi-arrow-left" class="p-button-secondary"
+            *ngIf="importStep === 'mapping'" (click)="importStep = 'selection'"></button>
+        <button pButton pRipple label="Atrás" icon="pi pi-arrow-left" class="p-button-secondary"
+            *ngIf="importStep === 'preview'" (click)="importStep = 'mapping'"></button>
+        <button pButton pRipple label="Previsualizar Datos" icon="pi pi-eye" *ngIf="importStep === 'mapping'"
+            (click)="previsualizarDatos()"></button>
+
         <div *ngIf="importStep === 'preview'">
-            <button pButton pRipple label="Descargar con Formato" icon="pi pi-download" class="p-button-outlined" (click)="descargarConFormato()"></button>
-            <button pButton pRipple label="Importar Directamente" icon="pi pi-check" class="ml-2" (click)="importarDirectamente()"></button>
+            <button pButton pRipple label="Descargar con Formato" icon="pi pi-download" class="p-button-outlined"
+                (click)="descargarConFormato()"></button>
+            <button pButton pRipple label="Importar Directamente" icon="pi pi-check" class="ml-2"
+                (click)="importarDirectamente()"></button>
         </div>
     </ng-template>
 </p-dialog>
 
 
-<p-dialog header="Modificar Casos Existentes" [(visible)]="importModificarDialog" [modal]="true" [style]="{width: '500px'}" (onHide)="onClearFiles()">
+<p-dialog header="Modificar Casos Existentes" [(visible)]="importModificarDialog" [modal]="true"
+    [style]="{width: '500px'}" (onHide)="onClearFiles()">
     <div class="confirmation-content text-center">
         <i class="pi pi-pencil text-5xl text-yellow-500 mb-3"></i>
-        <p>Para modificar casos masivamente, primero debe <strong>exportar los casos</strong> desde la tabla principal.</p>
-        <p class="mb-4">Luego, modifique el archivo Excel y súbalo aquí. Los cambios se previsualizarán automáticamente.</p>
-        
-        <p-fileUpload mode="basic"
-                      chooseLabel="Elegir Archivo"
-                      chooseIcon="pi pi-folder-open"
-                      [auto]="true"
-                      [customUpload]="true"
-                      (uploadHandler)="onArchivoSeleccionado($event); procesarArchivoModificacion()"
-                      accept=".xlsx"
-                      maxFileSize="1000000">
+        <p>Para modificar casos masivamente, primero debe <strong>exportar los casos</strong> desde la tabla principal.
+        </p>
+        <p class="mb-4">Luego, modifique el archivo Excel y súbalo aquí. Los cambios se previsualizarán automáticamente.
+        </p>
+
+        <p-fileUpload mode="basic" chooseLabel="Elegir Archivo" chooseIcon="pi pi-folder-open" [auto]="true"
+            [customUpload]="true" (uploadHandler)="onArchivoSeleccionado($event); procesarArchivoModificacion()"
+            accept=".xlsx" maxFileSize="1000000">
         </p-fileUpload>
     </div>
     <ng-template pTemplate="footer">
-        <button pButton pRipple label="Cerrar" icon="pi pi-times" class="p-button-text" (click)="cerrarDialogoImportarModificar()"></button>
+        <button pButton pRipple label="Cerrar" icon="pi pi-times" class="p-button-text"
+            (click)="cerrarDialogoImportarModificar()"></button>
     </ng-template>
 </p-dialog>
 
-<p-dialog header="Previsualización de Cambios" [(visible)]="previsualizacionDialog" [modal]="true" [style]="{width: '80vw', 'max-width': '1200px'}">
+<p-dialog header="Previsualización de Cambios" [(visible)]="previsualizacionDialog" [modal]="true"
+    [style]="{width: '80vw', 'max-width': '1200px'}">
     <ng-template pTemplate="content">
         <p class="mb-4">Se han detectado los siguientes cambios. Por favor, revísalos antes de confirmar.</p>
 
-        <p-fieldset legend="Casos a Modificar ({{casosConCambios.length}})" [toggleable]="true" *ngIf="casosConCambios.length > 0">
+        <p-fieldset legend="Casos a Modificar ({{casosConCambios.length}})" [toggleable]="true"
+            *ngIf="casosConCambios.length > 0">
             <div class="max-h-[400px] overflow-y-auto">
-                <div *ngFor="let item of casosConCambios" class="mb-3 p-3 border rounded-lg bg-surface-50 dark:bg-surface-800">
+                <div *ngFor="let item of casosConCambios"
+                    class="mb-3 p-3 border rounded-lg bg-surface-50 dark:bg-surface-800">
                     <p class="font-bold text-lg m-0">
                         <i class="pi pi-file-edit mr-2 text-primary"></i>
-                        {{ item.casoOriginal.caso.nombre_caso }} <span class="text-sm font-normal text-surface-500">(ID: {{item.casoOriginal.caso.id_caso}})</span>
+                        {{ item.casoOriginal.caso.nombre_caso }} <span class="text-sm font-normal text-surface-500">(ID:
+                            {{item.casoOriginal.caso.id_caso}})</span>
                     </p>
                     <div class="pl-5 mt-2">
                         <table class="w-full text-sm">
@@ -512,8 +487,10 @@
                             <tbody>
                                 <tr *ngFor="let cambio of item.cambios" class="border-t">
                                     <td class="p-2 font-semibold">{{ cambio.campo }}</td>
-                                    <td class="p-2"><span class="line-through text-red-500">{{ cambio.valorAnterior }}</span></td>
-                                    <td class="p-2"><span class="font-bold text-green-500">{{ cambio.valorNuevo }}</span></td>
+                                    <td class="p-2"><span class="line-through text-red-500">{{ cambio.valorAnterior
+                                            }}</span></td>
+                                    <td class="p-2"><span class="font-bold text-green-500">{{ cambio.valorNuevo
+                                            }}</span></td>
                                 </tr>
                             </tbody>
                         </table>
@@ -522,8 +499,9 @@
             </div>
         </p-fieldset>
 
-        <p-fieldset legend="Nuevos Casos a Crear ({{casosParaCrearDetectados.length}})" [toggleable]="true" class="mt-4" *ngIf="casosParaCrearDetectados.length > 0">
-             <div class="max-h-[200px] overflow-y-auto">
+        <p-fieldset legend="Nuevos Casos a Crear ({{casosParaCrearDetectados.length}})" [toggleable]="true" class="mt-4"
+            *ngIf="casosParaCrearDetectados.length > 0">
+            <div class="max-h-[200px] overflow-y-auto">
                 <ul class="list-none p-0 m-0">
                     <li *ngFor="let caso of casosParaCrearDetectados" class="p-2 border-b">
                         <i class="pi pi-plus-circle mr-2 text-green-500"></i>
@@ -535,54 +513,67 @@
 
     </ng-template>
     <ng-template pTemplate="footer">
-        <button pButton pRipple label="Cancelar" icon="pi pi-times" class="p-button-text" (click)="previsualizacionDialog = false"></button>
-        <button pButton pRipple label="Confirmar y Aplicar Cambios" icon="pi pi-check" (click)="confirmarCambios()"></button>
+        <button pButton pRipple label="Cancelar" icon="pi pi-times" class="p-button-text"
+            (click)="previsualizacionDialog = false"></button>
+        <button pButton pRipple label="Confirmar y Aplicar Cambios" icon="pi pi-check"
+            (click)="confirmarCambios()"></button>
     </ng-template>
 </p-dialog>
 
-<p-dialog [(visible)]="advertenciaDialog" 
-          header="Advertencia de Posibles Duplicados" 
-          [modal]="true" 
-          [style]="{width: '700px'}" 
-          (onHide)="cerrarDialogoAdvertencia()">
-    
+<p-dialog [(visible)]="advertenciaDialog" header="Advertencia de Posibles Duplicados" [modal]="true"
+    [style]="{width: '700px'}" (onHide)="cerrarDialogoAdvertencia()">
+
     <div class="p-4">
-        <div class="flex items-center gap-4 bg-yellow-100 dark:bg-yellow-900/30 p-3 rounded-lg border border-yellow-300 dark:border-yellow-700">
+        <div
+            class="flex items-center gap-4 bg-yellow-100 dark:bg-yellow-900/30 p-3 rounded-lg border border-yellow-300 dark:border-yellow-700">
             <i class="pi pi-exclamation-triangle text-3xl text-yellow-500"></i>
             <div>
                 <h3 class="font-bold text-lg m-0">Se encontraron casos con nombres muy parecidos</h3>
-                <p class="m-0 mt-1">Revisa la siguiente lista. Si estás seguro, puedes continuar con la creación de casos.</p>
+                <p class="m-0 mt-1">Revisa la siguiente lista. Si estás seguro, puedes continuar con la creación de
+                    casos.</p>
             </div>
         </div>
 
         <div class="mt-4 max-h-[300px] overflow-y-auto">
             <ul class="list-none p-0 m-0">
-                <li *ngFor="let advertencia of casosConAdvertencia" class="mb-3 p-2 border-b border-surface-200 dark:border-surface-700">
-                    <div class="font-semibold text-color">Caso en el archivo: <span class="font-normal text-primary">{{ advertencia.nombreNuevo }}</span></div>
-                    <div class="text-sm text-muted-color mt-1">Es muy similar a un caso existente: <span class="font-normal">{{ advertencia.nombreExistente }}</span> ({{ advertencia.similitud }}% de similitud)</div>
+                <li *ngFor="let advertencia of casosConAdvertencia"
+                    class="mb-3 p-2 border-b border-surface-200 dark:border-surface-700">
+                    <div class="font-semibold text-color">Caso en el archivo: <span class="font-normal text-primary">{{
+                            advertencia.nombreNuevo }}</span></div>
+                    <div class="text-sm text-muted-color mt-1">Es muy similar a un caso existente: <span
+                            class="font-normal">{{ advertencia.nombreExistente }}</span> ({{ advertencia.similitud }}%
+                        de similitud)</div>
                 </li>
             </ul>
         </div>
     </div>
 
     <ng-template pTemplate="footer">
-        <button pButton pRipple label="Cancelar" icon="pi pi-times" class="p-button-text" (click)="cerrarDialogoAdvertencia()"></button>
-        <button pButton pRipple label="Continuar de todas formas" icon="pi pi-check" class="p-button-warning" (click)="confirmarAdvertencia()"></button>
+        <button pButton pRipple label="Cancelar" icon="pi pi-times" class="p-button-text"
+            (click)="cerrarDialogoAdvertencia()"></button>
+        <button pButton pRipple label="Continuar de todas formas" icon="pi pi-check" class="p-button-warning"
+            (click)="confirmarAdvertencia()"></button>
     </ng-template>
 </p-dialog>
 
-<p-dialog header="Resumen de Importación" [(visible)]="resumenImportacionDialog" [modal]="true" [style]="{width: '500px'}">
+<p-dialog header="Resumen de Importación" [(visible)]="resumenImportacionDialog" [modal]="true"
+    [style]="{width: '500px'}">
     <div class="confirmation-content text-center">
         <i class="pi pi-info-circle text-6xl text-primary-500"></i>
         <p class="text-xl my-4">Se aplicarán los siguientes cambios:</p>
         <div class="text-left mx-auto inline-block">
-            <p class="text-lg flex align-items-center"><i class="pi pi-plus-circle text-green-500 mr-2"></i><strong>Nuevos Casos a Crear:</strong> <span class="ml-2 font-bold">{{ loteParaProcesar.casosParaCrear.length }}</span></p>
-            <p class="text-lg flex align-items-center"><i class="pi pi-pencil text-yellow-500 mr-2"></i><strong>Casos a Modificar:</strong> <span class="ml-2 font-bold">{{ loteParaProcesar.casosParaActualizar.length }}</span></p>
+            <p class="text-lg flex align-items-center"><i
+                    class="pi pi-plus-circle text-green-500 mr-2"></i><strong>Nuevos Casos a Crear:</strong> <span
+                    class="ml-2 font-bold">{{ loteParaProcesar.casosParaCrear.length }}</span></p>
+            <p class="text-lg flex align-items-center"><i class="pi pi-pencil text-yellow-500 mr-2"></i><strong>Casos a
+                    Modificar:</strong> <span class="ml-2 font-bold">{{ loteParaProcesar.casosParaActualizar.length
+                    }}</span></p>
         </div>
         <p class="mt-4">¿Estás seguro de que deseas continuar?</p>
     </div>
     <ng-template pTemplate="footer">
-        <button pButton pRipple icon="pi pi-times" label="Cancelar" class="p-button-text" (click)="resumenImportacionDialog = false"></button>
+        <button pButton pRipple icon="pi pi-times" label="Cancelar" class="p-button-text"
+            (click)="resumenImportacionDialog = false"></button>
         <button pButton pRipple icon="pi pi-check" label="Confirmar" (click)="confirmarProcesarLote()"></button>
     </ng-template>
 </p-dialog>

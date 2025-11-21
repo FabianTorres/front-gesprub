@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, signal, effect, ViewChild, ElementRef, computed  } from '@angular/core';
+import { Component, OnInit, inject, signal, effect, ViewChild, ElementRef, computed } from '@angular/core';
 import { CommonModule, DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
@@ -35,10 +35,11 @@ import { ProyectoService } from '../../services/proyecto.service';
 import { AutenticacionService } from '../../services/autenticacion.service';
 import { leerYValidarExcel, descargarPlantillaCasos, exportarAExcel } from '../../utils/excel.utils';
 import * as XLSX from 'xlsx';
+import XLSXStyle from 'xlsx-js-style';
 import { EstadoModificacion } from '../../models/estado-modificacion';
 import { EstadoModificacionService } from '../../services/estado-modificacion.service';
 import { CatalogoService } from '../../services/catalogo.service';
-import { Fuente } from '../../models/fuente'; 
+import { Fuente } from '../../models/fuente';
 import { FuenteService } from '../../services/fuente.service';
 import { switchMap } from 'rxjs';
 import { SortFuentesPipe } from '../../pipes/sort-fuentes.pipe';
@@ -64,10 +65,10 @@ interface Hito {
 @Component({
     standalone: true,
     imports: [
-    IconFieldModule, FileUpload, SortFuentesPipe, AutoCompleteModule, SplitButtonModule, FieldsetModule, InputIconModule, TooltipModule, CommonModule, FormsModule, TableModule, ButtonModule, ToolbarModule, DialogModule,
-    RouterModule, TruncatePipe, ChipsModule, TagModule, InputTextModule, TextareaModule, SelectModule, InputSwitchModule, ConfirmDialogModule, ToastModule, InputNumberModule, VersionFormatDirective,
-    FileUpload, SelectButtonModule
-],
+        IconFieldModule, FileUpload, SortFuentesPipe, AutoCompleteModule, SplitButtonModule, FieldsetModule, InputIconModule, TooltipModule, CommonModule, FormsModule, TableModule, ButtonModule, ToolbarModule, DialogModule,
+        RouterModule, TruncatePipe, ChipsModule, TagModule, InputTextModule, TextareaModule, SelectModule, InputSwitchModule, ConfirmDialogModule, ToastModule, InputNumberModule, VersionFormatDirective,
+        FileUpload, SelectButtonModule
+    ],
     providers: [MessageService, ConfirmationService, DatePipe],
     templateUrl: './casos.html'
 })
@@ -78,16 +79,24 @@ export class CasosPage implements OnInit {
     casos = computed(() => {
         const todos = this.todosLosCasosMaestros();
         const filtroActivo = this.filtroMisCasosActivo();
+        const filtroActivos = this.filtroSoloActivos();
         const miId = this.usuarioActualId();
 
         if (filtroActivo && miId) {
-        // Ahora filtramos verificando AMBAS propiedades para el ID de usuario asignado.
-        return todos.filter(c => 
-            c.caso.id_usuario_asignado === miId || c.caso.idUsuarioAsignado === miId
-        );
+            // Ahora filtramos verificando AMBAS propiedades para el ID de usuario asignado.
+            return todos.filter(c =>
+                c.caso.id_usuario_asignado === miId || c.caso.idUsuarioAsignado === miId
+            );
 
-    }
-        
+        }
+
+        // 3. Aplicar filtro de "Solo Activos" si está activo
+        if (filtroActivos) {
+            return todos.filter(
+                c => c.caso.activo === 1
+            );
+        }
+
         // Por defecto, o si el filtro está inactivo, se devuelven todos los casos.
         return todos;
     });
@@ -101,6 +110,7 @@ export class CasosPage implements OnInit {
     // Señal guarda TODOS los casos del componente, sin filtrar.
     private todosLosCasosMaestros = signal<CasoConEvidencia[]>([]);
     filtroMisCasosActivo = signal<boolean>(false);
+    filtroSoloActivos = signal<boolean>(false);
     // Objeto que representa el caso que se está creando o editando en el diálogo.
     caso!: Partial<Caso>;
     // Controla la visibilidad del diálogo emergente.
@@ -152,11 +162,11 @@ export class CasosPage implements OnInit {
     private catalogoService = inject(CatalogoService);
     private estadosEvidencia = this.catalogoService.estadosEvidencia;
 
-    private fuenteService = inject(FuenteService); 
+    private fuenteService = inject(FuenteService);
     todasLasFuentes = signal<Fuente[]>([]);
     private usuarioService = inject(UsuarioService);
 
-    sugerenciasFuentes = signal<Fuente[]>([]); 
+    sugerenciasFuentes = signal<Fuente[]>([]);
 
     // Diálogos y datos para el nuevo flujo de modificación
     importModificarDialog: boolean = false;
@@ -179,7 +189,7 @@ export class CasosPage implements OnInit {
     casosConAdvertencia: any[] = [];
     casosValidadosTemporalmente: any[] = [];
 
-    private accionConfirmada: 'importar' | 'guardarManual' = 'importar'; 
+    private accionConfirmada: 'importar' | 'guardarManual' = 'importar';
 
     // Controla el estado/paso actual del proceso de importación
     importStep: 'selection' | 'mapping' | 'preview' = 'selection';
@@ -248,7 +258,7 @@ export class CasosPage implements OnInit {
             if (hitoId) {
                 componentesDelHito = todosComponentes.filter(c => c.hito_componente === hitoId);
             }
-            
+
             this.componentesFiltrados.set(componentesDelHito);
 
             // Se resetea la selección de componente si ya no es válida para el nuevo hito.
@@ -296,7 +306,7 @@ export class CasosPage implements OnInit {
             { label: 'Modificado', value: 2 },
             { label: 'Sin cambios', value: 3 },
             { label: 'Eliminado', value: 6 }
-            
+
         ];
 
 
@@ -315,6 +325,13 @@ export class CasosPage implements OnInit {
                 icon: 'pi pi-file',
                 command: () => {
                     this.exportarCasos('csv');
+                }
+            },
+            {
+                label: 'Exportar Plan de Pruebas',
+                icon: 'pi pi-file-pdf',
+                command: () => {
+                    this.exportarPlanDePruebas();
                 }
             }
         ];
@@ -338,24 +355,24 @@ export class CasosPage implements OnInit {
         ];
     }
 
-    
+
     opcionesFiltroEstado = computed(() => {
         // Permitimos que el valor sea number, string o null
-        const estados: { label: string, value: number | string | null }[] = 
+        const estados: { label: string, value: number | string | null }[] =
             this.estadosEvidencia().map(e => ({ label: e.nombre, value: e.id_estado_evidencia }));
 
         // Para "Sin Ejecutar", el valor a filtrar ahora es nuestro identificador de texto.
         estados.push({ label: 'Sin Ejecutar', value: 'SIN_EJECUTAR' });
-        
+
         // "Cualquiera" sigue usando 'null' para limpiar el filtro.
         estados.unshift({ label: 'Cualquiera', value: null });
 
         return estados;
     });
-    
+
     // Método del ciclo de vida de Angular que se ejecuta al iniciar el componente.
     ngOnInit() {
-        
+
         this.cargarTodosLosUsuarios();
         this.cargarFormularios();
         this.cargarEstadosModificacion();
@@ -374,7 +391,7 @@ export class CasosPage implements OnInit {
 
         const estado = this.estadosEvidencia().find(e => e.id_estado_evidencia === id);
 
-        return estado ? estado.nombre : 'Sin Ejecutar'; 
+        return estado ? estado.nombre : 'Sin Ejecutar';
     }
 
     cargarEstadosModificacion() {
@@ -382,7 +399,7 @@ export class CasosPage implements OnInit {
             this.estadosModificacion.set(data);
         });
 
-    
+
     }
 
     cargarTodasLasFuentes() {
@@ -400,9 +417,9 @@ export class CasosPage implements OnInit {
             // 3. ...normalizando también el nombre de cada fuente antes de comparar.
             const nombreNormalizado = this.normalizarTexto(fuente.nombre_fuente);
             return nombreNormalizado.includes(queryNormalizada);
-    });
+        });
 
-    this.sugerenciasFuentes.set(filtradas);
+        this.sugerenciasFuentes.set(filtradas);
     }
 
     // Añade esta función para encontrar el nombre del estado por su ID
@@ -434,7 +451,7 @@ export class CasosPage implements OnInit {
             localStorage.setItem(key, this.componenteSeleccionadoId.toString());
 
             this.tableStateKey.set(`estado-tabla-casos-componente-${this.componenteSeleccionadoId}`);
-        }else{
+        } else {
             this.tableStateKey.set('estado-tabla-casos-sin-seleccion');
         }
 
@@ -448,35 +465,55 @@ export class CasosPage implements OnInit {
                 .subscribe(data => {
 
                     const casosEnriquecidos = data.map(item => {
-                    // Se busca el nombre del estado usando la función que ya tenemos.
-                    const nombreEstado = this.findEstadoModificacionNombre(item.caso.id_estado_modificacion);
-                    // Se unen los nombres de las fuentes en un solo string, separados por un espacio.
-                    const nombresFuentes = item.caso.fuentes?.map(f => f.nombre_fuente).join(' ') || '';
+                        // Se busca el nombre del estado usando la función que ya tenemos.
+                        const nombreEstado = this.findEstadoModificacionNombre(item.caso.id_estado_modificacion);
+                        // Se unen los nombres de las fuentes en un solo string, separados por un espacio.
+                        const nombresFuentes = item.caso.fuentes?.map(f => f.nombre_fuente).join(' ') || '';
 
-                    const ultimoEstadoId = item.ultimaEvidencia?.id_estado_evidencia ?? 'SIN_EJECUTAR';
 
-                    const rutsParaBuscar = item.rutsUnicos?.join(' ') || '';
+                        // --- INICIO MODIFICACIÓN: LÓGICA DE VERSIÓN OBSOLETA ---
+                        let ultimoEstadoId = item.ultimaEvidencia?.id_estado_evidencia ?? 'SIN_EJECUTAR';
 
-                    const jiraIdParaFiltro = item.ultimaEvidencia?.id_jira ?? '';
+                        // Si existe evidencia y el caso tiene versión definida
+                        if (item.ultimaEvidencia && item.caso.version) {
+                            // Convertimos a flotante para asegurar comparación numérica correcta (1.10 > 1.9)
+                            const vCaso = parseFloat(item.caso.version);
+                            // Aseguramos que la evidencia tenga versión, si no asumimos 0
+                            const vEvidencia = item.ultimaEvidencia.version_ejecucion ? parseFloat(item.ultimaEvidencia.version_ejecucion) : 0;
 
-                    const ultimoEstadoNombre = this.findEstadoEvidenciaNombre(item.ultimaEvidencia?.id_estado_evidencia)
+                            // Si la versión exigida por el caso es MAYOR a la ejecutada,
+                            // forzamos el estado visual a 'SIN_EJECUTAR'.
+                            if (vCaso > vEvidencia) {
+                                ultimoEstadoId = 'SIN_EJECUTAR';
+                            }
+                        }
 
-                   
-                    // Se crea una nueva versión del objeto 'caso' que incluye el nombre.
-                    const casoActualizado = { 
-                        ...item.caso, 
-                        nombre_estado_modificacion: nombreEstado,
-                        version: item.caso.version || '',
-                        fuentes_nombres: nombresFuentes,
-                        ruts_concatenados: rutsParaBuscar,
-                        jira_id_filter: jiraIdParaFiltro,
-                        ultimoEstadoNombreFilter: ultimoEstadoNombre
-                         
-                    };
+                        //const ultimoEstadoId = item.ultimaEvidencia?.id_estado_evidencia ?? 'SIN_EJECUTAR';
 
-                    
 
-                    // Se devuelve el objeto completo con el 'caso' ya actualizado.
+
+                        const rutsParaBuscar = item.rutsUnicos?.join(' ') || '';
+
+                        const jiraIdParaFiltro = item.ultimaEvidencia?.id_jira ?? '';
+
+                        const ultimoEstadoNombre = this.findEstadoEvidenciaNombre(item.ultimaEvidencia?.id_estado_evidencia)
+
+
+                        // Se crea una nueva versión del objeto 'caso' que incluye el nombre.
+                        const casoActualizado = {
+                            ...item.caso,
+                            nombre_estado_modificacion: nombreEstado,
+                            version: item.caso.version || '',
+                            fuentes_nombres: nombresFuentes,
+                            ruts_concatenados: rutsParaBuscar,
+                            jira_id_filter: jiraIdParaFiltro,
+                            ultimoEstadoNombreFilter: ultimoEstadoNombre
+
+                        };
+
+
+
+                        // Se devuelve el objeto completo con el 'caso' ya actualizado.
                         return { ...item, caso: casoActualizado, ultimoEstadoId: ultimoEstadoId };
                     });
                     //this.casos.set(casosEnriquecidos as any);
@@ -492,7 +529,7 @@ export class CasosPage implements OnInit {
         this.componenteService.getComponentesPorProyecto(proyectoId).subscribe(data => {
             this.componentes.set(data);
             this.cargarHitos(data);
-            
+
             // CAMBIO: Se intenta restaurar el último componente guardado para ESTE proyecto.
             const key = `ultimoComponente_${proyectoId}`;
             const ultimoComponenteId = localStorage.getItem(key);
@@ -502,7 +539,7 @@ export class CasosPage implements OnInit {
             }
         });
     }
-    
+
     // Busca el nombre de un componente a partir de su ID.
     findComponentName(id: number): string {
         return this.componentes().find(c => c.id_componente === id)?.nombre_componente || 'No encontrado';
@@ -510,9 +547,9 @@ export class CasosPage implements OnInit {
 
     // Prepara las variables para abrir el diálogo en modo 'Nuevo'.
     abrirDialogoNuevo() {
-       const componenteActual = this.componentes().find(c => c.id_componente === this.componenteSeleccionadoId);
+        const componenteActual = this.componentes().find(c => c.id_componente === this.componenteSeleccionadoId);
         this.caso = {
-            anio: environment.anioTributario, 
+            anio: environment.anioTributario,
             id_componente: componenteActual?.id_componente
         };
         this.editando = false;
@@ -521,8 +558,8 @@ export class CasosPage implements OnInit {
         //this.esFuenteExterna = false;
         this.detallesAvanzadosColapsados = true;
         this.casoDialog = true;
-        
-        
+
+
     }
 
     // Prepara las variables para abrir el diálogo en modo 'Editar' con los datos del caso seleccionado.
@@ -532,26 +569,26 @@ export class CasosPage implements OnInit {
         const proyectoActual = this.proyectoService.proyectoSeleccionado();
         const caso = casoConEvidencia.caso;
         if (!caso) {
-            this.messageService.add({severity: 'error', summary: 'Error', detail: 'No se pudieron cargar los datos del caso.'});
+            this.messageService.add({ severity: 'error', summary: 'Error', detail: 'No se pudieron cargar los datos del caso.' });
             return;
         }
 
         if (!caso.version) {
-            this.messageService.add({severity: 'warn', summary: 'Atención', detail: 'Debe escribir la versión de ejecución de la prueba.'});
+            this.messageService.add({ severity: 'warn', summary: 'Atención', detail: 'Debe escribir la versión de ejecución de la prueba.' });
             return;
         }
 
         if (!caso.descripcion_caso) {
-            this.messageService.add({severity: 'warn', summary: 'Atención', detail: 'Debe escribir una descripción para la prueba.'});
+            this.messageService.add({ severity: 'warn', summary: 'Atención', detail: 'Debe escribir una descripción para la prueba.' });
             return;
         }
         if (!caso.id_estado_modificacion) {
-            this.messageService.add({severity: 'warn', summary: 'Atención', detail: 'Debe seleccionar un estado de modificación para la prueba.'});
+            this.messageService.add({ severity: 'warn', summary: 'Atención', detail: 'Debe seleccionar un estado de modificación para la prueba.' });
             return;
         }
 
         if (!caso.id_componente) {
-            this.messageService.add({severity: 'warn', summary: 'Atención', detail: 'Debe seleccionar un componente para la prueba.'});
+            this.messageService.add({ severity: 'warn', summary: 'Atención', detail: 'Debe seleccionar un componente para la prueba.' });
             return;
         }
 
@@ -559,13 +596,13 @@ export class CasosPage implements OnInit {
         this.editando = true;
         this.activoDialog = caso.activo === 1;
         const hitoId = this.componentes().find(c => c.id_componente === caso.id_componente)?.hito_componente || null;
-        this.hitoSeleccionado.set(hitoId); 
-        
-        
+        this.hitoSeleccionado.set(hitoId);
+
+
         this.casoDialog = true;
     }
 
-    
+
 
     // Gestiona el guardado de un caso, ya sea para crear uno nuevo o actualizar uno existente.
     guardarCaso() {
@@ -578,10 +615,10 @@ export class CasosPage implements OnInit {
         const nombreNormalizadoNuevo = this.normalizarNombreCaso(nombreCasoNuevo);
 
 
-        
+
         // Si estamos editando, excluimos el caso actual de la lista de comparación
-        const otrosCasos = this.editando 
-            ? this.casos().filter(c => c.caso.id_caso !== this.caso.id_caso) 
+        const otrosCasos = this.editando
+            ? this.casos().filter(c => c.caso.id_caso !== this.caso.id_caso)
             : this.casos();
 
         const nombresExistentes = otrosCasos
@@ -613,7 +650,7 @@ export class CasosPage implements OnInit {
                 // Si no hay duplicados ni advertencias, guardamos directamente
                 this.procederConGuardadoManual();
             }
-        }else{
+        } else {
             this.procederConGuardadoManual();
         }
     }
@@ -622,38 +659,38 @@ export class CasosPage implements OnInit {
         const usuarioLogueado = this.authService.usuarioActual();
 
         if (!usuarioLogueado || !usuarioLogueado.idUsuario) {
-            this.messageService.add({severity: 'error', summary: 'Error', detail: 'No se pudo identificar al usuario. Por favor, inicie sesión de nuevo.'});
+            this.messageService.add({ severity: 'error', summary: 'Error', detail: 'No se pudo identificar al usuario. Por favor, inicie sesión de nuevo.' });
             return false;
         }
         if (!this.caso.version) {
-            this.messageService.add({severity: 'warn', summary: 'Atención', detail: 'Debe escribir la versión de ejecución de la prueba.'});
+            this.messageService.add({ severity: 'warn', summary: 'Atención', detail: 'Debe escribir la versión de ejecución de la prueba.' });
             return false;
         }
         if (!this.caso.descripcion_caso) {
-            this.messageService.add({severity: 'warn', summary: 'Atención', detail: 'Debe escribir una descripción para la prueba.'});
+            this.messageService.add({ severity: 'warn', summary: 'Atención', detail: 'Debe escribir una descripción para la prueba.' });
             return false;
         }
         if (!this.caso.id_estado_modificacion) {
-            this.messageService.add({severity: 'warn', summary: 'Atención', detail: 'Debe seleccionar un estado de modificación para la prueba.'});
+            this.messageService.add({ severity: 'warn', summary: 'Atención', detail: 'Debe seleccionar un estado de modificación para la prueba.' });
             return false;
         }
         if (!this.caso.id_componente) {
-            this.messageService.add({severity: 'warn', summary: 'Atención', detail: 'Debe seleccionar un componente para la prueba.'});
+            this.messageService.add({ severity: 'warn', summary: 'Atención', detail: 'Debe seleccionar un componente para la prueba.' });
             return false;
         }
-        const versionRegex = /^\d+\.\d+$/; 
+        const versionRegex = /^\d+\.\d+$/;
         if (!versionRegex.test(this.caso.version)) {
-            this.messageService.add({ 
-                severity: 'warn', 
-                summary: 'Formato Incorrecto', 
-                detail: 'La versión debe tener el formato número.número (ej: 1.0).' 
+            this.messageService.add({
+                severity: 'warn',
+                summary: 'Formato Incorrecto',
+                detail: 'La versión debe tener el formato número.número (ej: 1.0).'
             });
             return false;
         }
         if (!this.caso.fuentes || this.caso.fuentes.length === 0) {
             this.messageService.add({
-                severity: 'warn', 
-                summary: 'Atención', 
+                severity: 'warn',
+                summary: 'Atención',
                 detail: 'Debe seleccionar al menos una fuente de información.'
             });
             return false;
@@ -662,13 +699,13 @@ export class CasosPage implements OnInit {
     }
 
     private normalizarTexto(texto: string): string {
-            if (!texto) return '';
-            return texto
-                .toLowerCase()
-                .normalize("NFD")
-                .replace(/[\u0300-\u036f]/g, "");
-        }
-    
+        if (!texto) return '';
+        return texto
+            .toLowerCase()
+            .normalize("NFD")
+            .replace(/[\u0300-\u036f]/g, "");
+    }
+
     // Cierra el diálogo emergente.
     cerrarDialogo() {
         this.casoDialog = false;
@@ -753,10 +790,10 @@ export class CasosPage implements OnInit {
         const file = event.files[0];
         if (file) {
             this.archivoParaImportar = file;
-            this.messageService.add({ 
-                severity: 'info', 
-                summary: 'Archivo seleccionado', 
-                detail: `Listo para procesar: ${file.name}` 
+            this.messageService.add({
+                severity: 'info',
+                summary: 'Archivo seleccionado',
+                detail: `Listo para procesar: ${file.name}`
             });
         }
     }
@@ -772,7 +809,7 @@ export class CasosPage implements OnInit {
             try {
                 const bstr: ArrayBuffer = e.target.result;
                 const workbook: XLSX.WorkBook = XLSX.read(bstr, { type: 'array' });
-                
+
                 // 1. Obtenemos los nombres de todas las hojas del archivo
                 this.excelHojas = workbook.SheetNames;
 
@@ -801,10 +838,10 @@ export class CasosPage implements OnInit {
             const bstr: ArrayBuffer = e.target.result;
             const workbook: XLSX.WorkBook = XLSX.read(bstr, { type: 'array' });
             const worksheet: XLSX.WorkSheet = workbook.Sheets[nombreHoja];
-            
+
             // Leemos solo la primera fila para obtener los encabezados
             const datosParaEncabezados = XLSX.utils.sheet_to_json(worksheet, { header: 1, blankrows: false });
-            
+
             if (datosParaEncabezados && datosParaEncabezados.length > 0) {
                 this.excelEncabezados = (datosParaEncabezados[0] as string[]).map(h => String(h).trim());
                 // Inicializamos el objeto de mapeo
@@ -825,10 +862,10 @@ export class CasosPage implements OnInit {
 
         if (camposObligatoriosFaltantes.length > 0) {
             const nombresCampos = camposObligatoriosFaltantes.map(c => c.campo).join(', ');
-            this.messageService.add({ 
-                severity: 'warn', 
-                summary: 'Campos Requeridos Faltantes', 
-                detail: `Por favor, asigna una columna para los campos: ${nombresCampos}` 
+            this.messageService.add({
+                severity: 'warn',
+                summary: 'Campos Requeridos Faltantes',
+                detail: `Por favor, asigna una columna para los campos: ${nombresCampos}`
             });
             return;
         }
@@ -840,7 +877,7 @@ export class CasosPage implements OnInit {
             const bstr: ArrayBuffer = e.target.result;
             const workbook: XLSX.WorkBook = XLSX.read(bstr, { type: 'array' });
             const worksheet: XLSX.WorkSheet = workbook.Sheets[this.excelHojaSeleccionada];
-            
+
             const todasLasFilasOriginales = XLSX.utils.sheet_to_json(worksheet, { raw: false, blankrows: false });
 
             // Limpiamos las claves (nombres de columnas) de cada objeto leído del Excel
@@ -857,11 +894,11 @@ export class CasosPage implements OnInit {
             // Transformamos las primeras 5 filas para la previsualización
             this.datosPrevisualizacion = this.todasLasFilasDelExcel.slice(0, 5).map((filaOriginal: any) => {
                 const filaTransformada: { [key: string]: any } = {};
-                
+
                 this.nuestrosCampos.forEach(nuestroCampoInfo => {
                     const nuestroCampo = nuestroCampoInfo.campo;
                     const columnaUsuario = this.mapeoColumnas[nuestroCampo];
-                    
+
                     if (columnaUsuario) {
                         // Ahora la búsqueda SÍ funcionará porque ambas claves estarán limpias
                         filaTransformada[nuestroCampo] = filaOriginal[columnaUsuario] || '';
@@ -914,7 +951,7 @@ export class CasosPage implements OnInit {
         // Ahora, ejecutamos la misma lógica de validación de duplicados que en la importación manual
         this.casosValidadosTemporalmente = casosParaValidar;
         this.accionConfirmada = 'importar'; // Aseguramos que la acción sea la correcta
-        
+
         // Llamamos a la lógica de validación de duplicados y envío que ya existe
         this.procederConImportacion();
     }
@@ -940,10 +977,10 @@ export class CasosPage implements OnInit {
             casosLeidos.forEach((fila: any, index: number) => {
                 const numeroFila = index + 2;
                 const nombreCasoActual = fila['Nombre del Caso'];
-                
+
                 if (nombreCasoActual) {
                     const nombreNormalizado = this.normalizarNombreCaso(nombreCasoActual);
-                    
+
                     // 1. Revisar duplicados exactos dentro del mismo archivo
                     if (nombresEnArchivo.has(nombreNormalizado)) {
                         errores.push(`Fila ${numeroFila}: El caso "${nombreCasoActual}" está duplicado en el archivo.`);
@@ -1102,7 +1139,7 @@ export class CasosPage implements OnInit {
                     this.casosParaCrearDetectados.push(filaExcel);
                 }
             });
-            
+
             // Si encontramos errores de validación, los mostramos y detenemos el proceso.
             if (erroresDeValidacion.length > 0) {
                 this.messageService.add({ severity: 'error', summary: 'Errores de Validación en el Archivo', detail: 'Por favor, corrija los siguientes errores antes de continuar.', sticky: true });
@@ -1128,7 +1165,7 @@ export class CasosPage implements OnInit {
             this.messageService.add({ severity: 'error', summary: 'Error de Sesión', detail: 'No se pudo identificar al usuario.' });
             return;
         }
-    
+
         const loteFinal = {
             casosParaCrear: this.casosParaCrearDetectados.map(fila => ({
                 nombre_caso: String(fila['Nombre del Caso'] || ''),
@@ -1144,7 +1181,7 @@ export class CasosPage implements OnInit {
             })),
             casosParaActualizar: this.casosConCambios.map(c => c.datosParaEnviar)
         };
-    
+
         this.casoService.procesarLoteCasos(loteFinal).subscribe({
             next: (res) => {
                 this.messageService.add({ severity: 'success', summary: 'Éxito', detail: res.mensaje || 'Lote procesado correctamente.' });
@@ -1203,7 +1240,7 @@ export class CasosPage implements OnInit {
         }
     }
 
-    
+
 
     procederConImportacion() {
         const usuarioLogueado = this.authService.usuarioActual();
@@ -1244,26 +1281,26 @@ export class CasosPage implements OnInit {
             },
             error: (err) => {
                 if (err.error && err.error.errores && Array.isArray(err.error.errores)) {
-                    this.messageService.add({ 
-                        severity: 'error', 
-                        summary: 'Error de Validación en el Servidor', 
+                    this.messageService.add({
+                        severity: 'error',
+                        summary: 'Error de Validación en el Servidor',
                         detail: err.error.mensaje || 'Se encontraron errores en el archivo.',
                         sticky: true
                     });
                     err.error.errores.slice(0, 5).forEach((errorDetallado: any) => {
                         const mensaje = `Fila ${errorDetallado.fila}: ${errorDetallado.mensaje}`;
-                        this.messageService.add({ 
-                            severity: 'warn', 
+                        this.messageService.add({
+                            severity: 'warn',
                             summary: mensaje,
                             sticky: true,
                             life: 15000
                         });
                     });
                 } else {
-                    this.messageService.add({ 
-                        severity: 'error', 
-                        summary: 'Error Inesperado', 
-                        detail: 'Ocurrió un error al procesar el archivo en el servidor.' 
+                    this.messageService.add({
+                        severity: 'error',
+                        summary: 'Error Inesperado',
+                        detail: 'Ocurrió un error al procesar el archivo en el servidor.'
                     });
                 }
                 console.error('Error de importación desde el backend:', err);
@@ -1281,11 +1318,12 @@ export class CasosPage implements OnInit {
 
     procederConGuardadoManual() {
         const usuarioLogueado = this.authService.usuarioActual();
-        if (!usuarioLogueado) { 
+        if (!usuarioLogueado) {
             this.messageService.add({ severity: 'error', summary: 'Error de Sesión', detail: 'No se pudo identificar al usuario.' });
             this.cerrarDialogoAdvertencia();
-            return; }
-        
+            return;
+        }
+
         this.caso.activo = this.activoDialog ? 1 : 0;
         this.caso.id_usuario_creador = usuarioLogueado.idUsuario;
         this.caso.jp_responsable = usuarioLogueado.idUsuario;
@@ -1293,7 +1331,7 @@ export class CasosPage implements OnInit {
         const peticion = this.editando
             ? this.casoService.updateCaso(this.caso.id_caso!, this.caso as Caso)
             : this.casoService.createCaso(this.caso as Caso);
-        
+
         peticion.pipe(
             switchMap(casoGuardado => {
                 const idCaso = casoGuardado.id_caso!;
@@ -1303,18 +1341,18 @@ export class CasosPage implements OnInit {
         ).subscribe({
             next: () => {
                 this.messageService.add({
-                    severity: 'success', 
-                    summary: 'Éxito', 
+                    severity: 'success',
+                    summary: 'Éxito',
                     detail: 'Caso de prueba guardado correctamente.'
                 });
-                this.onComponenteSeleccionado(); 
+                this.onComponenteSeleccionado();
                 this.cerrarDialogo();
                 this.cerrarDialogoAdvertencia(); // Cerramos también el diálogo de advertencia por si estaba abierto
             },
             error: (err) => {
                 this.messageService.add({
-                    severity: 'error', 
-                    summary: 'Error', 
+                    severity: 'error',
+                    summary: 'Error',
                     detail: 'No se pudo guardar el caso'
                 });
             }
@@ -1332,7 +1370,7 @@ export class CasosPage implements OnInit {
         return usuario ? usuario.nombreUsuario : 'ID no encontrado';
     }
 
-     exportarCasos(formato: string) {
+    exportarCasos(formato: string) {
         if (this.casos().length === 0) {
             this.messageService.add({ severity: 'warn', summary: 'No hay datos', detail: 'No hay casos para exportar.' });
             return;
@@ -1340,7 +1378,7 @@ export class CasosPage implements OnInit {
 
         if (formato === 'excel') {
             const datosParaExportar = this.casos().map((item: CasoConEvidencia) => (console.log(''),
-                {
+            {
                 'ID Caso': item.caso.id_caso,
                 'Nombre del Caso': item.caso.nombre_caso,
                 'Descripción': item.caso.descripcion_caso,
@@ -1354,12 +1392,12 @@ export class CasosPage implements OnInit {
                 'Jira ID': item.ultimaEvidencia?.id_jira || '',
                 'Último Estado Ejecución': item.ultimaEvidencia ? this.findEstadoEvidenciaNombre(item.ultimaEvidencia.id_estado_evidencia) : 'Sin Ejecutar',
                 'Tester Asignado': item.ultimaEvidencia ? this.findUserNameById(item.ultimaEvidencia.id_usuario_ejecutante) : 'No asignado',
-                'Fecha Última Ejecución': this.datePipe.transform(item.ultimaEvidencia?.fecha_evidencia, 'yyyy-MM-dd HH:mm') || 'N/A',  
+                'Fecha Última Ejecución': this.datePipe.transform(item.ultimaEvidencia?.fecha_evidencia, 'yyyy-MM-dd HH:mm') || 'N/A',
                 'Descripción Última Evidencia': item.ultimaEvidencia?.descripcion_evidencia || 'N/A',
                 'Último RUT de Prueba': item.ultimaEvidencia?.rut || 'N/A'
-                 
+
             }));
-            
+
             exportarAExcel(datosParaExportar, "CasosDePrueba");
         } else if (formato === 'csv') {
             // Se mantiene la versión simple para el formato CSV
@@ -1378,13 +1416,13 @@ export class CasosPage implements OnInit {
                 'Activo': item.caso.activo === 1 ? 'Sí' : 'No',
                 'Jira ID': item.ultimaEvidencia?.id_jira || '',
                 'Tester Asignado': item.ultimaEvidencia ? this.findUserNameById(item.ultimaEvidencia.id_usuario_ejecutante) : 'No asignado',
-                'Fecha Última Ejecución': this.datePipe.transform(item.ultimaEvidencia?.fecha_evidencia, 'yyyy-MM-dd HH:mm') || 'N/A',  
+                'Fecha Última Ejecución': this.datePipe.transform(item.ultimaEvidencia?.fecha_evidencia, 'yyyy-MM-dd HH:mm') || 'N/A',
                 'Descripción Última Evidencia': item.ultimaEvidencia?.descripcion_evidencia || 'N/A',
                 'Último RUT de Prueba': item.ultimaEvidencia?.rut || 'N/A'
             }));
             exportarAExcel(datosParaExportar, "CasosDePrueba");
         }
-        
+
     }
 
     descargarPlantilla() {
@@ -1402,12 +1440,140 @@ export class CasosPage implements OnInit {
     }
 
     exportarPlanDePruebas() {
-        // Lógica futura para el informe
-        this.messageService.add({ severity: 'info', summary: 'Próximamente', detail: 'La generación del Plan de Pruebas estará disponible en el futuro.' });
+        // 1. Determinar la fuente de datos correcta
+        // Si la tabla tiene un filtro aplicado (filteredValue no es null), usamos eso.
+        // Si no, usamos la señal completa (this.casos()).
+        let casosVisibles: any[] = [];
+
+        if (this.dt && this.dt.filteredValue) {
+            casosVisibles = this.dt.filteredValue;
+        } else {
+            casosVisibles = this.casos();
+        }
+
+        if (casosVisibles.length === 0) {
+            this.messageService.add({ severity: 'warn', summary: 'No hay datos', detail: 'No hay casos en la lista para exportar.' });
+            return;
+        }
+
+        // 2. Filtrar SOLO los activos (Requerimiento del Negocio) y extraer sus IDs
+        // Esto se aplica tanto si viene de la tabla filtrada como si viene de la lista completa.
+        const idsParaExportar = casosVisibles
+            .filter(item => item.caso.activo === 1)
+            .map(item => item.caso.id_caso!);
+
+        if (idsParaExportar.length === 0) {
+            this.messageService.add({ severity: 'warn', summary: 'Sin casos activos', detail: 'La lista actual no contiene casos activos para el Plan de Pruebas.' });
+            return;
+        }
+
+        this.messageService.add({ severity: 'info', summary: 'Generando Reporte', detail: `Exportando ${idsParaExportar.length} casos...` });
+
+        // 3. Llamar al backend
+        this.casoService.getDetallesPlanPruebas(idsParaExportar).subscribe({
+            next: (datosBackend) => {
+                this.generarExcelConEstilos(datosBackend);
+                this.messageService.add({ severity: 'success', summary: 'Éxito', detail: 'Plan de Pruebas descargado.' });
+            },
+            error: (err) => {
+                console.error('Error al obtener detalles del plan:', err);
+                this.messageService.add({ severity: 'error', summary: 'Error', detail: 'No se pudo generar el reporte. Intente nuevamente.' });
+            }
+        });
+    }
+
+    // Método auxiliar privado para manejar la lógica de estilos y Excel
+    private generarExcelConEstilos(datos: any[]) {
+        // A. Definición de Estilos (Rojo y Verde Claro según tu foto)
+        const styleRojo = {
+            fill: { fgColor: { rgb: "FF2500" } }, // Fondo Rojo Fuerte
+            font: { color: { rgb: "080808" }, bold: true, sz: 14 }, // Texto Negro
+            alignment: { horizontal: "center", vertical: "center", wrapText: true },
+            border: { top: { style: "thin" }, bottom: { style: "thin" }, left: { style: "thin" }, right: { style: "thin" } }
+        };
+
+        const styleVerde = {
+            fill: { fgColor: { rgb: "DDE8CC" } }, // Fondo Verde Claro
+            font: { color: { rgb: "080808" }, bold: true, sz: 14 }, // Texto Negro
+            alignment: { horizontal: "center", vertical: "center", wrapText: true },
+            border: { top: { style: "thin" }, bottom: { style: "thin" }, left: { style: "thin" }, right: { style: "thin" } }
+        };
+
+        // B. Definición de Columnas y su Estilo (Orden exacto solicitado)
+        const headers = [
+            { title: "Identificación del Requerimiento", style: styleRojo, key: "nombre_componente" },
+            { title: "Casos de Uso", style: styleVerde, key: "nombre_caso" },
+            { title: "Pasos", style: styleVerde, key: "pasos" },
+            { title: "Resultados Esperados", style: styleRojo, key: "resultado_esperado" },
+            { title: "Versión", style: styleVerde, key: "version_evidencia" },
+            { title: "Rut", style: styleVerde, key: "rut_evidencia" },
+            { title: "JP Responsable", style: styleRojo, staticValue: "Fabian Torres" }, // Valor fijo
+            { title: "Analista responsable", style: styleVerde, key: "nombre_analista" },
+            { title: "Resultado de la prueba (OK/NOK)", style: styleRojo, key: "resultado_evidencia" },
+            { title: "Comentarios Adicionales", style: styleRojo, staticValue: "" }, // Columna vacía
+            { title: "Archivo", style: styleVerde, key: "nombres_archivos" }
+        ];
+
+        // C. Construcción de la Hoja de Datos
+        // Fila 1: Encabezados
+        const wsData = [
+            headers.map(h => ({ v: h.title, s: h.style }))
+        ];
+
+        // Fila 2 en adelante: Datos
+        datos.forEach(item => {
+            const row: any[] = [];
+            headers.forEach(col => {
+                let valor = col.staticValue !== undefined ? col.staticValue : (item[col.key] || '');
+
+                // Ajuste específico para NOK
+                if (col.key === 'resultado_evidencia' && valor === 'NK') {
+                    valor = 'NOK';
+                }
+
+                // Estilo simple para las celdas de datos (bordes y ajuste de texto)
+                const cellStyle = {
+                    alignment: { wrapText: true, vertical: "center" },
+                    border: { top: { style: "thin" }, bottom: { style: "thin" }, left: { style: "thin" }, right: { style: "thin" } }
+                };
+
+                row.push({ v: valor, s: cellStyle });
+            });
+            wsData.push(row);
+        });
+
+        // D. Crear Libro y Hoja
+        const wb = XLSXStyle.utils.book_new();
+        const ws = XLSXStyle.utils.aoa_to_sheet(wsData);
+
+        // E. Ajustar Ancho de Columnas (Opcional pero recomendado para legibilidad)
+        ws['!cols'] = [
+            { wch: 30 }, // Requerimiento
+            { wch: 30 }, // Caso
+            { wch: 40 }, // Pasos
+            { wch: 40 }, // Resultados
+            { wch: 10 }, // Versión
+            { wch: 15 }, // Rut
+            { wch: 20 }, // JP
+            { wch: 20 }, // Analista
+            { wch: 15 }, // Resultado
+            { wch: 30 }, // Comentarios
+            { wch: 30 }  // Archivo
+        ];
+
+        XLSXStyle.utils.book_append_sheet(wb, ws, "Plan de Pruebas");
+
+        // F. Descargar
+        const fecha = new Date().toISOString().slice(0, 10);
+        XLSXStyle.writeFile(wb, `Plan_de_Pruebas_Gesprub_${fecha}.xlsx`);
     }
 
     toggleFiltroMisCasos() {
         this.filtroMisCasosActivo.update(value => !value);
+    }
+
+    toggleFiltroSoloActivos() {
+        this.filtroSoloActivos.update(value => !value);
     }
 
 
@@ -1533,7 +1699,7 @@ export class CasosPage implements OnInit {
     onStateRestore(state: any) {
         // Hacemos un check para asegurarnos de que la referencia al input (#filterInput) exista
         if (this.filterInput && this.filterInput.nativeElement) {
-            
+
             // Verificamos si en el estado guardado existe un filtro global con un valor
             if (state && state.filters && state.filters.global) {
                 // Asignamos el valor del filtro guardado al input de búsqueda

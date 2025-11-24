@@ -1,6 +1,6 @@
 // src/app/layout/component/app.menu.ts
 
-import { Component, OnInit , effect, inject, signal } from '@angular/core';
+import { Component, OnInit, effect, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { MenuItem } from 'primeng/api';
@@ -14,21 +14,21 @@ import { AutenticacionService } from '../../services/autenticacion.service';
 @Component({
     selector: 'app-menu',
     standalone: true,
-    imports: [CommonModule, 
-              AppMenuitem, 
-              RouterModule,
-              SelectModule,
-              FormsModule
-            ],
-    templateUrl: './app.menu.html' 
+    imports: [CommonModule,
+        AppMenuitem,
+        RouterModule,
+        SelectModule,
+        FormsModule
+    ],
+    templateUrl: './app.menu.html'
 })
 export class AppMenu implements OnInit {
-    
+
     model = signal<MenuItem[]>([]);
 
     proyectos = signal<Proyecto[]>([]);
     proyectoActivo: Proyecto | null = null;
-    
+
     proyectoService = inject(ProyectoService);
 
     private authService = inject(AutenticacionService);
@@ -50,65 +50,6 @@ export class AppMenu implements OnInit {
         this.cargarProyectos();
         this.proyectoService.cargarProyectoGuardado();
 
-
-        // this.model = [
-        //     {
-        //         label: 'Inicio',
-        //         items: [
-        //             {
-        //                 label: 'Dashboard',
-        //                 icon: 'pi pi-fw pi-home',
-        //                 //routerLink: ['/'],
-        //                 //visible: false
-        //             }
-        //         ]
-        //     },
-        //     {
-        //         label: 'Gestión de Pruebas',
-        //         items: [
-        //             {
-        //                 label: 'Componentes',
-        //                 icon: 'pi pi-fw pi-server',
-        //                 routerLink: ['/pages/gestion/componentes'] 
-        //             },
-        //             {
-        //                 label: 'Casos de Prueba',
-        //                 icon: 'pi pi-fw pi-file-edit',
-        //                 routerLink: ['/pages/gestion/casos'] 
-        //             },
-        //             {
-        //                 label: 'Ciclos de Prueba',
-        //                 icon: 'pi pi-fw pi-sync',
-        //                 // routerLink: ['/pages/gestion/ciclos'] // Lo dejaremos comentado por ahora
-        //             }
-        //         ]
-        //     },
-        //     {
-        //         label: 'Administración',
-        //         items: [
-        //             {
-        //                 label: 'Usuarios',
-        //                 icon: 'pi pi-fw pi-users',
-        //                 routerLink: ['/pages/admin/usuarios'] 
-        //             }
-        //         ]
-        //     },
-        //     {
-        //         label: 'Personal',
-        //         items: [
-        //             { label: 'Mi Perfil', icon: 'pi pi-fw pi-user', routerLink: ['/pages/perfil'] }
-        //         ]
-        //     },
-        //     {
-        //         label: 'Herramientas',
-        //         //items: [
-        //         //    { label: 'Mi Perfil', icon: 'pi pi-fw pi-user', routerLink: ['/pages/perfil'] }
-        //         //]
-        //     },
-            
-
-            
-        // ];
     }
 
     // ===== 4. CREAMOS UNA FUNCIÓN PARA CONSTRUIR EL MENÚ DINÁMICAMENTE =====
@@ -139,9 +80,9 @@ export class AppMenu implements OnInit {
                         ]
                     },
                 ]
-                
+
             },
-            
+
             {
                 label: 'Gestión de Pruebas',
                 items: [
@@ -181,11 +122,16 @@ export class AppMenu implements OnInit {
         // Si el rol del usuario es 'Administrador'...
         if (rol === 'Administrador') {
             // ...añadimos la sección completa al array del menú.
-            
+
             menuItems.push({
                 label: 'Administración',
                 items: [
-                    { label: 'Usuarios', icon: 'pi pi-fw pi-users', routerLink: ['/pages/admin/usuarios'] }
+                    { label: 'Usuarios', icon: 'pi pi-fw pi-users', routerLink: ['/pages/admin/usuarios'] },
+                    {
+                        label: 'Descarga Masiva',
+                        icon: 'pi pi-fw pi-cloud-download',
+                        routerLink: ['/pages/admin/descargas']
+                    }
                 ]
             });
         }

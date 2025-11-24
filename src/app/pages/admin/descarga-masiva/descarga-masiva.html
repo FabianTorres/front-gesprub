@@ -1,0 +1,31 @@
+<p-toast></p-toast>
+<div class="card">
+    <h2 class="text-2xl font-semibold mb-4">Descarga Masiva de Evidencias</h2>
+    <p class="text-muted-color mb-6">
+        Herramienta administrativa para descargar todas las evidencias (archivos) de un componente en formato ZIP.
+    </p>
+
+    <div class="grid gap-4 max-w-4xl">
+        <div class="col-12">
+            <label class="block font-bold mb-2">1. Seleccione el Proyecto</label>
+            <p-select [options]="proyectos()" [(ngModel)]="proyectoSeleccionadoId" (onChange)="onProyectoChange()"
+                optionLabel="nombre_proyecto" optionValue="id_proyecto" placeholder="Elegir Proyecto..."
+                styleClass="w-full md:w-30rem">
+            </p-select>
+        </div>
+
+        <div class="col-12" *ngIf="proyectoSeleccionadoId">
+            <label class="block font-bold mb-2">2. Seleccione el Componente</label>
+            <p-select [options]="componentes()" [(ngModel)]="componenteSeleccionadoId" optionLabel="nombre_componente"
+                optionValue="id_componente" placeholder="Elegir Componente..." styleClass="w-full md:w-30rem"
+                [filter]="true" filterBy="nombre_componente">
+            </p-select>
+        </div>
+
+        <div class="col-12 mt-4" *ngIf="componenteSeleccionadoId">
+            <button pButton pRipple label="Descargar ZIP" icon="pi pi-download" class="p-button-primary"
+                [loading]="descargando()" (click)="descargarZip()">
+            </button>
+        </div>
+    </div>
+</div>

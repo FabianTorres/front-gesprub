@@ -31,4 +31,15 @@ export class ComponenteService {
     getComponentesPorProyecto(proyectoId: number): Observable<Componente[]> {
         return this.http.get<Componente[]>(this.apiUrl, { params: { proyectoId } });
     }
+
+    /**
+     * Descarga un ZIP con todas las evidencias del componente.
+     * Endpoint: GET /api/componente/{id}/descargar-zip
+     */
+    descargarZipEvidencias(idComponente: number): Observable<Blob> {
+        // Usamos environment.apiUrl para construir la ruta exacta "/componente/..."
+        return this.http.get(`${environment.apiUrl}/componente/${idComponente}/descargar-zip`, {
+            responseType: 'blob'
+        });
+    }
 }

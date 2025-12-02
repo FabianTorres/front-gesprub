@@ -1510,7 +1510,7 @@ export class CasosPage implements OnInit {
             { title: "JP Responsable", style: styleRojo, staticValue: "Fabian Torres" }, // Valor fijo
             { title: "Analista responsable", style: styleVerde, key: "nombre_analista" },
             { title: "Resultado de la prueba (OK/NOK)", style: styleRojo, key: "resultado_evidencia" },
-            { title: "Comentarios Adicionales", style: styleRojo, staticValue: "" }, // Columna vacía
+            { title: "Comentarios Adicionales", style: styleRojo, key: "id_jira" },
             { title: "Archivo", style: styleVerde, key: "nombres_archivos" }
         ];
 
@@ -1529,6 +1529,10 @@ export class CasosPage implements OnInit {
                 // Ajuste específico para NOK
                 if (col.key === 'resultado_evidencia' && valor === 'NK') {
                     valor = 'NOK';
+                }
+                // Si el valor existe y es la columna de Jira, le agregamos el prefijo
+                if (col.key === 'id_jira' && valor) {
+                    valor = `CERTRTA26-${valor}`;
                 }
 
                 // Estilo simple para las celdas de datos (bordes y ajuste de texto)

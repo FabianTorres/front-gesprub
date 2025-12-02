@@ -3,6 +3,11 @@ Todos los cambios significativos en este proyecto se documentarán en este archi
 El formato se basa en [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 y este proyecto adhiere al [Versionado Semántico](https://semver.org/lang/es/).
 
+## [1.2.5] - 2025-12-02
+
+### Changed
+-   Se mejora la funcionalidad de exportar a Excel para que ahora muestre el jira del caso
+
 ## [1.2.4] - 2025-11-24
 
 ### Added

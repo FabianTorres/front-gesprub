@@ -1,7 +1,7 @@
 // src/app/pages/ejecucion/ejecucion.ts
 
 import { Component, OnInit, ViewChild, computed, effect, inject, signal } from '@angular/core';
-import { CommonModule, DatePipe, Location  } from '@angular/common';
+import { CommonModule, DatePipe, Location } from '@angular/common';
 import { FormsModule, NgModel } from '@angular/forms';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { SelectModule } from 'primeng/select';
@@ -32,11 +32,13 @@ import { RutValidatorDirective } from '../../directives/rut-validator.directive'
 import { CatalogoService } from '../../services/catalogo.service';
 import { HistorialCaso } from '../../models/historial-caso';
 import { SortFuentesPipe } from '../../pipes/sort-fuentes.pipe';
+import { CicloService } from '../../services/ciclo.service';
+import { Ciclo } from '../../models/ciclo';
 
 @Component({
     standalone: true,
     imports: [
-        CommonModule, RutValidatorDirective , VersionFormatDirective , TagModule, FieldsetModule,DividerModule , FormsModule, RouterModule, ButtonModule, ButtonGroupModule, CardModule, InputTextModule,
+        CommonModule, RutValidatorDirective, VersionFormatDirective, TagModule, FieldsetModule, DividerModule, FormsModule, RouterModule, ButtonModule, ButtonGroupModule, CardModule, InputTextModule,
         TextareaModule, SelectModule, SortFuentesPipe, SelectButtonModule, FileUploadModule, ToastModule
     ],
     providers: [MessageService, DatePipe],
@@ -47,8 +49,9 @@ export class EjecucionPage implements OnInit {
     historial = signal<HistorialCaso | null>(null);
     nuevaEvidencia: Partial<Evidencia> = {};
     jiraInput: string | null = null;
-    archivosParaSubir = signal<File[]>([]); 
+    archivosParaSubir = signal<File[]>([]);
     guardandoEvidencia = signal<boolean>(false);
+    cicloActual = signal<Ciclo | null>(null);
 
     @ViewChild('rutInput') rutInputControl!: NgModel;
 
@@ -61,6 +64,7 @@ export class EjecucionPage implements OnInit {
     private location = inject(Location);
     private authService = inject(AutenticacionService);
     private catalogoService = inject(CatalogoService);
+    private cicloService = inject(CicloService);
 
 
     //private ultimaEvidencia: Evidencia;
@@ -77,7 +81,11 @@ export class EjecucionPage implements OnInit {
     mostrarCampoFormulario = signal<boolean>(false);
     private proyectoService = inject(ProyectoService);
 
-     // Esta señal "calcula" cuál es el objeto de estado completo que el usuario ha seleccionado.
+
+    // Variable para guardar el contexto del ciclo
+    idCicloContexto: number | null = null;
+
+    // Esta señal "calcula" cuál es el objeto de estado completo que el usuario ha seleccionado.
     estadoSeleccionado = computed(() => {
         const id = this.nuevaEvidencia.id_estado_evidencia;
         if (!id) return undefined;
@@ -99,7 +107,7 @@ export class EjecucionPage implements OnInit {
     ultimaVersionEjecutada = computed(() => {
         const historialActual = this.historial();
         if (historialActual && historialActual.historial.length > 0) {
-            
+
             // 1. Filtramos para quedarnos solo con las evidencias ACTIVAS.
             const evidenciasActivas = historialActual.historial.filter(e => e.activo !== 0);
 
@@ -119,38 +127,46 @@ export class EjecucionPage implements OnInit {
 
     constructor() {
 
-}
+    }
 
     ngOnInit() {
-        
+
         const casoId = this.route.snapshot.paramMap.get('id');
+        const cicloParam = this.route.snapshot.queryParamMap.get('idCiclo');
+        if (cicloParam) {
+            this.idCicloContexto = +cicloParam;
+            this.cicloService.getCicloById(this.idCicloContexto).subscribe({
+                next: (datosCiclo) => this.cicloActual.set(datosCiclo),
+                error: (err) => console.error('Error cargando ciclo', err)
+            });
+        }
         if (casoId) {
-            
+
             //Obtiene el caso por el id
             this.casoService.getCasoById(+casoId).subscribe(data => {
                 this.caso.set(data);
             });
 
             //Obtiene el historial del caso 
-            this.casoService.getHistorialPorCasoId(+casoId).subscribe(data=>{
-                 this.historial.set(data);
-             });
+            this.casoService.getHistorialPorCasoId(+casoId).subscribe(data => {
+                this.historial.set(data);
+            });
 
-          
+
             this.nuevaEvidencia.id_caso = +casoId;
         }
         this.cargarEstadosModificacion();
     }
 
-        getSeverityForCriticidad(nombreCriticidad: string): 'secondary' | 'success' | 'info' | 'warn' | 'danger' | 'contrast' {
-            switch (nombreCriticidad.toLowerCase()) {
-                case 'leve': return 'info';
-                case 'medio': return 'warn';
-                case 'grave': return 'danger';
-                case 'crítico': return 'contrast';
-                default: return 'secondary';
-            }
+    getSeverityForCriticidad(nombreCriticidad: string): 'secondary' | 'success' | 'info' | 'warn' | 'danger' | 'contrast' {
+        switch (nombreCriticidad.toLowerCase()) {
+            case 'leve': return 'info';
+            case 'medio': return 'warn';
+            case 'grave': return 'danger';
+            case 'crítico': return 'contrast';
+            default: return 'secondary';
         }
+    }
 
     cargarEstadosModificacion() {
         this.estadoModificacionService.getEstados().subscribe(data => this.estadosModificacion.set(data));
@@ -182,14 +198,14 @@ export class EjecucionPage implements OnInit {
         if (this.guardandoEvidencia()) {
             return;
         }
-        
-        
+
+
         if (!estadoSeleccionado) {
             this.messageService.add({ severity: 'warn', summary: 'Atención', detail: 'Debe seleccionar un resultado para la prueba.' });
             return;
         }
         if (!usuarioLogueado || !usuarioLogueado.idUsuario) {
-            this.messageService.add({severity: 'error', summary: 'Error', detail: 'No se pudo identificar al usuario. Por favor, inicie sesión de nuevo.'});
+            this.messageService.add({ severity: 'error', summary: 'Error', detail: 'No se pudo identificar al usuario. Por favor, inicie sesión de nuevo.' });
             return;
         }
 
@@ -206,12 +222,12 @@ export class EjecucionPage implements OnInit {
             this.messageService.add({ severity: 'warn', summary: 'Atención', detail: 'Debe escribir la versión de ejecución de la prueba.' });
             return;
         }
-        const versionRegex = /^\d+\.\d+$/; 
+        const versionRegex = /^\d+\.\d+$/;
         if (!versionRegex.test(this.nuevaEvidencia.version_ejecucion)) {
-            this.messageService.add({ 
-                severity: 'warn', 
-                summary: 'Formato Incorrecto', 
-                detail: 'La versión debe tener el formato número.número (ej: 1.0).' 
+            this.messageService.add({
+                severity: 'warn',
+                summary: 'Formato Incorrecto',
+                detail: 'La versión debe tener el formato número.número (ej: 1.0).'
             });
             return; // Detenemos el guardado
         }
@@ -222,35 +238,35 @@ export class EjecucionPage implements OnInit {
 
         // Comprobamos si el control del RUT existe y si es inválido.
         if (this.rutInputControl && this.rutInputControl.invalid) {
-            this.messageService.add({ 
-                severity: 'warn', 
-                summary: 'Atención', 
-                detail: 'El RUT ingresado no es válido. Por favor, corríjalo.' 
+            this.messageService.add({
+                severity: 'warn',
+                summary: 'Atención',
+                detail: 'El RUT ingresado no es válido. Por favor, corríjalo.'
             });
             return; // Detenemos la ejecución aquí
         }
 
         // Validar que OK o NK tengan al menos un archivo.
         if ((estadoSeleccionado?.nombre === 'OK' || estadoSeleccionado?.nombre === 'NK') && this.archivosParaSubir().length === 0) {
-            this.messageService.add({ 
-                severity: 'warn', 
-                summary: 'Atención', 
-                detail: 'Debe adjuntar al menos un archivo de evidencia para los estados OK y NK.' 
+            this.messageService.add({
+                severity: 'warn',
+                summary: 'Atención',
+                detail: 'Debe adjuntar al menos un archivo de evidencia para los estados OK y NK.'
             });
             return; // Detenemos el guardado
         }
 
         // Validar que NK tenga un Jira asociado.
         if (estadoSeleccionado?.nombre === 'NK' && (!this.jiraInput || this.jiraInput.trim() === '')) {
-            this.messageService.add({ 
-                severity: 'warn', 
-                summary: 'Atención', 
-                detail: 'El campo Jira es obligatorio cuando el resultado es NK.' 
+            this.messageService.add({
+                severity: 'warn',
+                summary: 'Atención',
+                detail: 'El campo Jira es obligatorio cuando el resultado es NK.'
             });
             return; // Detenemos el guardado
         }
 
-        
+
 
         if (this.jiraInput) {
             const parts = this.jiraInput.split('-');
@@ -259,11 +275,18 @@ export class EjecucionPage implements OnInit {
         } else {
             this.nuevaEvidencia.id_jira = null;
         }
+
+
+
+        // Inyectamos el ciclo si existe en el contexto
+        if (this.idCicloContexto) {
+            this.nuevaEvidencia.id_ciclo = this.idCicloContexto;
+        }
         const evidenciaParaEnviar: Partial<Evidencia> = { ...this.nuevaEvidencia };
         evidenciaParaEnviar.usuarioEjecutante = usuarioLogueado;
-        
-        this.nuevaEvidencia.usuarioEjecutante = usuarioLogueado; 
-        
+
+        this.nuevaEvidencia.usuarioEjecutante = usuarioLogueado;
+
 
         // Activamos el estado de "guardando" justo antes de empezar la operación.
         this.guardandoEvidencia.set(true);
@@ -275,7 +298,7 @@ export class EjecucionPage implements OnInit {
 
                 // Si se creó la evidencia y hay archivos seleccionados
                 if (idEvidencia && this.archivosParaSubir().length > 0) {
-                    
+
                     // Creamos un array de observables, uno por cada archivo a subir.
                     const uploadObservables = this.archivosParaSubir().map(file => {
                         // Llamamos al método actualizado del servicio, pasando el objeto File.
@@ -314,10 +337,10 @@ export class EjecucionPage implements OnInit {
                 setTimeout(() => this.router.navigate(['/pages/casos', this.nuevaEvidencia.id_caso]), 1500);
             },
             error: (err) => {
-            this.guardandoEvidencia.set(false);
+                this.guardandoEvidencia.set(false);
 
-            this.messageService.add({ severity: 'error', summary: 'Error', detail: 'No se pudo guardar la evidencia.' });
-        }
+                this.messageService.add({ severity: 'error', summary: 'Error', detail: 'No se pudo guardar la evidencia.' });
+            }
         });
     }
 
@@ -356,7 +379,7 @@ export class EjecucionPage implements OnInit {
 
         // 3. Formateamos el RUT con el guion
         let rutFormateado = cuerpo + '-' + dv;
-        
+
         // 4. Actualizamos el modelo y el valor del input
         // Es importante hacerlo de esta manera para evitar problemas con el cursor
         this.nuevaEvidencia.rut = rutFormateado;
@@ -366,19 +389,19 @@ export class EjecucionPage implements OnInit {
     onVersionInput(event: Event): void {
         const input = event.target as HTMLInputElement;
         let valor = input.value;
-    
+
         // 1. Reemplazamos la coma por un punto.
         valor = valor.replace(/,/g, '.');
-    
+
         // 2. Eliminamos cualquier caracter que no sea un dígito o un punto.
         valor = valor.replace(/[^0-9\.]/g, '');
-    
+
         // 3. Nos aseguramos de que haya un solo punto como máximo.
         const partes = valor.split('.');
         if (partes.length > 2) {
             valor = partes[0] + '.' + partes.slice(1).join('');
         }
-    
+
         // 4. Evitamos ceros a la izquierda en la parte principal (ej: 01.5 -> 1.5)
         if (partes[0] && partes[0].length > 1 && partes[0].startsWith('0')) {
             partes[0] = parseInt(partes[0], 10).toString();

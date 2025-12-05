@@ -1,20 +1,20 @@
-import { Component, OnInit, effect, inject, signal, computed, ViewChild  } from '@angular/core';
-import { CommonModule, DatePipe, Location  } from '@angular/common';
-import { ActivatedRoute,Router, RouterModule } from '@angular/router';
+import { Component, OnInit, effect, inject, signal, computed, ViewChild } from '@angular/core';
+import { CommonModule, DatePipe, Location } from '@angular/common';
+import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { ConfirmationService, MessageService } from 'primeng/api';
 import { ButtonModule } from 'primeng/button';
 import { CardModule } from 'primeng/card';
 import { TimelineModule } from 'primeng/timeline';
 import { TagModule } from 'primeng/tag';
 import { ToastModule } from 'primeng/toast';
-import { DialogModule } from 'primeng/dialog'; 
-import { SelectModule } from 'primeng/select'; 
+import { DialogModule } from 'primeng/dialog';
+import { SelectModule } from 'primeng/select';
 import { FormsModule, NgModel } from '@angular/forms';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { TooltipModule } from 'primeng/tooltip';
 import { InputTextModule } from 'primeng/inputtext';
 import { TextareaModule } from 'primeng/textarea';
-import { RutValidatorDirective } from '../../../directives/rut-validator.directive'; 
+import { RutValidatorDirective } from '../../../directives/rut-validator.directive';
 
 import { Caso } from '../../../models/caso';
 import { Evidencia } from '../../../models/evidencia';
@@ -32,9 +32,11 @@ import { Componente } from '../../../models/componente';
 import { CasoConEvidencia } from '../../../models/casoevidencia';
 import { SortFuentesPipe } from '../../../pipes/sort-fuentes.pipe';
 import { AutenticacionService } from '../../../services/autenticacion.service';
-import { ArchivoService } from '../../../services/archivo.service'; 
+import { ArchivoService } from '../../../services/archivo.service';
 import { ArchivoEvidencia } from '../../../models/archivo-evidencia';
 import { environment } from '../../../../environment/environment';
+import { CicloService } from '../../../services/ciclo.service';
+import { Ciclo } from '../../../models/ciclo';
 
 
 // Se define la interfaz local para Hito
@@ -46,12 +48,12 @@ interface Hito {
 @Component({
     standalone: true,
     imports: [
-        CommonModule, InputTextModule, TextareaModule, RutValidatorDirective, 
+        CommonModule, InputTextModule, TextareaModule, RutValidatorDirective,
         RouterModule,
         ButtonModule,
         CardModule,
         TimelineModule,
-        TagModule, SortFuentesPipe, 
+        TagModule, SortFuentesPipe,
         ToastModule, DialogModule, SelectModule, FormsModule, ConfirmDialogModule, TooltipModule
     ],
     providers: [MessageService, DatePipe, ConfirmationService],
@@ -65,7 +67,7 @@ export class HistorialPage implements OnInit {
     datosHistorial = signal<HistorialCaso | null>(null);
     usuarioActualId = computed(() => this.authService.usuarioActual()?.idUsuario ?? null);
     private evidenciaService = inject(EvidenciaService);
-    private catalogoService = inject(CatalogoService); 
+    private catalogoService = inject(CatalogoService);
     private estadosEvidencia = this.catalogoService.estadosEvidencia;
     private criticidades = this.catalogoService.criticidades;
     private archivoService = inject(ArchivoService);
@@ -74,11 +76,12 @@ export class HistorialPage implements OnInit {
     private confirmationService = inject(ConfirmationService);
     private componenteService = inject(ComponenteService);
     private authService = inject(AutenticacionService);
+    private cicloService = inject(CicloService);
 
     private route = inject(ActivatedRoute);
     private router = inject(Router);
     private casoService = inject(CasoService);
-    private location = inject(Location); 
+    private location = inject(Location);
     // Señal para la lista de estados
     estadosModificacion = signal<EstadoModificacion[]>([]);
 
@@ -88,6 +91,9 @@ export class HistorialPage implements OnInit {
     proyectoSeleccionadoId: number | null = null;
     componenteSeleccionadoId: number | null = null;
     casoDestinoId: number | null = null;
+
+    mostrarSelectorContexto = signal<boolean>(false);
+    ciclosDisponibles = signal<Ciclo[]>([]);
 
     moverDialog: boolean = false;
     evidenciaParaMover: Evidencia | null = null;
@@ -118,8 +124,8 @@ export class HistorialPage implements OnInit {
     }
     ngOnInit() {
         const casoId = this.route.snapshot.paramMap.get('id');
-            if (casoId) {
-                this.casoService.getHistorialPorCasoId(+casoId).pipe(
+        if (casoId) {
+            this.casoService.getHistorialPorCasoId(+casoId).pipe(
                 switchMap(data => {
                     if (data && data.historial && data.historial.length > 0) {
                         // Para cada evidencia, creamos un observable que busca sus archivos
@@ -136,40 +142,40 @@ export class HistorialPage implements OnInit {
                     return of(data); // Si no hay historial, devolvemos los datos como están
                 })
             ).subscribe(data => {
-                    // 1. Verificamos que los datos y el array 'historial' existan
-                    if (data && data.historial) {
+                // 1. Verificamos que los datos y el array 'historial' existan
+                if (data && data.historial) {
 
-                        // 2. Usamos .map() para crear un nuevo array con la propiedad 'posicion'
-                        const historialModificado = data.historial.map((evento, index) => {
-                            return {
-                                ...evento, // Copia todas las propiedades originales del evento
-                                posicion: index % 2 !== 0 ? 'left' : 'right' // Añade la propiedad 'posicion'
-                            };
-                        });
+                    // 2. Usamos .map() para crear un nuevo array con la propiedad 'posicion'
+                    const historialModificado = data.historial.map((evento, index) => {
+                        return {
+                            ...evento, // Copia todas las propiedades originales del evento
+                            posicion: index % 2 !== 0 ? 'left' : 'right' // Añade la propiedad 'posicion'
+                        };
+                    });
 
-                        // 3. Actualizamos la signal 'datosHistorial' con los datos ya transformados
-                        this.datosHistorial.set({
-                            ...data,
-                            historial: historialModificado
-                        });
-                        
-                    } else {
-                        // Si no hay datos, simplemente los establecemos como están
-                        this.datosHistorial.set(data);
-                    }
-                   
+                    // 3. Actualizamos la signal 'datosHistorial' con los datos ya transformados
+                    this.datosHistorial.set({
+                        ...data,
+                        historial: historialModificado
+                    });
 
-                });
-            }
+                } else {
+                    // Si no hay datos, simplemente los establecemos como están
+                    this.datosHistorial.set(data);
+                }
 
-            this.cargarEstadosModificacion();
+
+            });
+        }
+
+        this.cargarEstadosModificacion();
     }
 
     // Método para cargar los estados
     cargarEstadosModificacion() {
         this.estadoModificacionService.getEstados().subscribe(data => this.estadosModificacion.set(data));
     }
-    
+
     // Método para encontrar el nombre del estado por su ID
     findEstadoModificacionNombre(id: number | undefined): string {
         if (id === undefined) return 'N/A';
@@ -238,7 +244,7 @@ export class HistorialPage implements OnInit {
 
 
 
-     abrirDialogoMover(evidencia: Evidencia) {
+    abrirDialogoMover(evidencia: Evidencia) {
         this.evidenciaParaMover = evidencia;
         const proyectoActual = this.proyectoService.proyectoSeleccionado();
 
@@ -296,7 +302,7 @@ export class HistorialPage implements OnInit {
     }
 
     confirmarMovimiento() {
-        
+
         if (!this.casoDestinoId || !this.evidenciaParaMover?.id_evidencia) {
             this.messageService.add({ severity: 'warn', summary: 'Atención', detail: 'Debe seleccionar un caso de destino.' });
             return;
@@ -309,7 +315,7 @@ export class HistorialPage implements OnInit {
             acceptLabel: 'Sí, mover',
             rejectLabel: 'Cancelar',
             accept: () => {
-               
+
                 this.moverEvidencia();
             }
         });
@@ -323,12 +329,12 @@ export class HistorialPage implements OnInit {
 
         // Si la evidencia ya está inactiva (0), no hacemos nada.
         if (evidencia.activo === 0) {
-            this.messageService.add({ 
-                severity: 'info', 
-                summary: 'Información', 
-                detail: 'Esta evidencia ya está desactivada y la acción no se puede revertir.' 
+            this.messageService.add({
+                severity: 'info',
+                summary: 'Información',
+                detail: 'Esta evidencia ya está desactivada y la acción no se puede revertir.'
             });
-            return; 
+            return;
         }
 
         this.confirmationService.confirm({
@@ -341,55 +347,55 @@ export class HistorialPage implements OnInit {
                 const idEvidencia = evidencia.id_evidencia!;
                 const idCaso = this.datosHistorial()!.id_caso;
 
-                
-                    this.evidenciaService.updateEstadoActivo(idEvidencia, 0).pipe(
-                        // 1. Después de anular, pedimos el historial actualizado del caso.
-                        switchMap(() => {
-                            return this.casoService.getHistorialPorCasoId(idCaso);
-                        }),
-                        // 2. Con el historial actualizado, calculamos la nueva versión y la guardamos.
-                        switchMap(historialActualizado => {
-                            let nuevaVersion = '1.0'; // Versión por defecto si no quedan evidencias activas.
 
-                            // Filtramos solo las evidencias activas
-                            const evidenciasActivas = historialActualizado.historial?.filter(e => e.activo !== 0) || [];
+                this.evidenciaService.updateEstadoActivo(idEvidencia, 0).pipe(
+                    // 1. Después de anular, pedimos el historial actualizado del caso.
+                    switchMap(() => {
+                        return this.casoService.getHistorialPorCasoId(idCaso);
+                    }),
+                    // 2. Con el historial actualizado, calculamos la nueva versión y la guardamos.
+                    switchMap(historialActualizado => {
+                        let nuevaVersion = '1.0'; // Versión por defecto si no quedan evidencias activas.
 
-                            if (evidenciasActivas.length > 0) {
-                                // Asumimos que el historial viene ordenado del más nuevo al más viejo
-                                nuevaVersion = evidenciasActivas[0].version_ejecucion;
-                            }
-                            
-                            // Actualizamos la versión del caso principal en la base de datos
-                            return this.casoService.updateCasoVersion(idCaso, nuevaVersion);
-                        })
-                    ).subscribe({
-                        next: () => {
-                            // Actualizamos el estado localmente para que se refleje en la vista
-                            this.datosHistorial.update(historialActual => {
-                                if (historialActual) {
-                                    const index = historialActual.historial.findIndex(e => e.id_evidencia === idEvidencia);
-                                    if (index !== -1) {
-                                        historialActual.historial[index].activo = 0;
-                                    }
-                                }
-                                return historialActual ? { ...historialActual } : null;
-                            });
+                        // Filtramos solo las evidencias activas
+                        const evidenciasActivas = historialActualizado.historial?.filter(e => e.activo !== 0) || [];
 
-                            this.messageService.add({ 
-                                severity: 'success', 
-                                summary: 'Éxito', 
-                                detail: 'La ejecución ha sido desactivada.' 
-                            });
-                        },
-                        error: (err) => {
-                            this.messageService.add({ 
-                                severity: 'error', 
-                                summary: 'Error', 
-                                detail: `No se pudo desactivar la ejecución.`
-                            });
-                            console.error(`Anulando ejecución falló`, err);
+                        if (evidenciasActivas.length > 0) {
+                            // Asumimos que el historial viene ordenado del más nuevo al más viejo
+                            nuevaVersion = evidenciasActivas[0].version_ejecucion;
                         }
-                    });
+
+                        // Actualizamos la versión del caso principal en la base de datos
+                        return this.casoService.updateCasoVersion(idCaso, nuevaVersion);
+                    })
+                ).subscribe({
+                    next: () => {
+                        // Actualizamos el estado localmente para que se refleje en la vista
+                        this.datosHistorial.update(historialActual => {
+                            if (historialActual) {
+                                const index = historialActual.historial.findIndex(e => e.id_evidencia === idEvidencia);
+                                if (index !== -1) {
+                                    historialActual.historial[index].activo = 0;
+                                }
+                            }
+                            return historialActual ? { ...historialActual } : null;
+                        });
+
+                        this.messageService.add({
+                            severity: 'success',
+                            summary: 'Éxito',
+                            detail: 'La ejecución ha sido desactivada.'
+                        });
+                    },
+                    error: (err) => {
+                        this.messageService.add({
+                            severity: 'error',
+                            summary: 'Error',
+                            detail: `No se pudo desactivar la ejecución.`
+                        });
+                        console.error(`Anulando ejecución falló`, err);
+                    }
+                });
             }
         });
     }
@@ -415,49 +421,49 @@ export class HistorialPage implements OnInit {
             // 3. Tenemos el nuevo historial. Calculamos la nueva versión del CASO DE ORIGEN y la actualizamos.
             switchMap(historialActualizado => {
                 let nuevaVersionOrigen = '1.0'; // Versión por defecto si no quedan evidencias
-                
+
                 if (historialActualizado.historial && historialActualizado.historial.length > 0) {
                     // Asumimos que el historial viene ordenado del más nuevo al más viejo
                     nuevaVersionOrigen = historialActualizado.historial[0].version_ejecucion;
                 }
-                
+
                 //console.log(`Paso 3: Actualizando versión del caso de origen (${idCasoOrigen}) a ${nuevaVersionOrigen}`);
                 return this.casoService.updateCasoVersion(idCasoOrigen, nuevaVersionOrigen);
             })
         ).subscribe({
-        next: () => {
-            this.messageService.add({ 
-                severity: 'success', 
-                summary: 'Éxito', 
-                detail: 'La evidencia se movió exitosamente.' 
-            });
-            
-            // Refrescamos la vista para que la evidencia movida desaparezca
-            this.datosHistorial.update(historial => {
-                if (historial) {
-                    historial.historial = historial.historial.filter(e => e.id_evidencia !== idEvidencia);
-                }
-                return historial ? { ...historial } : null;
-            });
-            this.cerrarDialogoMover();
-        },
-        error: (err) => {
-            console.error('Error durante el proceso de mover evidencia:', err);
-            this.messageService.add({ 
-                severity: 'error', 
-                summary: 'Error', 
-                detail: 'Ocurrió un error al mover la evidencia. La operación fue cancelada.' 
-            });
-        }
+            next: () => {
+                this.messageService.add({
+                    severity: 'success',
+                    summary: 'Éxito',
+                    detail: 'La evidencia se movió exitosamente.'
+                });
+
+                // Refrescamos la vista para que la evidencia movida desaparezca
+                this.datosHistorial.update(historial => {
+                    if (historial) {
+                        historial.historial = historial.historial.filter(e => e.id_evidencia !== idEvidencia);
+                    }
+                    return historial ? { ...historial } : null;
+                });
+                this.cerrarDialogoMover();
+            },
+            error: (err) => {
+                console.error('Error durante el proceso de mover evidencia:', err);
+                this.messageService.add({
+                    severity: 'error',
+                    summary: 'Error',
+                    detail: 'Ocurrió un error al mover la evidencia. La operación fue cancelada.'
+                });
+            }
         });
     }
 
 
-    
+
     descargarArchivoSeguro(archivo: ArchivoEvidencia) {
-        this.messageService.add({ 
-            severity: 'info', 
-            summary: 'Preparando Descarga', 
+        this.messageService.add({
+            severity: 'info',
+            summary: 'Preparando Descarga',
             detail: `Solicitando "${archivo.nombre_archivo}"...`,
             life: 2000 // El mensaje dura 2 segundos
         });
@@ -467,26 +473,26 @@ export class HistorialPage implements OnInit {
             next: (blob) => {
                 // 1. Crear una URL local en el navegador para el Blob (el archivo)
                 const url = window.URL.createObjectURL(blob);
-                
+
                 // 2. Crear un enlace <a> temporal en la memoria
                 const a = document.createElement('a');
                 a.href = url;
                 a.download = archivo.nombre_archivo; // Asignar el nombre original
-                
+
                 // 3. Añadir el enlace al DOM y simular un clic
-                document.body.appendChild(a); 
+                document.body.appendChild(a);
                 a.click();
-                
+
                 // 4. Limpiar: quitar el enlace del DOM y liberar la memoria
-                document.body.removeChild(a); 
+                document.body.removeChild(a);
                 window.URL.revokeObjectURL(url);
             },
             error: (err) => {
                 console.error('Error al descargar el archivo:', err);
-                this.messageService.add({ 
-                    severity: 'error', 
-                    summary: 'Error de Descarga', 
-                    detail: 'No se pudo descargar el archivo. Verifique los permisos o inténtelo más tarde.' 
+                this.messageService.add({
+                    severity: 'error',
+                    summary: 'Error de Descarga',
+                    detail: 'No se pudo descargar el archivo. Verifique los permisos o inténtelo más tarde.'
                 });
             }
         });
@@ -513,7 +519,7 @@ export class HistorialPage implements OnInit {
     abrirDialogoEditar(evidencia: Evidencia) {
         this.evidenciaParaEditar.set(evidencia);
         // Creamos una copia para editar, para no modificar la original en la vista.
-        this.evidenciaEditada = { ...evidencia }; 
+        this.evidenciaEditada = { ...evidencia };
         this.motivoCorreccion = ''; // Limpiamos el motivo
         this.editarDialogVisible.set(true);
     }
@@ -541,10 +547,10 @@ export class HistorialPage implements OnInit {
         }
 
         if (this.evidenciaEditada.rut && this.rutInputControl && this.rutInputControl.invalid) {
-            this.messageService.add({ 
-                severity: 'warn', 
-                summary: 'Atención', 
-                detail: 'El RUT ingresado no es válido. Por favor, corríjalo.' 
+            this.messageService.add({
+                severity: 'warn',
+                summary: 'Atención',
+                detail: 'El RUT ingresado no es válido. Por favor, corríjalo.'
             });
             return; // Detenemos la ejecución
         }
@@ -555,7 +561,7 @@ export class HistorialPage implements OnInit {
             id_evidencia: undefined,
 
             id_caso: datosDelHistorial?.id_caso,
-            
+
             // 2. Sobrescribimos con los datos modificados del diálogo
             rut: this.evidenciaEditada.rut || undefined, // Si está vacío, lo dejamos como undefined
             id_jira: this.parseJiraInput(this.evidenciaEditada.id_jira),
@@ -564,13 +570,13 @@ export class HistorialPage implements OnInit {
             id_usuario_ejecutante: undefined!,
             usuarioEjecutante: usuario,
             fecha_evidencia: new Date().toISOString(), // La fecha y hora actual
-            
+
             // 4. Creamos una descripción que refleje la corrección
             descripcion_evidencia: this.generarDescripcionCorreccion(original)
         };
 
         console.log('Nuevos datos que se enviarán al backend:', nuevaEvidenciaReplica);
-        
+
         // 5. Llamamos al servicio para crear la nueva evidencia
         this.evidenciaService.createEvidencia(nuevaEvidenciaReplica as Evidencia).subscribe({
             next: () => {
@@ -591,11 +597,11 @@ export class HistorialPage implements OnInit {
     private generarDescripcionCorreccion(original: Evidencia): string {
         const fechaOriginal = new Date(original.fecha_evidencia!).toLocaleString('es-CL');
         let descripcion = `[CORRECCIÓN] `;
-        
+
         if (this.motivoCorreccion) {
             descripcion += `\nMotivo: ${this.motivoCorreccion}`;
         }
-        
+
         // Añadimos la descripción original si existía
         if (original.descripcion_evidencia) {
             descripcion += `\n\nOriginal:\n${original.descripcion_evidencia}`;
@@ -609,14 +615,55 @@ export class HistorialPage implements OnInit {
      */
     private parseJiraInput(jiraInput: any): number | undefined {
         if (!jiraInput) return undefined;
-        
+
         const jiraString = String(jiraInput);
         const parts = jiraString.split('-');
         const lastPart = parts[parts.length - 1];
-        
+
         const numero = parseInt(lastPart, 10);
         return isNaN(numero) ? undefined : numero;
     }
 
-   
+    verificarContextoEjecucion() {
+        const datos = this.datosHistorial();
+        if (!datos) return;
+
+        const idCaso = datos.id_caso;
+
+        this.cicloService.getCiclosActivosPorCaso(idCaso).subscribe({
+            next: (ciclos) => {
+                this.ciclosDisponibles.set(ciclos);
+
+                if (ciclos.length > 0) {
+                    // Hay ciclos -> Abrir el diálogo selector
+                    this.mostrarSelectorContexto.set(true);
+                } else {
+                    // No hay ciclos -> Advertencia
+                    this.confirmationService.confirm({
+                        message: 'Esta ejecución no estará asignada a ningún Jira de Liberación (Ciclo). ¿Desea continuar con una ejecución libre?',
+                        header: 'Advertencia de Ejecución',
+                        icon: 'pi pi-exclamation-triangle',
+                        acceptLabel: 'Sí, continuar',
+                        rejectLabel: 'Cancelar',
+                        accept: () => {
+                            this.navegarAEjecucion(null);
+                        }
+                    });
+                }
+            },
+            error: (err) => {
+                console.error(err);
+                this.navegarAEjecucion(null);
+            }
+        });
+    }
+
+    navegarAEjecucion(idCiclo: number | null) {
+        this.mostrarSelectorContexto.set(false);
+        const datos = this.datosHistorial();
+        if (datos) {
+            const queryParams = idCiclo ? { idCiclo: idCiclo } : {};
+            this.router.navigate(['/pages/ejecucion', datos.id_caso], { queryParams });
+        }
+    }
 }

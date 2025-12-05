@@ -1,0 +1,291 @@
+<p-toast></p-toast>
+<p-confirmDialog [style]="{width: '450px'}"></p-confirmDialog>
+
+<div class="card">
+    <h2 class="text-2xl font-semibold mb-4">Ciclos de Prueba Activos (Liberaciones)</h2>
+    <p class="text-muted-color mb-4">Gestione las liberaciones de Jira y su alcance de casos de pruebas.</p>
+
+    <p-toolbar styleClass="mb-4">
+        <ng-template pTemplate="left">
+            <button pButton pRipple label="Nuevo Ciclo" icon="pi pi-plus" class="mr-2"
+                (click)="abrirDialogoNuevo()"></button>
+        </ng-template>
+
+        <ng-template pTemplate="right">
+            <p-selectButton [options]="opcionesEstado" [ngModel]="filtroEstado()"
+                (ngModelChange)="filtroEstado.set($event); cargarCiclos()" optionLabel="label" optionValue="value">
+            </p-selectButton>
+        </ng-template>
+    </p-toolbar>
+
+    <p-table [value]="ciclos()" [loading]="loading()" responsiveLayout="scroll" [rows]="10" [paginator]="true">
+        <ng-template pTemplate="header">
+            <tr>
+                <th style="width: 17%">Jira</th>
+                <th style="width: 25%">Nombre</th>
+                <th style="width: 14%">Fecha Liberación</th>
+                <th style="width: 25%">Avance</th>
+                <th style="width: 18%">Acciones</th>
+            </tr>
+        </ng-template>
+        <ng-template pTemplate="body" let-ciclo>
+            <tr [ngClass]="{'opacity-60 bg-gray-50': ciclo.activo === 0}">
+                <td>
+                    <a [href]="getJiraUrl(ciclo.jiraKey)" target="_blank"
+                        class="text-primary font-bold hover:underline flex items-center gap-1">
+                        <i class="pi text-xs"></i>
+                        {{ ciclo.jiraKey }}
+                    </a>
+                </td>
+                <td>{{ ciclo.nombre }}</td>
+                <td>{{ ciclo.fechaLiberacion | date:'dd/MM/yyyy' }}</td>
+                <td>
+                    <div class="flex gap-2">
+                        <p-tag [value]="'Total: ' + ciclo.totalCasosAsignados" severity="info"
+                            pTooltip="Total Casos Asignados"></p-tag>
+                        <p-tag [value]="'OK: ' + ciclo.casosCertificados" severity="success"
+                            pTooltip="Casos Certificados"></p-tag>
+                        <p-tag [value]="'NK: ' + ciclo.casosError" severity="danger" pTooltip="Casos con Error"></p-tag>
+                    </div>
+                </td>
+                <td>
+                    <div class="flex gap-2">
+                        <button pButton pRipple icon="pi pi-pencil" class="p-button-rounded mr-2"
+                            (click)="editarCiclo(ciclo)" pTooltip="Editar Ciclo" tooltipPosition="top">
+                        </button>
+                        <button pButton pRipple icon="pi pi-list" class="p-button-rounded mr-2"
+                            (click)="gestionarAlcance(ciclo)" pTooltip="Gestionar Alcance" tooltipPosition="top">
+                        </button>
+
+                        <button pButton pRipple icon="pi pi-check-square" class="p-button-rounded mr-2"
+                            pTooltip="Cerrar Ciclo" tooltipPosition="top" (click)="confirmarCierre(ciclo)">
+                        </button>
+                    </div>
+                </td>
+            </tr>
+        </ng-template>
+        <ng-template pTemplate="empty">
+            <tr>
+                <td colspan="5" class="text-center p-4">No hay ciclos activos. Cree uno nuevo para comenzar.</td>
+            </tr>
+        </ng-template>
+    </p-table>
+</div>
+
+<p-dialog [(visible)]="cicloDialog" [style]="{width: '500px'}"
+    header="{{editando() ? 'Editar Ciclo' : 'Nuevo Ciclo de Prueba'}}" [modal]="true" class="p-fluid">
+    <ng-template pTemplate="content">
+        <div class="field mb-3">
+            <label for="jiraKey" class="block font-bold mb-2">Jira de liberación</label>
+            <input type="text" pInputText id="jiraKey" [(ngModel)]="nuevoCiclo.jiraKey" required autofocus
+                placeholder="Ej: CERTRTA26-150" pattern="^CERTRTA\d{2}-\d+$" #jiraKeyInput="ngModel" class="w-full" />
+            <small class="p-error block mt-1"
+                *ngIf="jiraKeyInput.invalid && (jiraKeyInput.dirty || jiraKeyInput.touched)">
+                <span *ngIf="jiraKeyInput.errors?.['required']">El Jira es requerido.</span>
+                <span *ngIf="jiraKeyInput.errors?.['pattern']">Formato inválido. Debe ser CERTRTAXX-XXX (ej:
+                    CERTRTA26-150).</span>
+            </small>
+        </div>
+        <div class="field mb-3">
+            <label for="nombre" class="block font-bold mb-2">Nombre Descriptivo</label>
+            <input type="text" pInputText id="nombre" [(ngModel)]="nuevoCiclo.nombre" required
+                placeholder="Ej: Vectores Bigdata 1.1" class="w-full" />
+        </div>
+        <div class="field mb-3">
+            <label for="descripcion" class="block font-bold mb-2">Descripción</label>
+            <textarea id="descripcion" pTextarea [(ngModel)]="nuevoCiclo.descripcion" rows="3" cols="20"
+                class="w-full"></textarea>
+        </div>
+        <div class="field mb-3">
+            <label for="fechaLib" class="block font-bold mb-2">Fecha de liberación</label>
+            <p-datePicker id="fechaLib" [(ngModel)]="nuevoCiclo.fechaLiberacion" dateFormat="dd/mm/yy" [showIcon]="true"
+                appendTo="body" styleClass="w-full">
+            </p-datePicker>
+        </div>
+    </ng-template>
+
+    <ng-template pTemplate="footer">
+        <button pButton pRipple label="Cancelar" icon="pi pi-times" class="p-button-text"
+            (click)="cerrarDialogo()"></button>
+        <button pButton pRipple label="Guardar" icon="pi pi-check" class="p-button-text"
+            (click)="guardarCiclo()"></button>
+    </ng-template>
+</p-dialog>
+
+<p-dialog [(visible)]="alcanceDialog" [style]="{width: '900px', height: '80vh'}"
+    [header]="'Gestionar Alcance: ' + (cicloSeleccionado?.jiraKey || '')" [modal]="true" [maximizable]="true"
+    class="p-fluid">
+
+    <ng-template pTemplate="content">
+        <div class="flex flex-col h-full">
+
+            <div class="flex justify-between items-center mb-4 gap-4 p-3 surface-ground border-round">
+                <div class="flex-1">
+                    <label class="block font-bold mb-1 text-sm">Filtrar casos por Componente</label>
+                    <p-select [options]="componentes()" [(ngModel)]="componenteFiltro" (onChange)="onComponenteChange()"
+                        optionLabel="nombre_componente" optionValue="id_componente"
+                        placeholder="Seleccione un componente para ver sus casos..." styleClass="w-full" [filter]="true"
+                        filterBy="nombre_componente">
+                    </p-select>
+                </div>
+
+                <div class="text-right">
+                    <span class="block text-sm text-muted-color">Total Casos Seleccionados</span>
+                    <span class="text-2xl font-bold text-primary">{{ idsSeleccionadosGlobal.size }}</span>
+                </div>
+            </div>
+
+            <div class="flex-1 overflow-auto border-1 surface-border border-round">
+                <p-table #dtAlcance [value]="casosDelComponente()" [loading]="loadingCasos" [rowHover]="true"
+                    styleClass="p-datatable-sm p-datatable-gridlines" responsiveLayout="scroll"
+                    [globalFilterFields]="['caso.nombre_caso', 'caso.nombre_estado_modificacion', 'caso.fuentes_nombres', 'caso.version']">
+
+                    <ng-template pTemplate="caption">
+                        <div class="flex justify-end items-center">
+                            <p-iconfield>
+                                <p-inputicon styleClass="pi pi-search" />
+                                <input pInputText type="text" (input)="onGlobalFilter(dtAlcance, $event)"
+                                    placeholder="Buscar en todos los campos..." class="w-full sm:w-auto" />
+                            </p-iconfield>
+                        </div>
+                    </ng-template>
+
+                    <ng-template pTemplate="header">
+                        <tr>
+                            <th style="width: 3rem" class="text-center">
+                                <p-checkbox [binary]="true" [ngModel]="areAllSelected()"
+                                    (onChange)="toggleTodosComponente($event)"
+                                    [disabled]="casosDelComponente().length === 0"
+                                    pTooltip="Seleccionar todos los visibles" tooltipPosition="top">
+                                </p-checkbox>
+                            </th>
+
+                            <th pSortableColumn="caso.id_estado_modificacion" style="min-width: 150px">
+                                <div class="flex justify-between items-center">
+                                    Actualización
+                                    <p-columnFilter field="caso.id_estado_modificacion" matchMode="equals"
+                                        display="menu" [showMatchModes]="false">
+                                        <ng-template pTemplate="filter" let-value let-filter="filterCallback">
+                                            <p-select [ngModel]="value" [options]="opcionesFiltroModificacion"
+                                                (onChange)="filter($event.value)" placeholder="Cualquiera"
+                                                [style]="{'min-width': '100%'}"></p-select>
+                                        </ng-template>
+                                    </p-columnFilter>
+                                </div>
+                            </th>
+
+                            <th pSortableColumn="caso.nombre_caso" style="min-width: 200px">
+                                <div class="flex justify-between items-center">
+                                    Nombre del Caso
+                                    <p-columnFilter type="text" field="caso.nombre_caso"
+                                        display="menu"></p-columnFilter>
+                                </div>
+                            </th>
+
+                            <th pSortableColumn="caso.version" style="width: 100px">
+                                <div class="flex justify-between items-center">
+                                    Ver.
+                                    <p-columnFilter type="text" field="caso.version" display="menu"></p-columnFilter>
+                                </div>
+                            </th>
+
+                            <th style="min-width: 150px">
+                                <div class="flex justify-between items-center">
+                                    Fuentes
+                                    <p-columnFilter type="text" field="caso.fuentes_nombres"
+                                        display="menu"></p-columnFilter>
+                                </div>
+                            </th>
+
+                            <th pSortableColumn="caso.estado_ejecucion" style="min-width: 150px">
+                                <div class="flex justify-between items-center">
+                                    Estado
+                                    <p-columnFilter field="caso.estado_ejecucion" matchMode="equals" display="menu"
+                                        [showMatchModes]="false">
+                                        <ng-template pTemplate="filter" let-value let-filter="filterCallback">
+                                            <p-select [ngModel]="value" [options]="opcionesFiltroEstadoEjecucion"
+                                                (onChange)="filter($event.value)" placeholder="Cualquiera"
+                                                [style]="{'min-width': '100%'}">
+                                            </p-select>
+                                        </ng-template>
+                                    </p-columnFilter>
+                                </div>
+                            </th>
+                            <th style="width: 50px">Acción</th>
+                        </tr>
+                    </ng-template>
+
+                    <ng-template pTemplate="body" let-item>
+                        <tr [ngClass]="{'surface-hover': isCasoSelected(item.caso.id_caso)}">
+                            <td class="text-center">
+                                <p-checkbox [binary]="true" [ngModel]="isCasoSelected(item.caso.id_caso)"
+                                    (onChange)="toggleCaso(item.caso.id_caso, $event)">
+                                </p-checkbox>
+                            </td>
+
+                            <td>
+                                <p-tag [value]="findEstadoModificacionNombre(item.caso.id_estado_modificacion)"
+                                    [severity]="getSeverityForModificacion(findEstadoModificacionNombre(item.caso.id_estado_modificacion))">
+                                </p-tag>
+                            </td>
+
+                            <td class="font-medium">{{ item.caso.nombre_caso }}</td>
+
+                            <td class="text-center">{{ item.caso.version }}</td>
+
+                            <td>
+                                <div class="flex flex-wrap gap-1">
+                                    <p-tag *ngFor="let fuente of (item.caso.fuentes | sortFuentes)"
+                                        [value]="fuente.nombre_fuente" severity="secondary">
+                                    </p-tag>
+                                </div>
+                            </td>
+
+                            <td>
+                                <p-tag [value]="item.ultimaEvidencia ? 'Ejecutado' : 'Sin Ejecutar'"
+                                    [severity]="item.ultimaEvidencia ? 'success' : 'secondary'">
+                                </p-tag>
+                            </td>
+                            <td class="text-center">
+                                <button pButton pRipple icon="pi pi-play"
+                                    class="p-button-rounded p-button-text p-button-success"
+                                    pTooltip="Ejecutar en este Ciclo" tooltipPosition="left"
+                                    [routerLink]="['/pages/ejecucion', item.caso.id_caso]"
+                                    [queryParams]="{ idCiclo: cicloSeleccionado?.idCiclo }">
+                                </button>
+                            </td>
+                        </tr>
+                    </ng-template>
+
+                    <ng-template pTemplate="emptymessage">
+                        <tr>
+                            <td colspan="6" class="text-center p-4"> <span *ngIf="!componenteFiltro"
+                                    class="text-xl text-muted-color">
+                                    <i class="pi pi-arrow-up text-3xl mb-2 block"></i>
+                                    Seleccione un componente arriba para cargar los casos.
+                                </span>
+                                <span *ngIf="componenteFiltro" class="text-muted-color">
+                                    No se encontraron casos en este componente.
+                                </span>
+                            </td>
+                        </tr>
+                    </ng-template>
+                </p-table>
+            </div>
+        </div>
+    </ng-template>
+
+    <ng-template pTemplate="footer">
+        <div class="flex justify-between items-center w-full">
+            <span class="text-sm text-muted-color">
+                <i class="pi pi-info-circle mr-1"></i>
+                Se guardará la selección global ({{ idsSeleccionadosGlobal.size }} casos).
+            </span>
+            <div class="flex gap-2">
+                <button pButton pRipple label="Cancelar" icon="pi pi-times" class="p-button-text"
+                    (click)="alcanceDialog = false"></button>
+                <button pButton pRipple label="Guardar Alcance" icon="pi pi-check" (click)="guardarAlcance()"></button>
+            </div>
+        </div>
+    </ng-template>
+</p-dialog>

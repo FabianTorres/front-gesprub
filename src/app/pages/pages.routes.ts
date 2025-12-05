@@ -71,6 +71,7 @@ export default [
 
             { path: 'muro-tareas', loadComponent: () => import('./gestion/muro-tareas/muro-tareas.component').then(m => m.MuroTareasComponent) },
             { path: 'tablero-kanban', loadComponent: () => import('./gestion/tablero-kanban/tablero-kanban.component').then(m => m.TableroKanbanComponent) },
+            { path: 'ciclos', loadComponent: () => import('./gestion/ciclos/ciclos').then(m => m.CiclosPage) },
             //{ path: '', redirectTo: 'casos', pathMatch: 'full' }
         ]
     },

@@ -1,197 +1,201 @@
 <p-toast></p-toast>
 <div class="grid p-fluid gap-2">
-   <div class="col-12 md:col-7">
-    <p-card>
-        <ng-template pTemplate="header">
-            <div class="p-4 flex items-center gap-4">
-                <button pButton
-                        type="button"
-                        icon="pi pi-arrow-left"
-                        (click)="volverAtras()"
+    <div class="col-12 md:col-7">
+        <p-card>
+            <ng-template pTemplate="header">
+                <div class="p-4 flex items-center gap-4">
+                    <button pButton type="button" icon="pi pi-arrow-left" (click)="volverAtras()"
                         class="p-button-secondary p-button-outlined p-button-rounded">
-                </button>
-                <h1 class="text-xl font-bold m-0">Detalles del Caso de Prueba</h1>
-            </div>
-        </ng-template>
-        <div *ngIf="caso() as c; else loading">
-            
-            <div class="flex flex-col gap-5">
-                
-                <div>
-                    <span class="font-semibold block text-surface-600 dark:text-surface-300 text-2xl">Nombre del Caso</span>
-                    <p class="mt-1 m-0 text-surface-900 dark:text-surface-0">{{ c.nombre_caso }}
-                            <p-tag [value]="findEstadoModificacionNombre(c.id_estado_modificacion)" 
+                    </button>
+                    <h1 class="text-xl font-bold m-0">Detalles del Caso de Prueba</h1>
+                </div>
+            </ng-template>
+            <div *ngIf="caso() as c; else loading">
+
+                <div *ngIf="cicloActual() as ciclo"
+                    class="mb-5 p-3 surface-ground border-round-md border-l-4 border-primary flex align-items-center justify-content-between shadow-1">
+
+                    <div class="flex align-items-center gap-3">
+                        <div
+                            class="flex align-items-center justify-content-center bg-primary-50 border-circle w-3rem h-3rem">
+                            <i class="pi pi-compass text-primary text-xl"></i>
+                        </div>
+
+                        <div class="flex flex-col">
+                            <span class="text-xs font-medium text-muted-color uppercase mb-1">Ejecución asociada a
+                                Jira:</span>
+                            <div class="flex align-items-center gap-2">
+                                <span class="font-bold text-xl text-color">{{ ciclo.jiraKey }}</span>
+                                <span class="text-surface-500 hidden sm:inline">|</span>
+                                <span class="text-color-secondary text-sm sm:text-base">{{ ciclo.nombre }}</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- <p-tag value="En Ciclo" severity="info" [rounded]="true" styleClass="hidden sm:flex"></p-tag> -->
+                </div>
+
+                <div class="flex flex-col gap-5">
+
+                    <div>
+                        <span class="font-semibold block text-surface-600 dark:text-surface-300 text-2xl">Nombre del
+                            Caso</span>
+                        <p class="mt-1 m-0 text-surface-900 dark:text-surface-0">{{ c.nombre_caso }}
+                            <p-tag [value]="findEstadoModificacionNombre(c.id_estado_modificacion)"
                                 [severity]="getSeverityForModificacion(findEstadoModificacionNombre(c.id_estado_modificacion))"
                                 class="mt-1"></p-tag>
-                    </p>
-                </div>
-                
-                <div>
-                    <span class="font-semibold block text-surface-600 dark:text-surface-300 text-2xl">Descripción</span>
-                    <p class="mt-1 m-0 text-surface-900 dark:text-surface-0">{{ c.descripcion_caso }}</p>
-                </div>
-
-                <div *ngIf="c.fuentes && c.fuentes.length > 0">
-                    <span class="font-semibold block text-surface-600 dark:text-surface-300 text-2xl">Fuentes</span>
-                    <div class="flex flex-wrap gap-1 mt-2">
-                        <p-tag *ngFor="let fuente of c.fuentes | sortFuentes" [value]="fuente.nombre_fuente"></p-tag>
+                        </p>
                     </div>
-                </div>
 
-                <div>
-                    <span class="font-semibold block text-surface-600 dark:text-surface-300 text-2xl">Resultado Esperado</span>
-                    <p class="mt-1 m-0 text-surface-900 dark:text-surface-0 white-space-pre-wrap">{{ c.resultado_esperado }}</p>
-                </div>
+                    <div>
+                        <span
+                            class="font-semibold block text-surface-600 dark:text-surface-300 text-2xl">Descripción</span>
+                        <p class="mt-1 m-0 text-surface-900 dark:text-surface-0">{{ c.descripcion_caso }}</p>
+                    </div>
 
+                    <div *ngIf="c.fuentes && c.fuentes.length > 0">
+                        <span class="font-semibold block text-surface-600 dark:text-surface-300 text-2xl">Fuentes</span>
+                        <div class="flex flex-wrap gap-1 mt-2">
+                            <p-tag *ngFor="let fuente of c.fuentes | sortFuentes"
+                                [value]="fuente.nombre_fuente"></p-tag>
+                        </div>
+                    </div>
+
+                    <div>
+                        <span class="font-semibold block text-surface-600 dark:text-surface-300 text-2xl">Resultado
+                            Esperado</span>
+                        <p class="mt-1 m-0 text-surface-900 dark:text-surface-0 white-space-pre-wrap">{{
+                            c.resultado_esperado }}</p>
+                    </div>
+
+                </div>
             </div>
-        </div>
-        <ng-template #loading>
-            <p>Cargando datos del caso...</p>
-        </ng-template>
-    </p-card>
-</div>
+            <ng-template #loading>
+                <p>Cargando datos del caso...</p>
+            </ng-template>
+        </p-card>
+    </div>
 
- <div class="col-12 md:col-1 flex items-center justify-center">
+    <div class="col-12 md:col-1 flex items-center justify-center">
         <p-divider layout="vertical" class="!hidden md:!flex"></p-divider>
         <p-divider layout="horizontal" class="!flex md:!hidden" align="center"></p-divider>
     </div>
 
     <div class="col-12 md:col-4">
-    <p-card>
-        <ng-template pTemplate="header">
-            <div class="p-4">
-                <h2 class="text-2xl font-semibold m-0">Registrar Evidencia</h2>
-            </div>
-        </ng-template>
-        <div class="flex flex-col gap-4">
-            <div>
-                <label class="block font-bold mb-2 text-xl">Resultado de la Prueba <span class="text-red-500">*</span></label>
-                <div class="flex gap-2">
-                    <button *ngFor="let estado of listaEstadosEvidencia()"
-                            pButton 
-                            type="button" 
+        <p-card>
+            <ng-template pTemplate="header">
+                <div class="p-4">
+                    <h2 class="text-2xl font-semibold m-0">Registrar Evidencia</h2>
+                </div>
+            </ng-template>
+            <div class="flex flex-col gap-4">
+                <div>
+                    <label class="block font-bold mb-2 text-xl">Resultado de la Prueba <span
+                            class="text-red-500">*</span></label>
+                    <div class="flex gap-2">
+                        <button *ngFor="let estado of listaEstadosEvidencia()" pButton type="button"
                             [label]="estado.nombre"
-                            (click)="nuevaEvidencia.id_estado_evidencia = estado.id_estado_evidencia"
-                            [ngClass]="{
+                            (click)="nuevaEvidencia.id_estado_evidencia = estado.id_estado_evidencia" [ngClass]="{
                                         'p-button-outlined': nuevaEvidencia.id_estado_evidencia !== estado.id_estado_evidencia, 
                                         'btn-na-selected': nuevaEvidencia.id_estado_evidencia === estado.id_estado_evidencia && estado.nombre === 'N/A'
                                     }"
                             [icon]="estado.nombre === 'OK' ? 'pi pi-check-circle' : (estado.nombre === 'NK' ? 'pi pi-times-circle' : 'pi pi-stop-circle')"
                             [severity]="estado.nombre === 'OK' ? 'success' : (estado.nombre === 'NK' ? 'danger' : 'secondary')">
-                    </button>   
+                        </button>
+                    </div>
                 </div>
-            </div>
 
-            <div *ngIf="nuevaEvidencia.id_estado_evidencia === idEstadoNK()">
-                <label for="criticidad" class="block font-bold mb-2 text-xl">Criticidad del Fallo</label>
-                <div class="flex flex-wrap gap-2">
-                    <button *ngFor="let c of listaCriticidades()"
-                            pButton 
-                            type="button" 
-                            [label]="c.nombre_criticidad"
-                            (click)="nuevaEvidencia.id_criticidad = c.id_criticidad"
+                <div *ngIf="nuevaEvidencia.id_estado_evidencia === idEstadoNK()">
+                    <label for="criticidad" class="block font-bold mb-2 text-xl">Criticidad del Fallo</label>
+                    <div class="flex flex-wrap gap-2">
+                        <button *ngFor="let c of listaCriticidades()" pButton type="button"
+                            [label]="c.nombre_criticidad" (click)="nuevaEvidencia.id_criticidad = c.id_criticidad"
                             [ngClass]="{'p-button-outlined': nuevaEvidencia.id_criticidad !== c.id_criticidad}"
                             [severity]="getSeverityForCriticidad(c.nombre_criticidad)">
-                    </button>
+                        </button>
+                    </div>
                 </div>
-            </div>
 
-            <div>
-                <label for="descripcion" class="block font-bold mb-2 text-xl">Descripción de Evidencia
-                    <span *ngIf="estadoSeleccionado()?.nombre === 'NK' || estadoSeleccionado()?.nombre === 'N/A'" class="text-red-500">*</span>
-                </label>
-                <textarea id="descripcion" pTextarea [(ngModel)]="nuevaEvidencia.descripcion_evidencia" 
-                    rows="5" placeholder="Describe lo que sucedió..." class="w-full"
-                    [required]="estadoSeleccionado()?.nombre === 'NK' || estadoSeleccionado()?.nombre === 'N/A'"
-                    #descripcion="ngModel">
+                <div>
+                    <label for="descripcion" class="block font-bold mb-2 text-xl">Descripción de Evidencia
+                        <span *ngIf="estadoSeleccionado()?.nombre === 'NK' || estadoSeleccionado()?.nombre === 'N/A'"
+                            class="text-red-500">*</span>
+                    </label>
+                    <textarea id="descripcion" pTextarea [(ngModel)]="nuevaEvidencia.descripcion_evidencia" rows="5"
+                        placeholder="Describe lo que sucedió..." class="w-full"
+                        [required]="estadoSeleccionado()?.nombre === 'NK' || estadoSeleccionado()?.nombre === 'N/A'"
+                        #descripcion="ngModel">
                 </textarea>
-                <small class="p-error text-red-500" 
-                    *ngIf="descripcion.invalid && descripcion.touched && (estadoSeleccionado()?.nombre === 'NK' || estadoSeleccionado()?.nombre === 'N/A')">
-                    La descripción es requerida para los estados NK y N/A.
-                </small>
-            </div>
-
-            <div>
-                <div class="flex items-baseline justify-between">
-                    <label for="version_ejecucion" class="block font-bold mb-2 text-xl">Versión Ejecución <span class="text-red-500">*</span></label>
-                    <span class="text-sm font-normal text-surface-500 dark:text-surface-400">
-                        Última ejecutada: <strong>{{ ultimaVersionEjecutada() }}</strong>
-                    </span>
+                    <small class="p-error text-red-500"
+                        *ngIf="descripcion.invalid && descripcion.touched && (estadoSeleccionado()?.nombre === 'NK' || estadoSeleccionado()?.nombre === 'N/A')">
+                        La descripción es requerida para los estados NK y N/A.
+                    </small>
                 </div>
-                <input type="text" pInputText id="version_ejecucion" 
-                        [(ngModel)]="nuevaEvidencia.version_ejecucion" 
-                        placeholder="Ingresar versión..." class="w-full"
-                        required
-                        appVersionFormat
-                        #versionEjecucion="ngModel" 
-                        (input)="onVersionInput($event)"/>
+
+                <div>
+                    <div class="flex items-baseline justify-between">
+                        <label for="version_ejecucion" class="block font-bold mb-2 text-xl">Versión Ejecución <span
+                                class="text-red-500">*</span></label>
+                        <span class="text-sm font-normal text-surface-500 dark:text-surface-400">
+                            Última ejecutada: <strong>{{ ultimaVersionEjecutada() }}</strong>
+                        </span>
+                    </div>
+                    <input type="text" pInputText id="version_ejecucion" [(ngModel)]="nuevaEvidencia.version_ejecucion"
+                        placeholder="Ingresar versión..." class="w-full" required appVersionFormat
+                        #versionEjecucion="ngModel" (input)="onVersionInput($event)" />
 
                     <small class="p-error text-red-500" *ngIf="versionEjecucion.invalid && versionEjecucion.touched">
                         Campo requerido. El formato debe ser número.número (ej: 1.15).
                     </small>
-            </div>
+                </div>
 
-            <div>
-                <label for="rut" class="block font-bold mb-2 text-xl">RUT</label>
-                <input type="text" pInputText id="rut" 
-                       [(ngModel)]="nuevaEvidencia.rut" 
-                       placeholder="Ej: 12345678-9" 
-                       class="w-full"
-                       appRutValidator     
-                       #rutInput="ngModel"
-                       (input)="onRutInput($event)"/>
-                
-                <small class="p-error text-red-500" 
-                       *ngIf="rutInput.invalid && rutInput.touched">
-                    El RUT ingresado no es válido.
-                </small>
-            </div>
+                <div>
+                    <label for="rut" class="block font-bold mb-2 text-xl">RUT</label>
+                    <input type="text" pInputText id="rut" [(ngModel)]="nuevaEvidencia.rut" placeholder="Ej: 12345678-9"
+                        class="w-full" appRutValidator #rutInput="ngModel" (input)="onRutInput($event)" />
 
-            <div>
-                <label class="block font-bold mb-2 text-xl">Adjuntar Archivos</label>
-                <p-fileUpload name="evidenciaFiles[]" 
-                            (onSelect)="onSelectFiles($event)"
-                            (onRemove)="onRemoveFile($event)"
-                            (onClear)="onClearFiles()"
-                            [multiple]="true" 
-                            accept="image/*,video/*,.pdf,.doc,.docx,.xls,.xlsx,.csv,.txt,.log,.zip" 
-                            maxFileSize="10000000"
-                            chooseLabel="Elegir Archivos"
-                            [showUploadButton]="false" 
-                            [showCancelButton]="false">
-                    <ng-template pTemplate="content">
-                        <ul *ngIf="archivosParaSubir().length" class="list-none p-0 m-0">
-                            <li *ngFor="let file of archivosParaSubir()" class="flex items-center flex-wrap p-2 my-1 bg-surface-100 dark:bg-surface-800 rounded-border">
-                                <div class="flex items-center gap-2 flex-1">
-                                    <i class="pi pi-file"></i>
-                                    <span class="font-semibold">{{ file.name }}</span>
-                                    <span>({{ (file.size / 1024) | number:'1.0-0' }} KB)</span>
-                                </div>
-                            </li>
-                        </ul>
-                    </ng-template>
-                </p-fileUpload>
-            </div>
-            
-            <div *ngIf="nuevaEvidencia.id_estado_evidencia === idEstadoNK()">
-                <label for="jira" class="block font-bold mb-2 text-xl">Jira</label>
-                <input type="text" pInputText id="jira" [(ngModel)]="jiraInput" 
-                       maxlength="20" placeholder="Ej: CERTRTA25-1381" class="w-full"/>
-            </div>
+                    <small class="p-error text-red-500" *ngIf="rutInput.invalid && rutInput.touched">
+                        El RUT ingresado no es válido.
+                    </small>
+                </div>
 
-            <div class="flex justify-end mt-4 gap-2">
-                <button pButton type="button" label="Volver al Historial" icon="pi pi-book" 
-                        class="p-button-secondary" 
-                        [routerLink]="['/pages/casos', caso()?.id_caso]"></button>
-                <button pButton type="button" label="Volver a la Lista" icon="pi pi-list" 
-                        class="p-button-secondary" 
+                <div>
+                    <label class="block font-bold mb-2 text-xl">Adjuntar Archivos</label>
+                    <p-fileUpload name="evidenciaFiles[]" (onSelect)="onSelectFiles($event)"
+                        (onRemove)="onRemoveFile($event)" (onClear)="onClearFiles()" [multiple]="true"
+                        accept="image/*,video/*,.pdf,.doc,.docx,.xls,.xlsx,.csv,.txt,.log,.zip" maxFileSize="10000000"
+                        chooseLabel="Elegir Archivos" [showUploadButton]="false" [showCancelButton]="false">
+                        <ng-template pTemplate="content">
+                            <ul *ngIf="archivosParaSubir().length" class="list-none p-0 m-0">
+                                <li *ngFor="let file of archivosParaSubir()"
+                                    class="flex items-center flex-wrap p-2 my-1 bg-surface-100 dark:bg-surface-800 rounded-border">
+                                    <div class="flex items-center gap-2 flex-1">
+                                        <i class="pi pi-file"></i>
+                                        <span class="font-semibold">{{ file.name }}</span>
+                                        <span>({{ (file.size / 1024) | number:'1.0-0' }} KB)</span>
+                                    </div>
+                                </li>
+                            </ul>
+                        </ng-template>
+                    </p-fileUpload>
+                </div>
+
+                <div *ngIf="nuevaEvidencia.id_estado_evidencia === idEstadoNK()">
+                    <label for="jira" class="block font-bold mb-2 text-xl">Jira</label>
+                    <input type="text" pInputText id="jira" [(ngModel)]="jiraInput" maxlength="20"
+                        placeholder="Ej: CERTRTA25-1381" class="w-full" />
+                </div>
+
+                <div class="flex justify-end mt-4 gap-2">
+                    <button pButton type="button" label="Volver al Historial" icon="pi pi-book"
+                        class="p-button-secondary" [routerLink]="['/pages/casos', caso()?.id_caso]"></button>
+                    <button pButton type="button" label="Volver a la Lista" icon="pi pi-list" class="p-button-secondary"
                         routerLink="/pages/gestion/casos"></button>
-                <button pButton type="button" label="Guardar Evidencia" icon="pi pi-save" 
-                        (click)="guardarEvidencia()"
-                        [loading]="guardandoEvidencia()"
+                    <button pButton type="button" label="Guardar Evidencia" icon="pi pi-save"
+                        (click)="guardarEvidencia()" [loading]="guardandoEvidencia()"
                         [disabled]="guardandoEvidencia()"></button>
+                </div>
             </div>
-        </div>
-    </p-card>
-</div>
+        </p-card>
+    </div>
 </div>

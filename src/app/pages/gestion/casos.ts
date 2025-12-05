@@ -1,8 +1,9 @@
 import { Component, OnInit, inject, signal, effect, ViewChild, ElementRef, computed } from '@angular/core';
 import { CommonModule, DatePipe } from '@angular/common';
+import { RouterModule, Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
-import { RouterModule } from '@angular/router';
 import { ConfirmationService, MessageService, MenuItem } from 'primeng/api';
+import { DividerModule } from 'primeng/divider';
 import { Table, TableModule } from 'primeng/table';
 import { ButtonModule } from 'primeng/button';
 import { TagModule } from 'primeng/tag';
@@ -47,6 +48,8 @@ import { FileUpload } from "primeng/fileupload";
 import * as similarity from 'string-similarity';
 import { Usuario } from '../../models/usuario';
 import { UsuarioService } from '../../services/usuario.service';
+import { CicloService } from '../../services/ciclo.service';
+import { Ciclo } from '../../models/ciclo';
 
 
 // Define la estructura de un cambio detectado para la previsualización.
@@ -67,7 +70,7 @@ interface Hito {
     imports: [
         IconFieldModule, FileUpload, SortFuentesPipe, AutoCompleteModule, SplitButtonModule, FieldsetModule, InputIconModule, TooltipModule, CommonModule, FormsModule, TableModule, ButtonModule, ToolbarModule, DialogModule,
         RouterModule, TruncatePipe, ChipsModule, TagModule, InputTextModule, TextareaModule, SelectModule, InputSwitchModule, ConfirmDialogModule, ToastModule, InputNumberModule, VersionFormatDirective,
-        FileUpload, SelectButtonModule
+        FileUpload, SelectButtonModule, DividerModule
     ],
     providers: [MessageService, ConfirmationService, DatePipe],
     templateUrl: './casos.html'
@@ -76,6 +79,7 @@ export class CasosPage implements OnInit {
     // Señal (Signal) que almacena la lista de casos a mostrar en la tabla.
     //casos = signal<CasoConEvidencia[]>([]);
     //Modificacion preliminar
+    private confirmationService = inject(ConfirmationService);
     casos = computed(() => {
         const todos = this.todosLosCasosMaestros();
         const filtroActivo = this.filtroMisCasosActivo();
@@ -106,6 +110,8 @@ export class CasosPage implements OnInit {
 
     // Señal que almacena la lista completa de componentes para los desplegables.
     componentes = signal<Componente[]>([]);
+
+
 
     // Señal guarda TODOS los casos del componente, sin filtrar.
     private todosLosCasosMaestros = signal<CasoConEvidencia[]>([]);
@@ -161,6 +167,8 @@ export class CasosPage implements OnInit {
 
     private catalogoService = inject(CatalogoService);
     private estadosEvidencia = this.catalogoService.estadosEvidencia;
+
+    private cicloService = inject(CicloService);
 
     private fuenteService = inject(FuenteService);
     todasLasFuentes = signal<Fuente[]>([]);
@@ -247,6 +255,12 @@ export class CasosPage implements OnInit {
     ];
     filtroAsignacion = signal<'todos' | 'misCasos'>('todos');
 
+
+    // Variables para el selector de contexto
+    mostrarSelectorContexto = signal<boolean>(false);
+    ciclosDisponibles = signal<Ciclo[]>([]);
+    casoParaEjecutar: any | null = null;
+    private router = inject(Router);
 
     constructor() {
         // Se crea un 'effect' que reacciona a los cambios en la señal 'hitoSeleccionado'.
@@ -1712,6 +1726,70 @@ export class CasosPage implements OnInit {
                 // Si no hay filtro global guardado, nos aseguramos de que el input esté vacío
                 this.filterInput.nativeElement.value = '';
             }
+        }
+    }
+
+    /**
+     * Intercepta la acción de ejecutar para verificar si el caso pertenece a un ciclo.
+     */
+    /**
+     * Intercepta la acción de ejecutar para verificar si el caso pertenece a un ciclo.
+     */
+    verificarContextoEjecucion(caso: any) {
+        this.casoParaEjecutar = caso;
+
+        // Consultamos al backend si este caso tiene "dueños" activos
+        this.cicloService.getCiclosActivosPorCaso(caso.id_caso).subscribe({
+            next: (ciclos) => {
+                this.ciclosDisponibles.set(ciclos);
+
+                if (ciclos.length > 0) {
+                    // ESCENARIO A: Hay ciclos -> Mostramos el selector
+                    this.mostrarSelectorContexto.set(true);
+                } else {
+                    // ESCENARIO B: No hay ciclos -> ADVERTENCIA DE SEGURIDAD
+                    // (Antes tenías navegación directa aquí, por eso no veías el diálogo)
+                    this.confirmationService.confirm({
+                        key: 'confirmacionCasos',
+                        message: 'Esta ejecución no estará asignada a ningún Jira de Liberación (Ciclo). ¿Desea continuar con una ejecución libre?',
+                        header: 'Advertencia de Ejecución',
+                        icon: 'pi pi-exclamation-triangle',
+                        acceptLabel: 'Sí, continuar',
+                        rejectLabel: 'Cancelar',
+                        accept: () => {
+                            this.navegarAEjecucion(null);
+                        },
+                        reject: () => {
+                            this.casoParaEjecutar = null;
+                        }
+                    });
+                }
+            },
+            error: (err) => {
+                console.error('Error verificando contextos', err);
+                // En caso de error, dejamos pasar (o podrías mostrar un error)
+                this.navegarAEjecucion(null);
+            }
+        });
+    }
+
+    /**
+     * Realiza la navegación final a la pantalla de ejecución.
+     * @param idCiclo El ID del ciclo seleccionado (o null para ejecución libre).
+     */
+    navegarAEjecucion(idCiclo: number | null) {
+        this.mostrarSelectorContexto.set(false); // Cerramos el diálogo si estaba abierto
+
+        if (this.casoParaEjecutar) {
+            const idCaso = this.casoParaEjecutar.id_caso;
+
+            // Construimos los Query Params solo si hay ciclo
+            const queryParams = idCiclo ? { idCiclo: idCiclo } : {};
+
+            this.router.navigate(['/pages/ejecucion', idCaso], { queryParams });
+
+            // Limpiamos la referencia
+            this.casoParaEjecutar = null;
         }
     }
 }

@@ -19,4 +19,11 @@ export interface Evidencia {
   archivos?: ArchivoEvidencia[];
   rut?: string;
   activo?: number;
+  id_ciclo?: number;
+}
+
+export interface CicloResumen {
+  idCiclo: number;
+  jiraKey: string;
+  nombre: string;
 }

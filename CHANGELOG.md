@@ -3,6 +3,14 @@ Todos los cambios significativos en este proyecto se documentarán en este archi
 El formato se basa en [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 y este proyecto adhiere al [Versionado Semántico](https://semver.org/lang/es/).
 
+## [2.0.0] - 2025-12-04
+
+### Added
+-   Se agrega el menu y la funcionalidad de gestión de Jiras de liberacion (ciclos de pruebas).
+### Removed
+-   Se remueve la funcionalidad de asignacion de casos a usuarios (muro de tareas)
+-   Se remueve la limitacion de que un caso solo pueda ejecutarse cuando este asignado a un usuario
+
 ## [1.2.5] - 2025-12-02
 
 ### Changed

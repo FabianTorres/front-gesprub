@@ -33,6 +33,10 @@ export class AppMenu implements OnInit {
 
     private authService = inject(AutenticacionService);
 
+    // --- CONFIG para la "feature Nuevo" ---
+    private readonly FEATURE_KEY = 'gesprub:feature:ciclosNuevo:firstSeen';
+    private readonly FEATURE_DAYS = 5; // desaparecer después de X días
+
     constructor() {
         // Se crea un 'effect' para reaccionar a los cambios del servicio.
         effect(() => {
@@ -54,6 +58,7 @@ export class AppMenu implements OnInit {
 
     // ===== 4. CREAMOS UNA FUNCIÓN PARA CONSTRUIR EL MENÚ DINÁMICAMENTE =====
     buildMenu(rol?: string) {
+        const showNuevoBadge = this.isNewFeatureActive();
         const menuItems: MenuItem[] = [
             {
                 label: 'Inicio',
@@ -88,13 +93,21 @@ export class AppMenu implements OnInit {
                 items: [
                     { label: 'Componentes', icon: 'pi pi-fw pi-server', routerLink: ['/pages/gestion/componentes'] },
                     { label: 'Casos de Prueba', icon: 'pi pi-fw pi-file-edit', routerLink: ['/pages/gestion/casos'] },
-                    { label: 'Ciclos de Prueba', icon: 'pi pi-fw pi-sync', disabled: true } // Deshabilitado en lugar de comentado
+                    {
+                        label: 'Ciclos de Prueba',
+                        icon: 'pi pi-fw pi-sync',
+                        routerLink: ['/pages/gestion/ciclos'],
+                        // Badge nativo de PrimeNG
+                        badge: showNuevoBadge ? 'Nuevo' : undefined,
+                        // Clase para estilizar badge (puedes cambiar a warning/danger/etc)
+                        badgeStyleClass: showNuevoBadge ? 'p-badge-warning' : undefined
+                    }
                 ]
             },
             {
                 label: 'Gestión de asignaciones',
                 items: [
-                    { label: 'Muro tareas', icon: 'pi pi-fw pi-user', routerLink: ['/pages/gestion/muro-tareas'] },
+                    // { label: 'Muro tareas', icon: 'pi pi-fw pi-user', routerLink: ['/pages/gestion/muro-tareas'] },
                     { label: 'Tablero Kanban', icon: 'pi pi-fw pi-table', routerLink: ['/pages/gestion/tablero-kanban'] }
                 ]
             },
@@ -147,5 +160,27 @@ export class AppMenu implements OnInit {
     // Se añade el tipo 'Proyecto' para corregir el error.
     onProjectChange(proyecto: Proyecto | null) {
         this.proyectoService.seleccionarProyecto(proyecto);
+    }
+
+    // Devuelve true si la etiqueta "Nuevo" debe mostrarse (basado en localStorage y FEATURE_DAYS)
+    private isNewFeatureActive(): boolean {
+        try {
+            const firstSeen = localStorage.getItem(this.FEATURE_KEY);
+            if (!firstSeen) {
+                // No existe registro: creamos uno ahora (primera vez que el usuario ve el menú)
+                const now = new Date().toISOString();
+                localStorage.setItem(this.FEATURE_KEY, now);
+                return true; // la mostramos la primera vez
+            }
+
+            const firstDate = new Date(firstSeen);
+            const now = new Date();
+            const diffMs = now.getTime() - firstDate.getTime();
+            const diffDays = diffMs / (1000 * 60 * 60 * 24);
+            return diffDays < this.FEATURE_DAYS;
+        } catch (e) {
+            // Si por alguna razón localStorage falla, mostramos la etiqueta por defecto
+            return true;
+        }
     }
 }

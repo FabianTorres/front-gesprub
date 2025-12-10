@@ -13,6 +13,7 @@ export interface Ciclo {
     casosCertificados: number;
     casosError: number;
     casosSinEjecutar: number;
+    idProyecto: number;
 }
 
 export interface CicloRequest {
@@ -21,4 +22,5 @@ export interface CicloRequest {
     descripcion?: string;
     fechaLiberacion?: string | Date; // Puede ser Date en el formulario, string para el backend
     idUsuarioCreador: number;
+    idProyecto: number;
 }

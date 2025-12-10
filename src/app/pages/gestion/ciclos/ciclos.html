@@ -60,6 +60,11 @@
                         <button pButton pRipple icon="pi pi-check-square" class="p-button-rounded mr-2"
                             pTooltip="Cerrar Ciclo" tooltipPosition="top" (click)="confirmarCierre(ciclo)">
                         </button>
+
+                        <button pButton pRipple icon="pi pi-file-excel" class="p-button-rounded p-button-outlined mr-2"
+                            (click)="exportarReporteCiclo(ciclo)" pTooltip="Descargar Reporte Excel"
+                            tooltipPosition="top">
+                        </button>
                     </div>
                 </td>
             </tr>

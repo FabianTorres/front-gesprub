@@ -15,8 +15,12 @@ export class CicloService {
     }
 
     // 2. Listar Ciclos Activos (Dashboard)
-    getCiclos(estado: 'activos' | 'cerrados' | 'todos' = 'activos'): Observable<Ciclo[]> {
-        const params = new HttpParams().set('estado', estado);
+    getCiclos(idProyecto: number, estado: 'activos' | 'cerrados' | 'todos' = 'activos'): Observable<Ciclo[]> {
+        // Enviamos ambos parámetros
+        const params = new HttpParams()
+            .set('idProyecto', idProyecto.toString())
+            .set('estado', estado);
+
         return this.http.get<Ciclo[]>(this.apiUrl, { params });
     }
 
@@ -48,5 +52,9 @@ export class CicloService {
     // 8. Obtener un ciclo por su ID (Para mostrar el nombre en la ejecución)
     getCicloById(id: number): Observable<Ciclo> {
         return this.http.get<Ciclo>(`${this.apiUrl}/${id}`);
+    }
+
+    getReporteDetallado(idCiclo: number): Observable<any[]> {
+        return this.http.get<any[]>(`${this.apiUrl}/${idCiclo}/reporte`);
     }
 }

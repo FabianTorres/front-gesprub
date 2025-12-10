@@ -1,7 +1,8 @@
-import { Component, OnInit, inject, signal, computed } from '@angular/core';
+import { Component, OnInit, inject, signal, computed, effect } from '@angular/core';
 import { CommonModule, DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ConfirmationService, MessageService } from 'primeng/api';
+import XLSXStyle from 'xlsx-js-style';
 import { RouterModule } from '@angular/router';
 import { TableModule } from 'primeng/table';
 import { ButtonModule } from 'primeng/button';
@@ -66,6 +67,8 @@ export class CiclosPage implements OnInit {
     alcanceDialog: boolean = false;
     cicloSeleccionado: Ciclo | null = null;
 
+    proyectoActualId = signal<number | null>(null);
+
     // Referencia a la tabla del diálogo (le pondremos el ID #dtAlcance en el HTML)
     @ViewChild('dtAlcance') dtAlcance!: Table;
 
@@ -99,6 +102,7 @@ export class CiclosPage implements OnInit {
 
     //Un Set para guardar IDs únicos sin duplicados
     idsSeleccionadosGlobal = new Set<number>();
+    private proyectoService = inject(ProyectoService);
 
     // Inyecciones
     private cicloService = inject(CicloService);
@@ -108,10 +112,23 @@ export class CiclosPage implements OnInit {
     private datePipe = inject(DatePipe);
     private componenteService = inject(ComponenteService);
     private casoService = inject(CasoService);
-    private proyectoService = inject(ProyectoService);
+
+    constructor() {
+        // EFECTO REACTIVO: Si cambia el proyecto global, recargamos la tabla
+        effect(() => {
+            const proyecto = this.proyectoService.proyectoSeleccionado();
+            if (proyecto) {
+                this.proyectoActualId.set(proyecto.id_proyecto);
+                this.cargarCiclos(); // Recarga automática
+            } else {
+                this.proyectoActualId.set(null);
+                this.ciclos.set([]); // Limpia la tabla si no hay proyecto
+            }
+        });
+    }
 
     ngOnInit() {
-        this.cargarCiclos();
+        //this.cargarCiclos();
         this.cargarEstadosModificacion();
         // Inicializar opciones de filtro (Misma lógica que en CasosPage)
         this.opcionesFiltroModificacion = [
@@ -144,9 +161,12 @@ export class CiclosPage implements OnInit {
     }
 
     cargarCiclos() {
+
+        const idProyecto = this.proyectoActualId();
+        if (!idProyecto) return; // Protección
         this.loading.set(true);
         // Pasamos el valor actual de la señal de filtro
-        this.cicloService.getCiclos(this.filtroEstado()).subscribe({
+        this.cicloService.getCiclos(+idProyecto, this.filtroEstado()).subscribe({
             next: (data) => {
                 this.ciclos.set(data);
                 this.loading.set(false);
@@ -189,6 +209,12 @@ export class CiclosPage implements OnInit {
 
     guardarCiclo() {
         const usuario = this.authService.usuarioActual();
+        const idProyecto = this.proyectoActualId();
+
+        if (!idProyecto) {
+            this.messageService.add({ severity: 'error', summary: 'Error', detail: 'No hay un proyecto seleccionado.' });
+            return;
+        }
 
         if (!this.nuevoCiclo.jiraKey || !this.nuevoCiclo.nombre || !usuario) {
             this.messageService.add({ severity: 'warn', summary: 'Faltan datos', detail: 'Debe ingresar la Clave Jira y el Nombre.' });
@@ -201,6 +227,7 @@ export class CiclosPage implements OnInit {
             nombre: this.nuevoCiclo.nombre,
             descripcion: this.nuevoCiclo.descripcion || '',
             idUsuarioCreador: usuario.idUsuario,
+            idProyecto: idProyecto,
             // Convertir fecha a string YYYY-MM-DD si viene de un DatePicker
             fechaLiberacion: this.nuevoCiclo.fechaLiberacion ?
                 this.datePipe.transform(this.nuevoCiclo.fechaLiberacion, 'yyyy-MM-dd')! : undefined
@@ -400,5 +427,89 @@ export class CiclosPage implements OnInit {
     // Método para filtrar globalmente
     onGlobalFilter(table: Table, event: Event) {
         table.filterGlobal((event.target as HTMLInputElement).value, 'contains');
+    }
+
+    exportarReporteCiclo(ciclo: Ciclo) {
+        if (!ciclo.idCiclo) return;
+
+        this.messageService.add({ severity: 'info', summary: 'Exportando', detail: 'Generando reporte...' });
+
+        // 1. Llamamos al endpoint del reporte (Asumiendo que el servicio ya lo tiene)
+        this.cicloService.getReporteDetallado(ciclo.idCiclo).subscribe({
+            next: (datos) => {
+                this.generarExcelReporte(datos, ciclo);
+                this.messageService.add({ severity: 'success', summary: 'Éxito', detail: 'Reporte descargado.' });
+            },
+            error: (err) => {
+                console.error(err);
+                this.messageService.add({ severity: 'error', summary: 'Error', detail: 'No se pudo generar el reporte.' });
+            }
+        });
+    }
+
+    private generarExcelReporte(datos: any[], ciclo: Ciclo) {
+        // --- ESTILOS ---
+        const styleHeader = {
+            fill: { fgColor: { rgb: "4F46E5" } }, // Azul Indigo (Tu primary color aprox)
+            font: { color: { rgb: "FFFFFF" }, bold: true, sz: 12 },
+            alignment: { horizontal: "center", vertical: "center" },
+            border: { bottom: { style: "thin" } }
+        };
+
+        const styleCell = {
+            alignment: { wrapText: true, vertical: "center" },
+            border: { top: { style: "thin" }, bottom: { style: "thin" }, left: { style: "thin" }, right: { style: "thin" } }
+        };
+
+        const styleOK = { ...styleCell, fill: { fgColor: { rgb: "DCFCE7" } }, font: { color: { rgb: "166534" }, bold: true } }; // Verde suave
+        const styleNK = { ...styleCell, fill: { fgColor: { rgb: "FEE2E2" } }, font: { color: { rgb: "991B1B" }, bold: true } }; // Rojo suave
+        const stylePendiente = { ...styleCell, font: { color: { rgb: "6B7280" }, italic: true } }; // Gris
+
+        // --- COLUMNAS ---
+        const headers = [
+            "ID Caso", "Componente", "Nombre del Caso", "Actualización", "Versión",
+            "Estado Ejecución", "Fecha", "Certificador", "Jira", "Observación"
+        ];
+
+        // Fila 1: Títulos
+        const wsData: any[][] = [
+            headers.map(h => ({ v: h, s: styleHeader }))
+        ];
+
+        // Filas de Datos
+        datos.forEach(item => {
+            let estiloEstado = styleCell;
+            let estadoTexto = item.estadoEjecucion || "Sin Ejecutar";
+
+            // Asignar colores según estado
+            if (estadoTexto === 'OK') estiloEstado = styleOK;
+            else if (estadoTexto === 'NK') estiloEstado = styleNK;
+            else estiloEstado = stylePendiente;
+
+            const row = [
+                { v: item.idCaso, s: styleCell },
+                { v: item.nombreComponente, s: styleCell },
+                { v: item.nombreCaso, s: styleCell },
+                { v: item.actualizacion || '-', s: { ...styleCell, alignment: { horizontal: "center" } } },
+                { v: item.versionCaso, s: { ...styleCell, alignment: { horizontal: "center" } } },
+                { v: estadoTexto, s: estiloEstado }, // Celda Coloreada
+                { v: item.fechaEjecucion ? this.datePipe.transform(item.fechaEjecucion, 'dd/MM/yyyy HH:mm') : '-', s: styleCell },
+                { v: item.tester || '-', s: styleCell },
+                { v: item.jiraDefecto ? `CERTRTA26-${item.jiraDefecto}` : '', s: styleCell }, // Formatear Jira
+                { v: item.observacion || '', s: styleCell }
+            ];
+            wsData.push(row);
+        });
+
+        // --- GENERACIÓN DEL ARCHIVO ---
+        const wb = XLSXStyle.utils.book_new();
+        const ws = XLSXStyle.utils.aoa_to_sheet(wsData);
+
+        // Anchos de columna
+        ws['!cols'] = [{ wch: 10 }, { wch: 30 }, { wch: 40 }, { wch: 15 }, { wch: 10 }, { wch: 15 }, { wch: 20 }, { wch: 20 }, { wch: 15 }, { wch: 40 }];
+
+        XLSXStyle.utils.book_append_sheet(wb, ws, "Reporte Ejecución");
+        const nombreArchivo = `Reporte_${ciclo.jiraKey}_${new Date().toISOString().slice(0, 10)}.xlsx`;
+        XLSXStyle.writeFile(wb, nombreArchivo);
     }
 }

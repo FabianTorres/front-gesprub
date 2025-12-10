@@ -68,7 +68,7 @@
 
             <ng-template pTemplate="header">
                 <tr>
-                    <th pSortableColumn="caso.id_estado_modificacion" style="width:10%">
+                    <th pSortableColumn="caso.id_estado_modificacion" style="width:5%">
                         <div class="flex justify-between items-center">
                             Tipo de actualización
                             <p-columnFilter field="caso.id_estado_modificacion" matchMode="equals" display="menu"
@@ -86,13 +86,13 @@
                             <p-columnFilter type="text" field="caso.nombre_caso" display="menu"></p-columnFilter>
                         </div>
                     </th>
-                    <th pSortableColumn="caso.descripcion_caso">
+                    <th pSortableColumn="caso.descripcion_caso" style="width:18%">
                         <div class="flex justify-between items-center">
                             Descripción
                             <p-columnFilter type="text" field="caso.descripcion_caso" display="menu"></p-columnFilter>
                         </div>
                     </th>
-                    <th pSortableColumn="caso.fuentes_nombres" style="width:15%">
+                    <th pSortableColumn="caso.fuentes_nombres" style="width:13%">
                         <div class="flex justify-between items-center">
                             Fuentes
                             <p-columnFilter type="text" field="caso.fuentes_nombres" display="menu"></p-columnFilter>
@@ -152,7 +152,30 @@
                         <p-tag [value]="findEstadoModificacionNombre(item.caso.id_estado_modificacion)"
                             [severity]="getSeverityForModificacion(findEstadoModificacionNombre(item.caso.id_estado_modificacion))"></p-tag>
                     </td>
-                    <td>{{item.caso.nombre_caso}}</td>
+                    <td>
+                        <div class="flex flex-col align-items-start">
+
+                            <div *ngIf="item.caso.ciclosActivos && item.caso.ciclosActivos.length > 0" class="mb-1">
+
+                                <span
+                                    class="inline-flex align-items-center px-1.5 py-0.5 rounded text-[10px] border
+                                    bg-primary-50 text-primary-700 border-primary-200
+                                    dark:bg-primary-500/20 dark:text-primary-300 dark:border-primary-500/30 cursor-help"
+                                    [pTooltip]="getTooltipCiclos(item.caso.ciclosActivos)" tooltipPosition="top">
+
+                                    <!-- <i class="pi pi-compass text-[5px] mr-1"></i> -->
+
+                                    <span *ngIf="item.caso.ciclosActivos.length === 1">
+                                        {{ item.caso.ciclosActivos[0].jiraKey }}
+                                    </span>
+                                    <span *ngIf="item.caso.ciclosActivos.length > 1">
+                                        {{ item.caso.ciclosActivos.length }} Ciclos Activos
+                                    </span>
+                                </span>
+                            </div>
+                            <span class="font-medium text-color">{{item.caso.nombre_caso}}</span>
+                        </div>
+                    </td>
                     <td [pTooltip]="item.caso.descripcion_caso" tooltipPosition="bottom"
                         tooltipStyleClass="custom-tooltip-wide">
                         {{item.caso.descripcion_caso | truncate:60}}
@@ -181,7 +204,15 @@
                     <td class="text-center">
                         <ng-container
                             *ngIf="findEstadoEvidenciaNombre(item.ultimoEstadoId) === 'NK' && item.ultimaEvidencia && item.ultimaEvidencia.id_jira">
-                            <p-tag severity="secondary" [value]="item.ultimaEvidencia.id_jira"></p-tag>
+
+                            <a [href]="getJiraUrl(item.ultimaEvidencia.id_jira)" target="_blank" class="no-underline"
+                                pTooltip="Ver incidencia en Jira" tooltipPosition="top">
+
+                                <p-tag severity="warning" [value]="item.ultimaEvidencia.id_jira"
+                                    styleClass="cursor-pointer hover:brightness-90 transition-all">
+                                </p-tag>
+                            </a>
+
                         </ng-container>
                     </td>
                     <td class="text-center">

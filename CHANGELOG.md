@@ -3,6 +3,13 @@ Todos los cambios significativos en este proyecto se documentarán en este archi
 El formato se basa en [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 y este proyecto adhiere al [Versionado Semántico](https://semver.org/lang/es/).
 
+## [2.0.2] - 2025-12-10
+
+### Changed
+-   Se mejora la visualizacion del jira en la vista de casos
+### Added
+-   Se agrega componente visual de ciclos de prueba en cada caso
+
 ## [2.0.1] - 2025-12-10
 
 ### Added

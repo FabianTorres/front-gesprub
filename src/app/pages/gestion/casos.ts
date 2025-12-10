@@ -478,6 +478,7 @@ export class CasosPage implements OnInit {
             this.casoService.getCasosPorComponente(this.componenteSeleccionadoId)
                 .subscribe(data => {
 
+
                     const casosEnriquecidos = data.map(item => {
                         // Se busca el nombre del estado usando la función que ya tenemos.
                         const nombreEstado = this.findEstadoModificacionNombre(item.caso.id_estado_modificacion);
@@ -511,7 +512,7 @@ export class CasosPage implements OnInit {
                         const jiraIdParaFiltro = item.ultimaEvidencia?.id_jira ?? '';
 
                         const ultimoEstadoNombre = this.findEstadoEvidenciaNombre(item.ultimaEvidencia?.id_estado_evidencia)
-
+                        const ciclosDelBackend = (item.caso as any).ciclosActivos || [];
 
                         // Se crea una nueva versión del objeto 'caso' que incluye el nombre.
                         const casoActualizado = {
@@ -521,7 +522,8 @@ export class CasosPage implements OnInit {
                             fuentes_nombres: nombresFuentes,
                             ruts_concatenados: rutsParaBuscar,
                             jira_id_filter: jiraIdParaFiltro,
-                            ultimoEstadoNombreFilter: ultimoEstadoNombre
+                            ultimoEstadoNombreFilter: ultimoEstadoNombre,
+                            ciclosActivos: ciclosDelBackend
 
                         };
 
@@ -530,8 +532,8 @@ export class CasosPage implements OnInit {
                         // Se devuelve el objeto completo con el 'caso' ya actualizado.
                         return { ...item, caso: casoActualizado, ultimoEstadoId: ultimoEstadoId };
                     });
-                    //this.casos.set(casosEnriquecidos as any);
-                    //Modificacion preliminar
+
+
                     this.todosLosCasosMaestros.set(casosEnriquecidos as any);
                     this.cargandoCasos.set(false);
                 });
@@ -1791,5 +1793,25 @@ export class CasosPage implements OnInit {
             // Limpiamos la referencia
             this.casoParaEjecutar = null;
         }
+    }
+
+    getTooltipCiclos(ciclos: any[]): string {
+        if (!ciclos || ciclos.length === 0) return '';
+        // Retorna un string con saltos de línea: "CERTRTA26-150 | Corrección Renta"
+        return ciclos.map(c => `• ${c.jiraKey} | ${c.nombre}`).join('\n');
+    }
+
+    /**
+     * Construye la URL para ir al ticket de Jira.
+     * Asume que tienes la base URL en tu environment.
+     */
+    getJiraUrl(jiraId: any): string {
+        if (!jiraId) return '#';
+        // Opción 1: Si usas environment (Recomendado)
+        // Asegúrate que jiraBaseUrl termine en algo como "/browse/CERTRTA26-"
+        return `${environment.jiraBaseUrl}${jiraId}`;
+
+        // Opción 2: Hardcodeada (Si no quieres configurar environment ahora)
+        // return `https://jira.sii.cl/browse/CERTRTA26-${jiraId}`; 
     }
 }

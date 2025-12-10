@@ -24,4 +24,9 @@ export interface Caso {
   usuarioEjecutante?: Usuario;
   idCriticidad?: number;
   fechaUltimaEvidencia?: string;
+  ciclosActivos?: {
+    idCiclo: number;
+    jiraKey: string;
+    nombre: string;
+  }[];
 }

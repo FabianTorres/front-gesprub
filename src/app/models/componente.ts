@@ -8,5 +8,6 @@ export interface Componente {
     activo: number;
     id_proyecto?: number; // Mantenemos el ID por si acaso
     proyecto?: Proyecto;    // Se añade el objeto Proyecto
-     id_ambito: number;
+    id_ambito: number;
+    nombre_corto?: string;
 }

@@ -1,145 +1,164 @@
- <p-toast></p-toast>
-        <div class="card">
-            <h2 class="text-2xl font-semibold mb-4">Gestión de Componentes</h2>
-            <p-toolbar styleClass="mb-4">
-                <ng-template pTemplate="left">
-                    <button pButton pRipple label="Nuevo Componente" icon="pi pi-plus" (click)="abrirDialogoNuevo()"></button>
-                </ng-template>
-            </p-toolbar>
+<p-toast></p-toast>
+<div class="card">
+    <h2 class="text-2xl font-semibold mb-4">Gestión de Componentes</h2>
+    <p-toolbar styleClass="mb-4">
+        <ng-template pTemplate="left">
+            <button pButton pRipple label="Nuevo Componente" icon="pi pi-plus" (click)="abrirDialogoNuevo()"></button>
+        </ng-template>
+    </p-toolbar>
 
-            <p-table #dt [value]="componentes()" [rows]="10" [paginator]="true" responsiveLayout="scroll"
-                sortMode="multiple" [multiSortMeta]="multiSortMeta" dataKey="id_componente"
-                [globalFilterFields]="['nombre_componente','hito_componente']" class="p-datatable-gridlines">
+    <p-table #dt [value]="componentes()" [rows]="10" [paginator]="true" responsiveLayout="scroll" sortMode="multiple"
+        [multiSortMeta]="multiSortMeta" dataKey="id_componente"
+        [globalFilterFields]="['nombre_componente','hito_componente']" class="p-datatable-gridlines">
 
-            <ng-template pTemplate="caption">
-                        <div class="flex justify-between items-center">
-                            <button pButton label="Limpiar Filtros" class="p-button-outlined" icon="pi pi-filter-slash" (click)="clear(dt)"></button>
-                            
-                            <p-iconfield>
-                                <p-inputicon styleClass="pi pi-search" />
-                                <input #filterInputComp pInputText type="text" (input)="onGlobalFilter(dt, $event)" placeholder="Buscar componente..." style="width: 300px;" />
-                            </p-iconfield>
-                        </div>
-                    </ng-template>
+        <ng-template pTemplate="caption">
+            <div class="flex justify-between items-center">
+                <button pButton label="Limpiar Filtros" class="p-button-outlined" icon="pi pi-filter-slash"
+                    (click)="clear(dt)"></button>
 
-                <ng-template pTemplate="header">
-                    <tr>
-                        <th pSortableColumn="hito_componente" style="width:15%">
-                            <div class="flex justify-between items-center">
-                                Hito
-                                <p-columnFilter field="hito_componente" matchMode="equals" display="menu" [showMatchModes]="false">
-                                    <ng-template pTemplate="filter" let-value let-filter="filterCallback">
-                                        <p-select [ngModel]="value" [options]="hitos()" (onChange)="filter($event.value)" placeholder="Cualquiera"></p-select>
-                                    </ng-template>
-                                </p-columnFilter>
-                            </div>
-                        </th>
-                        <th pSortableColumn="nombre_componente">
-                            <div class="flex justify-between items-center">
-                                Nombre
-                                <p-columnFilter type="text" field="nombre_componente" display="menu"></p-columnFilter>
-                            </div>
-                        </th>
-                        <th pSortableColumn="fecha_limite">
-                            <div class="flex justify-between items-center">
-                                Fecha Límite
-                                <p-columnFilter type="date" field="fecha_limite" display="menu"></p-columnFilter>
-                            </div>
-                        </th>
+                <p-iconfield>
+                    <p-inputicon styleClass="pi pi-search" />
+                    <input #filterInputComp pInputText type="text" (input)="onGlobalFilter(dt, $event)"
+                        placeholder="Buscar componente..." style="width: 300px;" />
+                </p-iconfield>
+            </div>
+        </ng-template>
 
-                        <th pSortableColumn="id_ambito">Ámbito <p-sortIcon field="id_ambito"></p-sortIcon></th>
-                        <th pSortableColumn="activo">
-                            <div class="flex justify-between items-center">
-                                Activo
-                                <p-columnFilter field="activo" matchMode="equals" display="menu" [showMatchModes]="false">
-                                    <ng-template pTemplate="filter" let-value let-filter="filterCallback">
-                                        <p-select [ngModel]="value" [options]="opcionesFiltroActivo" (onChange)="filter($event.value)" placeholder="Cualquiera"></p-select>
-                                    </ng-template>
-                                </p-columnFilter>
-                            </div>
-                        </th>
-                        <th style="width:15%">Acciones</th>
-                    </tr>
-                </ng-template>
-                <ng-template pTemplate="body" let-componente>
-                    <tr>
-                        <td>{{componente.hito_componente}}</td>
-                        <td>{{componente.nombre_componente}}</td>
-                        <td>{{componente.fecha_limite | date: 'dd/MM/yyyy'}}</td>
-                        <td>{{ findAmbitoNombre(componente.id_ambito) }}</td>
-                        <td class="text-center">
-                            <i class="pi text-xl" [ngClass]="{
+        <ng-template pTemplate="header">
+            <tr>
+                <th pSortableColumn="hito_componente" style="width:15%">
+                    <div class="flex justify-between items-center">
+                        Hito
+                        <p-columnFilter field="hito_componente" matchMode="equals" display="menu"
+                            [showMatchModes]="false">
+                            <ng-template pTemplate="filter" let-value let-filter="filterCallback">
+                                <p-select [ngModel]="value" [options]="hitos()" (onChange)="filter($event.value)"
+                                    placeholder="Cualquiera"></p-select>
+                            </ng-template>
+                        </p-columnFilter>
+                    </div>
+                </th>
+                <th pSortableColumn="nombre_componente">
+                    <div class="flex justify-between items-center">
+                        Nombre
+                        <p-columnFilter type="text" field="nombre_componente" display="menu"></p-columnFilter>
+                    </div>
+                </th>
+                <th pSortableColumn="nombre_corto">
+                    <div class="flex justify-between items-center">
+                        Nombre Corto
+                        <p-columnFilter type="text" field="nombre_corto" display="menu"></p-columnFilter>
+                    </div>
+                </th>
+                <th pSortableColumn="fecha_limite">
+                    <div class="flex justify-between items-center">
+                        Fecha Límite
+                        <p-columnFilter type="date" field="fecha_limite" display="menu"></p-columnFilter>
+                    </div>
+                </th>
+
+                <th pSortableColumn="id_ambito">Ámbito <p-sortIcon field="id_ambito"></p-sortIcon></th>
+                <th pSortableColumn="activo">
+                    <div class="flex justify-between items-center">
+                        Activo
+                        <p-columnFilter field="activo" matchMode="equals" display="menu" [showMatchModes]="false">
+                            <ng-template pTemplate="filter" let-value let-filter="filterCallback">
+                                <p-select [ngModel]="value" [options]="opcionesFiltroActivo"
+                                    (onChange)="filter($event.value)" placeholder="Cualquiera"></p-select>
+                            </ng-template>
+                        </p-columnFilter>
+                    </div>
+                </th>
+                <th style="width:15%">Acciones</th>
+            </tr>
+        </ng-template>
+        <ng-template pTemplate="body" let-componente>
+            <tr>
+                <td>{{componente.hito_componente}}</td>
+                <td>{{componente.nombre_componente}}</td>
+                <td>{{componente.nombre_corto}}</td>
+                <td>{{componente.fecha_limite | date: 'dd/MM/yyyy'}}</td>
+                <td>{{ findAmbitoNombre(componente.id_ambito) }}</td>
+                <td class="text-center">
+                    <i class="pi text-xl" [ngClass]="{
                                 'pi-check-circle text-green-500': componente.activo === 1, 
                                 'pi-ban text-red-500': componente.activo !== 1
                             }" [pTooltip]="componente.activo === 1 ? 'Activo' : 'Inactivo'" tooltipPosition="top">
-                            </i>
-                        </td>
-                        <td>
-                            <button pButton pRipple icon="pi pi-pencil" class="p-button-rounded mr-2" 
-                                    (click)="editarComponente(componente)"
-                                    pTooltip="Editar" tooltipPosition="top"></button>
-                            
-                            <button pButton pRipple icon="pi pi-list" class="p-button-rounded" 
-                                    (click)="irACasos(componente)"
-                                    pTooltip="Ir a Casos" tooltipPosition="top"></button>
-                        </td>
-                    </tr>
-                </ng-template>
-                 <ng-template #empty>
-                    <tr>
-                        <td colspan="5" class="text-center">No se encontraron componentes.</td>
-                    </tr>
-                </ng-template>
-            </p-table>
+                    </i>
+                </td>
+                <td>
+                    <button pButton pRipple icon="pi pi-pencil" class="p-button-rounded mr-2"
+                        (click)="editarComponente(componente)" pTooltip="Editar" tooltipPosition="top"></button>
+
+                    <button pButton pRipple icon="pi pi-list" class="p-button-rounded" (click)="irACasos(componente)"
+                        pTooltip="Ir a Casos" tooltipPosition="top"></button>
+                </td>
+            </tr>
+        </ng-template>
+        <ng-template #empty>
+            <tr>
+                <td colspan="5" class="text-center">No se encontraron componentes.</td>
+            </tr>
+        </ng-template>
+    </p-table>
+</div>
+
+<p-dialog [(visible)]="componenteDialog" [style]="{width: '450px'}"
+    [header]="editando ? 'Editar Componente' : 'Nuevo Componente'" [modal]="true" class="p-fluid">
+    <ng-template pTemplate="content">
+        <div class="flex flex-col gap-4">
+
+            <div class="field">
+                <label for="ambito" class="block font-bold mb-2">Ámbito</label>
+                <p-select id="ambito" [options]="listaAmbitos()" [(ngModel)]="componente.id_ambito"
+                    optionLabel="nombre_ambito" optionValue="id_ambito" placeholder="Seleccione un ámbito" required
+                    styleClass="w-full">
+                </p-select>
+            </div>
+
+            <div>
+                <label for="hito" class="block font-bold mb-2">Hito</label>
+                <p-inputNumber id="hito" [(ngModel)]="componente.hito_componente" styleClass="w-full"></p-inputNumber>
+            </div>
+
+            <div>
+                <label for="nombre" class="block font-bold mb-2">Nombre</label>
+                <input type="text" pInputText id="nombre" [(ngModel)]="componente.nombre_componente" required autofocus
+                    class="w-full" />
+                <small class="p-error" *ngIf="submitted && !componente.nombre_componente">El nombre es
+                    requerido.</small>
+            </div>
+
+            <div>
+                <label for="nombre_corto" class="block font-bold mb-2">Nombre Corto</label>
+                <input type="text" pInputText id="nombre_corto" [(ngModel)]="componente.nombre_corto" required autofocus
+                    class="w-full" />
+                <small class="p-error" *ngIf="submitted && !componente.nombre_corto">El nombre corto es
+                    requerido.</small>
+            </div>
+
+
+
+            <div>
+                <label for="fecha" class="block font-bold mb-2">Fecha Límite</label>
+                <p-datePicker id="fecha" [(ngModel)]="fechaLimiteDialog" dateFormat="dd/mm/yy" [appendTo]="'body'"
+                    styleClass="w-full"></p-datePicker>
+            </div>
+
+
+
+            <div class="flex items-center mt-2">
+                <p-inputSwitch [(ngModel)]="activoDialog" inputId="activo"></p-inputSwitch>
+                <label for="activo" class="ml-2">Activo</label>
+            </div>
+
         </div>
+    </ng-template>
 
-        <p-dialog [(visible)]="componenteDialog" [style]="{width: '450px'}" [header]="editando ? 'Editar Componente' : 'Nuevo Componente'" [modal]="true" class="p-fluid">
-            <ng-template pTemplate="content">
-                <div class="flex flex-col gap-4">
-
-                    <div class="field">
-                        <label for="ambito" class="block font-bold mb-2">Ámbito</label>
-                        <p-select id="ambito"
-                                [options]="listaAmbitos()"
-                                [(ngModel)]="componente.id_ambito"
-                                optionLabel="nombre_ambito"
-                                optionValue="id_ambito"
-                                placeholder="Seleccione un ámbito"
-                                required
-                                styleClass="w-full">
-                        </p-select>
-                    </div>
-
-                    <div>
-                        <label for="hito" class="block font-bold mb-2">Hito</label>
-                        <p-inputNumber id="hito" [(ngModel)]="componente.hito_componente" styleClass="w-full"></p-inputNumber>
-                    </div>
-                    
-                    <div>
-                        <label for="nombre" class="block font-bold mb-2">Nombre</label>
-                        <input type="text" pInputText id="nombre" [(ngModel)]="componente.nombre_componente" required autofocus class="w-full" />
-                        <small class="p-error" *ngIf="submitted && !componente.nombre_componente">El nombre es requerido.</small>
-                    </div>
-
-                    
-
-                    <div>
-                        <label for="fecha" class="block font-bold mb-2">Fecha Límite</label>
-                        <p-datePicker id="fecha" [(ngModel)]="fechaLimiteDialog" dateFormat="dd/mm/yy" [appendTo]="'body'" styleClass="w-full"></p-datePicker>
-                    </div>
-
-                    
-
-                    <div class="flex items-center mt-2">
-                        <p-inputSwitch [(ngModel)]="activoDialog" inputId="activo"></p-inputSwitch>
-                        <label for="activo" class="ml-2">Activo</label>
-                    </div>
-
-                </div>
-            </ng-template>
-            
-            <ng-template pTemplate="footer">
-                <button pButton pRipple label="Cancelar" icon="pi pi-times" class="p-button-text" (click)="cerrarDialogo()"></button>
-                <button pButton pRipple label="Guardar" icon="pi pi-check" class="p-button-text" (click)="guardarComponente()"></button>
-            </ng-template>
-        </p-dialog>
+    <ng-template pTemplate="footer">
+        <button pButton pRipple label="Cancelar" icon="pi pi-times" class="p-button-text"
+            (click)="cerrarDialogo()"></button>
+        <button pButton pRipple label="Guardar" icon="pi pi-check" class="p-button-text"
+            (click)="guardarComponente()"></button>
+    </ng-template>
+</p-dialog>

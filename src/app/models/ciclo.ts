@@ -14,6 +14,7 @@ export interface Ciclo {
     casosError: number;
     casosSinEjecutar: number;
     idProyecto: number;
+    componentesInvolucrados?: string[];
 }
 
 export interface CicloRequest {

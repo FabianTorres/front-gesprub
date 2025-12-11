@@ -30,13 +30,33 @@
         </ng-template>
         <ng-template pTemplate="body" let-ciclo>
             <tr [ngClass]="{'opacity-60 bg-gray-50': ciclo.activo === 0}">
-                <td>
-                    <a [href]="getJiraUrl(ciclo.jiraKey)" target="_blank"
-                        class="text-primary font-bold hover:underline flex items-center gap-1">
-                        <i class="pi text-xs"></i>
-                        {{ ciclo.jiraKey }}
-                    </a>
+
+
+                <td style="min-width: 150px">
+                    <div class="flex flex-col gap-1">
+                        <a [href]="getJiraUrl(ciclo.jiraKey)" target="_blank"
+                            class="text-primary font-bold hover:underline flex items-center gap-1">
+                            <i class="pi text-xs"></i>
+                            {{ ciclo.jiraKey }}
+                        </a>
+
+                        <div class="flex flex-wrap gap-1 mt-1">
+                            <ng-container
+                                *ngIf="ciclo.componentesInvolucrados && ciclo.componentesInvolucrados.length > 0">
+                                <p-tag *ngFor="let comp of ciclo.componentesInvolucrados" [value]="comp"
+                                    severity="secondary"
+                                    styleClass="text-xs px-2 py-0.5 border-1 surface-border bg-surface-100 text-surface-600 font-normal">
+                                </p-tag>
+                            </ng-container>
+
+                            <span *ngIf="!ciclo.componentesInvolucrados || ciclo.componentesInvolucrados.length === 0"
+                                class="text-xs text-surface-400 italic flex align-items-center gap-1">
+                                <i class="pi pi-info-circle text-[10px]"></i> Sin alcance definido
+                            </span>
+                        </div>
+                    </div>
                 </td>
+
                 <td>{{ ciclo.nombre }}</td>
                 <td>{{ ciclo.fechaLiberacion | date:'dd/MM/yyyy' }}</td>
                 <td>

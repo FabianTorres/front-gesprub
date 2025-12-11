@@ -3,6 +3,14 @@ Todos los cambios significativos en este proyecto se documentarán en este archi
 El formato se basa en [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 y este proyecto adhiere al [Versionado Semántico](https://semver.org/lang/es/).
 
+## [2.0.3] - 2025-12-11
+
+### Changed
+-   Se modifica la vista de ciclos para que se pueda ver el componente (nombre corto) en cada ciclo
+
+### Added
+-   Se agrega la funcionalidad de agregar nombre corto a los componentes
+
 ## [2.0.2] - 2025-12-10
 
 ### Changed

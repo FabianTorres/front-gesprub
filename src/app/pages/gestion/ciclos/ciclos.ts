@@ -2,6 +2,7 @@ import { Component, OnInit, inject, signal, computed, effect } from '@angular/co
 import { CommonModule, DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ConfirmationService, MessageService } from 'primeng/api';
+import { SelectItem, FilterService } from 'primeng/api';
 import XLSXStyle from 'xlsx-js-style';
 import { RouterModule } from '@angular/router';
 import { TableModule } from 'primeng/table';
@@ -16,6 +17,7 @@ import { ToastModule } from 'primeng/toast';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { TooltipModule } from 'primeng/tooltip';
 import { CheckboxModule } from 'primeng/checkbox';
+import { MultiSelectModule } from 'primeng/multiselect';
 import { TruncatePipe } from '../../../pipes/truncate.pipe';
 import { SelectButtonModule } from 'primeng/selectbutton';
 import { ViewChild } from '@angular/core';
@@ -45,7 +47,7 @@ import { ProyectoService } from '../../../services/proyecto.service';
         DialogModule, InputTextModule, TextareaModule, DatePickerModule,
         TagModule, ToastModule, ConfirmDialogModule, TooltipModule,
         SelectModule, CheckboxModule, SortFuentesPipe, SelectButtonModule,
-        IconFieldModule, InputIconModule, RouterModule
+        MultiSelectModule, IconFieldModule, InputIconModule, RouterModule
     ],
     providers: [MessageService, ConfirmationService, DatePipe],
     templateUrl: './ciclos.html'
@@ -99,6 +101,10 @@ export class CiclosPage implements OnInit {
     casosDelComponente = signal<CasoConEvidencia[]>([]);
     componenteFiltro: number | null = null;
     loadingCasos: boolean = false;
+
+    // Opciones para el filtro de etiquetas (se calcula solo)
+    opcionesFiltroEtiquetas = signal<SelectItem[]>([]);
+    private filterService = inject(FilterService);
 
     //Un Set para guardar IDs únicos sin duplicados
     idsSeleccionadosGlobal = new Set<number>();
@@ -169,6 +175,7 @@ export class CiclosPage implements OnInit {
         this.cicloService.getCiclos(+idProyecto, this.filtroEstado()).subscribe({
             next: (data) => {
                 this.ciclos.set(data);
+                this.calcularOpcionesEtiquetas(data);
                 this.loading.set(false);
             },
             error: (err) => {
@@ -176,6 +183,69 @@ export class CiclosPage implements OnInit {
                 this.loading.set(false);
             }
         });
+    }
+
+    // Extrae todos los componentes únicos de los ciclos cargados
+    private calcularOpcionesEtiquetas(data: Ciclo[]) {
+        const todosLosTags = new Set<string>();
+        data.forEach(c => {
+            if (c.componentesInvolucrados) {
+                c.componentesInvolucrados.forEach(tag => todosLosTags.add(tag));
+            }
+        });
+
+        // Convertimos a formato para el MultiSelect, ordenado alfabéticamente
+        const opciones = Array.from(todosLosTags).sort().map(tag => ({
+            label: tag,
+            value: tag
+        }));
+        this.opcionesFiltroEtiquetas.set(opciones);
+    }
+
+    /**
+     * ORDENAMIENTO PERSONALIZADO PARA JIRA
+     * Permite que "Jira-2" venga antes que "Jira-10"
+     */
+    customSort(event: any) {
+        event.data.sort((data1: any, data2: any) => {
+            const value1 = data1[event.field];
+            const value2 = data2[event.field];
+            const result = this.compararJiraKeys(value1, value2);
+            return (event.order * result);
+        });
+    }
+
+    private compararJiraKeys(key1: string, key2: string): number {
+        const val1 = key1 || '';
+        const val2 = key2 || '';
+
+        // Regex para detectar formato "ALGO-NUMERO" (ej: CERTRTA26-196)
+        const regex = /-(\d+)$/;
+
+        const match1 = val1.match(regex);
+        const match2 = val2.match(regex);
+
+        // CASO 1: Ambos tienen formato Jira (Terminan en guion y número)
+        if (match1 && match2) {
+            const num1 = parseInt(match1[1], 10);
+            const num2 = parseInt(match2[1], 10);
+
+            // Si los números son distintos, ordena por número
+            if (num1 !== num2) {
+                return num1 - num2;
+            }
+            // Si los números son iguales (ej: mismo Jira, distinto nombre), ordena alfabéticamente
+            return val1.localeCompare(val2);
+        }
+
+        // CASO 2: Solo el primero es Jira (Prioridad al Jira)
+        if (match1) return -1;
+
+        // CASO 3: Solo el segundo es Jira
+        if (match2) return 1;
+
+        // CASO 4: Ninguno es Jira (Nombres libres), orden alfabético normal
+        return val1.localeCompare(val2, undefined, { numeric: true, sensitivity: 'base' });
     }
 
     abrirDialogoNuevo() {

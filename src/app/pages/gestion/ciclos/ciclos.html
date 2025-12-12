@@ -18,80 +18,128 @@
         </ng-template>
     </p-toolbar>
 
-    <p-table [value]="ciclos()" [loading]="loading()" responsiveLayout="scroll" [rows]="10" [paginator]="true">
+    <p-table #dt [value]="ciclos()" [loading]="loading()" responsiveLayout="scroll" [rows]="10" [paginator]="true"
+        [rowsPerPageOptions]="[10, 25, 50]" sortMode="single" [customSort]="true" (sortFunction)="customSort($event)"
+        sortField="jiraKey" [sortOrder]="1" [globalFilterFields]="['jiraKey', 'nombre', 'componentesInvolucrados']"
+        styleClass="p-datatable-gridlines">
+
+        <ng-template pTemplate="caption">
+            <div class="flex flex-column md:flex-row md:justify-content-between md:align-items-center gap-3">
+                <span class="text-xl font-bold text-900">Listado de Liberaciones</span>
+
+                <div class="flex gap-2">
+                    <button pButton label="Limpiar" class="p-button-outlined p-button-sm" icon="pi pi-filter-slash"
+                        (click)="dt.clear()"></button>
+                    <span class="p-input-icon-left">
+                        <i class="pi pi-search"></i>
+                        <input pInputText type="text" (input)="dt.filterGlobal($any($event.target).value, 'contains')"
+                            placeholder="Buscar..." class="p-inputtext-sm" />
+                    </span>
+                </div>
+            </div>
+        </ng-template>
+
         <ng-template pTemplate="header">
             <tr>
-                <th style="width: 17%">Jira</th>
-                <th style="width: 25%">Nombre</th>
-                <th style="width: 14%">Fecha Liberación</th>
-                <th style="width: 25%">Avance</th>
+                <th pSortableColumn="jiraKey" style="width: 17%">
+                    <div class="flex justify-between items-center">
+                        <span>Jira</span>
+                        <div class="flex items-center gap-1">
+                            <p-sortIcon field="jiraKey"></p-sortIcon>
+                            <p-columnFilter field="componentesInvolucrados" matchMode="contains" display="menu"
+                                [showMatchModes]="false" [showOperator]="false" [showAddButton]="false">
+                                <ng-template pTemplate="filter" let-value let-filter="filterCallback">
+                                    <div class="p-3" style="min-width: 250px;">
+                                        <span class="font-bold mb-2 block">Filtrar por Componente</span>
+                                        <p-multiSelect [options]="opcionesFiltroEtiquetas()" [ngModel]="value"
+                                            placeholder="Seleccionar..." (onChange)="filter($event.value)"
+                                            optionLabel="label" optionValue="value" display="chip" styleClass="w-full">
+                                        </p-multiSelect>
+                                    </div>
+                                </ng-template>
+                            </p-columnFilter>
+                        </div>
+                    </div>
+                </th>
+
+                <th pSortableColumn="nombre" style="width: 25%">
+                    <div class="flex justify-between items-center">
+                        Nombre
+                        <p-sortIcon field="nombre"></p-sortIcon>
+                    </div>
+                </th>
+
+                <th pSortableColumn="fechaLiberacion" style="width: 14%">
+                    <div class="flex justify-between items-center">
+                        Liberación
+                        <div class="flex items-center gap-1">
+                            <p-sortIcon field="fechaLiberacion"></p-sortIcon>
+                            <p-columnFilter type="date" field="fechaLiberacion" display="menu"></p-columnFilter>
+                        </div>
+                    </div>
+                </th>
+
+                <th pSortableColumn="totalCasosAsignados" style="width: 25%">
+                    <div class="flex justify-between items-center">
+                        Avance
+                        <p-sortIcon field="totalCasosAsignados"></p-sortIcon>
+                    </div>
+                </th>
+
                 <th style="width: 18%">Acciones</th>
             </tr>
         </ng-template>
+
         <ng-template pTemplate="body" let-ciclo>
             <tr [ngClass]="{'opacity-60 bg-gray-50': ciclo.activo === 0}">
-
 
                 <td style="min-width: 150px">
                     <div class="flex flex-col gap-1">
                         <a [href]="getJiraUrl(ciclo.jiraKey)" target="_blank"
                             class="text-primary font-bold hover:underline flex items-center gap-1">
-                            <i class="pi text-xs"></i>
                             {{ ciclo.jiraKey }}
                         </a>
-
                         <div class="flex flex-wrap gap-1 mt-1">
-                            <ng-container
-                                *ngIf="ciclo.componentesInvolucrados && ciclo.componentesInvolucrados.length > 0">
+                            <ng-container *ngIf="ciclo.componentesInvolucrados?.length > 0">
                                 <p-tag *ngFor="let comp of ciclo.componentesInvolucrados" [value]="comp"
                                     severity="secondary"
-                                    styleClass="text-xs px-2 py-0.5 border-1 surface-border bg-surface-100 text-surface-600 font-normal">
-                                </p-tag>
+                                    styleClass="text-xs px-2 py-0.5 border-1 surface-border bg-surface-100 text-surface-600 font-normal"></p-tag>
                             </ng-container>
-
-                            <span *ngIf="!ciclo.componentesInvolucrados || ciclo.componentesInvolucrados.length === 0"
-                                class="text-xs text-surface-400 italic flex align-items-center gap-1">
-                                <i class="pi pi-info-circle text-[10px]"></i> Sin alcance definido
-                            </span>
+                            <span *ngIf="!ciclo.componentesInvolucrados?.length"
+                                class="text-xs text-surface-400 italic">Sin alcance</span>
                         </div>
                     </div>
                 </td>
 
                 <td>{{ ciclo.nombre }}</td>
                 <td>{{ ciclo.fechaLiberacion | date:'dd/MM/yyyy' }}</td>
+
                 <td>
-                    <div class="flex gap-2">
-                        <p-tag [value]="'Total: ' + ciclo.totalCasosAsignados" severity="info"
-                            pTooltip="Total Casos Asignados"></p-tag>
-                        <p-tag [value]="'OK: ' + ciclo.casosCertificados" severity="success"
-                            pTooltip="Casos Certificados"></p-tag>
-                        <p-tag [value]="'NK: ' + ciclo.casosError" severity="danger" pTooltip="Casos con Error"></p-tag>
+                    <div class="flex gap-2 flex-wrap">
+                        <p-tag [value]="'Total: ' + ciclo.totalCasosAsignados" severity="info"></p-tag>
+                        <p-tag [value]="'OK: ' + ciclo.casosCertificados" severity="success"></p-tag>
+                        <p-tag [value]="'NK: ' + ciclo.casosError" severity="danger"></p-tag>
                     </div>
                 </td>
+
                 <td>
                     <div class="flex gap-2">
                         <button pButton pRipple icon="pi pi-pencil" class="p-button-rounded mr-2"
-                            (click)="editarCiclo(ciclo)" pTooltip="Editar Ciclo" tooltipPosition="top">
-                        </button>
+                            (click)="editarCiclo(ciclo)"></button>
                         <button pButton pRipple icon="pi pi-list" class="p-button-rounded mr-2"
-                            (click)="gestionarAlcance(ciclo)" pTooltip="Gestionar Alcance" tooltipPosition="top">
-                        </button>
-
+                            (click)="gestionarAlcance(ciclo)"></button>
                         <button pButton pRipple icon="pi pi-check-square" class="p-button-rounded mr-2"
-                            pTooltip="Cerrar Ciclo" tooltipPosition="top" (click)="confirmarCierre(ciclo)">
-                        </button>
-
-                        <button pButton pRipple icon="pi pi-file-excel" class="p-button-rounded p-button-outlined mr-2"
-                            (click)="exportarReporteCiclo(ciclo)" pTooltip="Descargar Reporte Excel"
-                            tooltipPosition="top">
-                        </button>
+                            (click)="confirmarCierre(ciclo)"></button>
+                        <button pButton pRipple icon="pi pi-file-excel" class="p-button-rounded p-button-outlined"
+                            (click)="exportarReporteCiclo(ciclo)"></button>
                     </div>
                 </td>
             </tr>
         </ng-template>
+
         <ng-template pTemplate="empty">
             <tr>
-                <td colspan="5" class="text-center p-4">No hay ciclos activos. Cree uno nuevo para comenzar.</td>
+                <td colspan="5" class="text-center p-4">No se encontraron ciclos.</td>
             </tr>
         </ng-template>
     </p-table>

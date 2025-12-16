@@ -42,6 +42,18 @@ export class DescargaMasivaPage implements OnInit {
     // Estado de carga
     descargando = signal<boolean>(false);
 
+    //Variable para el filtro de estado
+    estadoSeleccionadoId = signal<number | null>(null);
+
+    // Opciones basadas en tus IDs de base de datos
+    opcionesEstado = [
+        { label: 'Todos los estados', value: null },
+        { label: 'Nuevo', value: 1 },
+        { label: 'Modificado', value: 2 },
+        { label: 'Sin Cambios', value: 3 },
+        { label: 'Eliminado', value: 6 }
+    ];
+
     constructor() { }
 
     ngOnInit() {
@@ -57,6 +69,7 @@ export class DescargaMasivaPage implements OnInit {
 
     onProyectoChange() {
         this.componenteSeleccionadoId = null;
+        this.estadoSeleccionadoId.set(null);
         this.componentes.set([]);
 
         if (this.proyectoSeleccionadoId) {
@@ -72,14 +85,16 @@ export class DescargaMasivaPage implements OnInit {
         }
 
         this.descargando.set(true);
-        this.messageService.add({ severity: 'info', summary: 'Procesando', detail: 'Generando archivo ZIP, por favor espere...' });
+        const estadoLabel = this.opcionesEstado.find(e => e.value === this.estadoSeleccionadoId())?.label || 'Total';
+        this.messageService.add({ severity: 'info', summary: 'Procesando', detail: `Generando ZIP (${estadoLabel}), espere...` });
 
-        this.componenteService.descargarZipEvidencias(this.componenteSeleccionadoId).subscribe({
+        this.componenteService.descargarZipEvidencias(this.componenteSeleccionadoId, this.estadoSeleccionadoId()).subscribe({
             next: (blob) => {
                 // Crear nombre del archivo con fecha
                 const nombreComponente = this.componentes().find(c => c.id_componente === this.componenteSeleccionadoId)?.nombre_componente || 'componente';
                 const fecha = new Date().toISOString().slice(0, 10);
-                const fileName = `Evidencias_${nombreComponente}_${fecha}.zip`;
+                const sufijo = this.estadoSeleccionadoId() ? `_Filtro${this.estadoSeleccionadoId()}` : '_Completo';
+                const fileName = `Evidencias_${nombreComponente}${sufijo}_${fecha}.zip`;
 
                 // Crear enlace temporal y descargar
                 const url = window.URL.createObjectURL(blob);

@@ -512,7 +512,14 @@ export class CasosPage implements OnInit {
                         const jiraIdParaFiltro = item.ultimaEvidencia?.id_jira ?? '';
 
                         const ultimoEstadoNombre = this.findEstadoEvidenciaNombre(item.ultimaEvidencia?.id_estado_evidencia)
-                        const ciclosDelBackend = (item.caso as any).ciclosActivos || [];
+                        // Por defecto vaciamos la lista
+                        let ciclosDelBackend = [];
+
+                        // Solo leemos los ciclos si el caso está REALMENTE ACTIVO (1).
+                        // Si es inactivo (0), se queda como array vacío [] y la etiqueta desaparece.
+                        if (item.caso.activo === 1) {
+                            ciclosDelBackend = (item.caso as any).ciclosActivos || [];
+                        }
 
                         // Se crea una nueva versión del objeto 'caso' que incluye el nombre.
                         const casoActualizado = {
@@ -1814,4 +1821,14 @@ export class CasosPage implements OnInit {
         // Opción 2: Hardcodeada (Si no quieres configurar environment ahora)
         // return `https://jira.sii.cl/browse/CERTRTA26-${jiraId}`; 
     }
+
+    /**
+     * Cuenta cuántos casos tienen activo === 1 en una lista dada.
+     * Se usa para el contador visual del footer.
+     */
+    contarCasosActivos(lista: any[] | undefined | null): number {
+        if (!lista || lista.length === 0) return 0;
+        return lista.filter(item => item.caso.activo === 1).length;
+    }
 }
+

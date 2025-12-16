@@ -2,6 +2,15 @@
 Todos los cambios significativos en este proyecto se documentarán en este archivo.
 El formato se basa en [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 y este proyecto adhiere al [Versionado Semántico](https://semver.org/lang/es/).
+## [2.0.5] - 2025-12-16
+
+### Changed
+-   Se cambia la funcionalidad de ejecutar caso para que no se pueda ejecutar un caso inactivo
+-   Se mejora la funcionalidad de descarga masiva de evidencias con el filtro de estado
+### Fixed
+-   Ahora los ciclos de prueba solo podran agregarse con los casos activos.
+-   Ahora el contador de casos activos se muestra correctamente en la vista de casos.
+
 
 ## [2.0.4] - 2025-12-12
 

@@ -230,8 +230,8 @@
                                 [routerLink]="['/pages/casos', item.caso.id_caso]" pTooltip="Historial"
                                 tooltipPosition="top"></button>
                             <button pButton pRipple icon="pi pi-play" class="p-button-rounded"
-                                (click)="verificarContextoEjecucion(item.caso)" pTooltip="Ejecutar"
-                                tooltipPosition="top"></button>
+                                (click)="verificarContextoEjecucion(item.caso)" [disabled]="item.caso.activo !== 1"
+                                pTooltip="Ejecutar" tooltipPosition="top"></button>
                         </div>
                     </td>
                 </tr>
@@ -245,8 +245,12 @@
         </p-table>
         <div *ngIf="casos().length > 0" class="flex justify-end mt-2 pr-2">
             <span class="text-sm font-semibold text-surface-600 dark:text-surface-400">
-                Mostrando {{ (dt.filteredValue ? dt.filteredValue.length : casos().length) }} de {{ casos().length }}
-                casos
+                Mostrando {{ contarCasosActivos(dt.filteredValue || casos()) }}
+                de {{ contarCasosActivos(casos()) }} casos activos
+
+                <span class="text-xs font-normal ml-1 text-surface-400">
+                    (Total histórico: {{ (dt.filteredValue ? dt.filteredValue.length : casos().length) }})
+                </span>
             </span>
         </div>
     </div>

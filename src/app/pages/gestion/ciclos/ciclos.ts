@@ -392,8 +392,10 @@ export class CiclosPage implements OnInit {
         this.loadingCasos = true;
         this.casoService.getCasosPorComponente(this.componenteFiltro).subscribe({
             next: (data) => {
+
+                const dataSoloActivos = data.filter(item => item.caso.activo === 1);
                 // Mapeamos para agregar campos "planos" que facilitan el filtrado en la tabla
-                const casosEnriquecidos = data.map(item => {
+                const casosEnriquecidos = dataSoloActivos.map(item => {
                     const nombreEstado = this.findEstadoModificacionNombre(item.caso.id_estado_modificacion);
                     const nombresFuentes = item.caso.fuentes?.map(f => f.nombre_fuente).join(' ') || '';
 

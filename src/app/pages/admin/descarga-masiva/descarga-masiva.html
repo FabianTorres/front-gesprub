@@ -22,6 +22,15 @@
             </p-select>
         </div>
 
+        <div class="col-12" *ngIf="componenteSeleccionadoId">
+            <label class="block font-bold mb-2">3. Filtrar por Estado (Opcional)</label>
+            <p-select [options]="opcionesEstado" [ngModel]="estadoSeleccionadoId()"
+                (ngModelChange)="estadoSeleccionadoId.set($event)" optionLabel="label" optionValue="value"
+                placeholder="Seleccione filtro..." styleClass="w-full md:w-30rem">
+            </p-select>
+            <small class="block mt-1 text-gray-500">Deje en "Todos" para descargar el paquete completo.</small>
+        </div>
+
         <div class="col-12 mt-4" *ngIf="componenteSeleccionadoId">
             <button pButton pRipple label="Descargar ZIP" icon="pi pi-download" class="p-button-primary"
                 [loading]="descargando()" (click)="descargarZip()">

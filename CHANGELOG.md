@@ -2,6 +2,14 @@
 Todos los cambios significativos en este proyecto se documentarán en este archivo.
 El formato se basa en [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 y este proyecto adhiere al [Versionado Semántico](https://semver.org/lang/es/).
+
+### [2.0.6] - 2025-12-26
+
+### Changed
+-   Se mejora la funcionalidad de exportar a Excel para que ahora muestre la fuente.
+### Fixed
+-   Se soluciona un problema con la visualizacion del campo Estado en la exportacion de Plan de pruebas.
+
 ## [2.0.5] - 2025-12-16
 
 ### Changed

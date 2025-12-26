@@ -1479,7 +1479,7 @@ export class CasosPage implements OnInit {
             return;
         }
 
-        // 2. Filtrar SOLO los activos (Requerimiento del Negocio) y extraer sus IDs
+        // 2. Filtrar SOLO los activos y extraer sus IDs
         // Esto se aplica tanto si viene de la tabla filtrada como si viene de la lista completa.
         const idsParaExportar = casosVisibles
             .filter(item => item.caso.activo === 1)
@@ -1505,9 +1505,9 @@ export class CasosPage implements OnInit {
         });
     }
 
-    // Método auxiliar privado para manejar la lógica de estilos y Excel
+    // Método auxiliar privado para manejar la logica de estilos y Excel
     private generarExcelConEstilos(datos: any[]) {
-        // A. Definición de Estilos (Rojo y Verde Claro según tu foto)
+        // A. Definición de Estilos (Rojo y Verde Claro segun tu foto)
         const styleRojo = {
             fill: { fgColor: { rgb: "FF2500" } }, // Fondo Rojo Fuerte
             font: { color: { rgb: "080808" }, bold: true, sz: 14 }, // Texto Negro
@@ -1522,15 +1522,16 @@ export class CasosPage implements OnInit {
             border: { top: { style: "thin" }, bottom: { style: "thin" }, left: { style: "thin" }, right: { style: "thin" } }
         };
 
-        // B. Definición de Columnas y su Estilo (Orden exacto solicitado)
+        // B. Definicion de Columnas y su Estilo (Orden exacto solicitado)
         const headers = [
             { title: "Identificación del Requerimiento", style: styleRojo, key: "nombre_componente" },
             { title: "Casos de Uso", style: styleVerde, key: "nombre_caso" },
+            { title: "Fuente", style: styleVerde, key: "nombres_fuentes" },
             { title: "Pasos", style: styleVerde, key: "pasos" },
             { title: "Resultados Esperados", style: styleRojo, key: "resultado_esperado" },
             { title: "Versión", style: styleVerde, key: "version_evidencia" },
             { title: "Rut", style: styleVerde, key: "rut_evidencia" },
-            { title: "JP Responsable", style: styleRojo, staticValue: "Fabian Torres" }, // Valor fijo
+            { title: "JP Responsable", style: styleRojo, staticValue: "Fabian Torres" },
             { title: "Analista responsable", style: styleVerde, key: "nombre_analista" },
             { title: "Resultado de la prueba (OK/NOK)", style: styleRojo, key: "resultado_evidencia" },
             { title: "Comentarios Adicionales", style: styleRojo, key: "id_jira" },
@@ -1549,9 +1550,16 @@ export class CasosPage implements OnInit {
             headers.forEach(col => {
                 let valor = col.staticValue !== undefined ? col.staticValue : (item[col.key] || '');
 
-                // Ajuste específico para NOK
-                if (col.key === 'resultado_evidencia' && valor === 'NK') {
-                    valor = 'NOK';
+                // Ajuste especifico para NOK
+                if (col.key === 'resultado_evidencia') {
+                    // Si viene vacio, null o 'N/A', lo marcamos como Sin Ejecutar
+                    if (!valor || valor === 'N/A') {
+                        valor = 'Sin Ejecutar';
+                    }
+                    // Ajuste para NOK
+                    else if (valor === 'NK') {
+                        valor = 'NOK';
+                    }
                 }
                 // Si el valor existe y es la columna de Jira, le agregamos el prefijo
                 if (col.key === 'id_jira' && valor) {
@@ -1577,6 +1585,7 @@ export class CasosPage implements OnInit {
         ws['!cols'] = [
             { wch: 30 }, // Requerimiento
             { wch: 30 }, // Caso
+            { wch: 25 }, // Fuente
             { wch: 40 }, // Pasos
             { wch: 40 }, // Resultados
             { wch: 10 }, // Versión

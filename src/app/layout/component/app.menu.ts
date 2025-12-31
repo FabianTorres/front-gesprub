@@ -127,6 +127,17 @@ export class AppMenu implements OnInit {
                     { label: 'Ámbitos', icon: 'pi pi-fw pi-tags', routerLink: ['/pages/config/ambitos'] },
                     { label: 'Fuentes de Información', icon: 'pi pi-fw pi-tags', routerLink: ['/pages/config/fuentes'] }
                 ]
+            },
+            {
+                label: 'Herramientas Externas',
+                items: [
+                    {
+                        label: 'Carga de Vectores',
+                        icon: 'pi pi-fw pi-upload',
+                        url: '/cargavx',
+                        target: '_blank'
+                    }
+                ]
             }
             // La sección de Administración se añade condicionalmente más abajo
         ];

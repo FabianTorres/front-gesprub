@@ -3,7 +3,12 @@ Todos los cambios significativos en este proyecto se documentarán en este archi
 El formato se basa en [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 y este proyecto adhiere al [Versionado Semántico](https://semver.org/lang/es/).
 
-### [2.0.6] - 2025-12-26
+## [2.1.0] - 2025-12-31
+
+### Added
+-   Se agrega la funcionalidad de la gestion de carga de vectores
+
+## [2.0.6] - 2025-12-26
 
 ### Changed
 -   Se mejora la funcionalidad de exportar a Excel para que ahora muestre la fuente.

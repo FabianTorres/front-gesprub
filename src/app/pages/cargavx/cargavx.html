@@ -330,7 +330,7 @@
                 <label for="vectorNum" class="block font-bold mb-2">Vector</label>
                 <p-select [options]="catalogo()" [(ngModel)]="vector.vector" optionLabel="vectorId"
                     optionValue="vectorId" [filter]="true" filterBy="vectorId,nombre" placeholder="Seleccione Vector"
-                    styleClass="w-full" appendTo="body">
+                    styleClass="w-full" appendTo="body" [virtualScroll]="true" [virtualScrollItemSize]="65">
 
                     <ng-template pTemplate="selectedItem" let-selectedOption>
                         <div class="flex align-items-center gap-2" *ngIf="selectedOption">

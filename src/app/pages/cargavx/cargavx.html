@@ -1,298 +1,441 @@
 <p-toast></p-toast>
 <p-confirmDialog [style]="{width: '450px'}"></p-confirmDialog>
 
-<div class="layout-main-container">
-    <p-tabView styleClass="w-full">
+<div class="layout-main-container flex flex-column justify-content-start" style="min-height: 100vh;">
 
-        <p-tabPanel header="Generador de Carga" leftIcon="pi pi-upload">
+    <div class="flex align-items-center justify-content-start gap-5 py-3 px-5 mb-0 bg-primary-reverse"
+        style="background: var(--primary-color); color: white; margin: -2rem -2rem 0 -2rem; width: calc(100% + 4rem); box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);">
 
-            <div class="card border-none shadow-none p-0">
-                <h2 class="text-2xl font-semibold mb-4">Generador de Carga de Vectores</h2>
-                <p class="text-muted-color mb-4">Gestiona los vectores y valida duplicados antes de exportar el archivo
-                    SQL.</p>
+        <div class="flex align-items-center gap-3">
+            <i class="pi pi-calendar text-2xl"></i>
+            <span class="font-bold text-xl">Periodo de Operación:</span>
+        </div>
 
-                <p-toolbar styleClass="mb-4">
-                    <ng-template pTemplate="left">
-                        <button pButton pRipple label="Nuevo Vector" icon="pi pi-plus" class="mr-2"
-                            (click)="abrirNuevo()"></button>
+        <p-dropdown [options]="periodosDisponibles" [(ngModel)]="periodoSeleccionado" (onChange)="cambiarPeriodo()"
+            optionLabel="label" optionValue="value" [style]="{'width':'160px'}" styleClass="border-none shadow-none">
+        </p-dropdown>
+    </div>
+    <div class="flex-grow-1 w-full mt-2">
 
-                        <button pButton pRipple [label]="filtrandoDuplicados() ? 'Ver Todos' : 'Ver Duplicados'"
-                            icon="pi pi-filter" class="mr-2"
-                            [ngClass]="filtrandoDuplicados() ? 'p-button-warning' : 'p-button-secondary p-button-outlined'"
-                            (click)="toggleFiltroDuplicados()"
-                            pTooltip="Muestra solo los registros con RUT, Periodo y Vector repetidos"
-                            tooltipPosition="top">
-                        </button>
-                    </ng-template>
+        <p-tabView styleClass="w-full">
 
-                    <ng-template pTemplate="right">
-                        <button pButton pRipple label="Ver Historial" icon="pi pi-history"
-                            class="p-button-outlined mr-2" (click)="abrirHistorial()">
-                        </button>
-                        <button pButton pRipple label="Exportar SQL (Batch)" icon="pi pi-database" class="p-button mr-2"
-                            (click)="exportarSQL()" pTooltip="Exportar vectores Batch para TR_RESUMEN_TRANS_2010"
-                            tooltipPosition="top">
-                        </button>
+            <p-tabPanel header="Generador de Carga" leftIcon="pi pi-upload">
 
-                        <button pButton pRipple label="Exportar TXT (BigData)" icon="pi pi-file" class="p-button mr-2"
-                            (click)="exportarTXT()" pTooltip="Exportar vectores BigData para Integración"
-                            tooltipPosition="top">
-                        </button>
-                    </ng-template>
-                </p-toolbar>
+                <div class="card border-none shadow-none p-0">
+                    <h2 class="text-2xl font-semibold mb-4">Generador de Carga de Vectores</h2>
+                    <p class="text-muted-color mb-4">Gestiona los vectores y valida duplicados antes de exportar el
+                        archivo
+                        SQL.</p>
 
-                <p-table #dt [value]="vectoresVisuales()" [rows]="10" [paginator]="true"
-                    [rowsPerPageOptions]="[10, 20, 50, 100]" [loading]="loading" responsiveLayout="scroll"
-                    [rowHover]="true" dataKey="id" styleClass="p-datatable-gridlines"
-                    [globalFilterFields]="['rut', 'periodo', 'vector', 'valor', 'tipo']">
+                    <p-toolbar styleClass="mb-4">
+                        <ng-template pTemplate="left">
+                            <button pButton pRipple label="Nuevo Vector" icon="pi pi-plus" class="mr-2"
+                                (click)="abrirNuevo()"></button>
 
-                    <ng-template pTemplate="caption">
+                            <button pButton pRipple [label]="filtrandoDuplicados() ? 'Ver Todos' : 'Ver Duplicados'"
+                                icon="pi pi-filter" class="mr-2"
+                                [ngClass]="filtrandoDuplicados() ? 'p-button-warning' : 'p-button-secondary p-button-outlined'"
+                                (click)="toggleFiltroDuplicados()"
+                                pTooltip="Muestra solo los registros con RUT, Periodo y Vector repetidos"
+                                tooltipPosition="top">
+                            </button>
+                        </ng-template>
+
+                        <ng-template pTemplate="right">
+                            <button pButton pRipple label="Ver Historial" icon="pi pi-history"
+                                class="p-button-outlined mr-2" (click)="abrirHistorial()">
+                            </button>
+                            <button pButton pRipple label="Exportar SQL (Batch)" icon="pi pi-database"
+                                class="p-button mr-2" (click)="exportarSQL()"
+                                pTooltip="Exportar vectores Batch para TR_RESUMEN_TRANS_2010" tooltipPosition="top">
+                            </button>
+
+                            <button pButton pRipple label="Exportar TXT (BigData)" icon="pi pi-file"
+                                class="p-button mr-2" (click)="exportarTXT()"
+                                pTooltip="Exportar vectores BigData para Integración" tooltipPosition="top">
+                            </button>
+                        </ng-template>
+                    </p-toolbar>
+
+                    <p-table #dt [value]="vectoresVisuales()" [rows]="10" [paginator]="true"
+                        [rowsPerPageOptions]="[10, 20, 50, 100]" [loading]="loading" responsiveLayout="scroll"
+                        [rowHover]="true" dataKey="id" styleClass="p-datatable-gridlines"
+                        [globalFilterFields]="['rut', 'periodo', 'vector', 'valor', 'tipo']" sortMode="multiple"
+                        [multiSortMeta]="ordenamientoInicial">
+
+                        <ng-template pTemplate="caption">
+                            <div
+                                class="flex flex-column md:flex-row md:justify-content-between md:align-items-center gap-3">
+                                <span class="text-xl font-bold text-900">Listado de Vectores</span>
+
+                                <div class="flex gap-2 align-items-center">
+                                    <button pButton label="Limpiar" class="p-button-outlined p-button-sm"
+                                        icon="pi pi-filter-slash" (click)="dt.clear()"></button>
+                                    <span class="p-input-icon-left">
+                                        <i class="pi pi-search"></i>
+                                        <input pInputText type="text"
+                                            (input)="dt.filterGlobal($any($event.target).value, 'contains')"
+                                            placeholder="Buscar..." class="p-inputtext-sm" />
+                                    </span>
+                                </div>
+                            </div>
+                        </ng-template>
+
+                        <ng-template pTemplate="header">
+                            <tr>
+                                <th pSortableColumn="rut" style="min-width: 100px">
+                                    <div class="flex justify-between items-center">
+                                        RUT
+                                        <div class="flex align-items-center gap-1">
+                                            <p-sortIcon field="rut"></p-sortIcon>
+                                            <p-columnFilter type="text" field="rut" display="menu"
+                                                placeholder="Buscar RUT"></p-columnFilter>
+                                        </div>
+                                    </div>
+                                </th>
+
+                                <th pSortableColumn="periodo" style="min-width: 50px">
+                                    <div class="flex justify-between items-center">
+                                        Periodo
+                                        <div class="flex align-items-center gap-1">
+                                            <p-sortIcon field="periodo"></p-sortIcon>
+                                            <p-columnFilter type="text" field="periodo" display="menu"
+                                                placeholder="202600"></p-columnFilter>
+                                        </div>
+                                    </div>
+                                </th>
+
+                                <th pSortableColumn="vector" style="min-width: 50px">
+                                    <div class="flex justify-between items-center">
+                                        Vector
+                                        <div class="flex align-items-center gap-1">
+                                            <p-sortIcon field="vector"></p-sortIcon>
+                                            <p-columnFilter type="text" field="vector" display="menu"
+                                                placeholder="N° Vector"></p-columnFilter>
+                                        </div>
+                                    </div>
+                                </th>
+
+                                <th pSortableColumn="valor" style="min-width: 150px">
+                                    <div class="flex justify-between items-center">
+                                        Valor
+                                        <div class="flex align-items-center gap-1">
+                                            <p-sortIcon field="valor"></p-sortIcon>
+                                            <p-columnFilter type="numeric" field="valor"
+                                                display="menu"></p-columnFilter>
+                                        </div>
+                                    </div>
+                                </th>
+
+                                <th pSortableColumn="tipo">
+                                    <div class="flex justify-between items-center">
+                                        Tipo
+                                        <div class="flex align-items-center gap-1">
+                                            <p-sortIcon field="tipo"></p-sortIcon>
+
+                                            <p-columnFilter field="tipo" matchMode="equals" display="menu"
+                                                [showMatchModes]="false" [showOperator]="false" [showAddButton]="false">
+                                                <ng-template pTemplate="filter" let-value let-filter="filterCallback">
+                                                    <p-dropdown [ngModel]="value"
+                                                        [options]="['BATCH', 'BIGDATA_INTEGRADO']"
+                                                        (onChange)="filter($any($event).value)" placeholder="Todos"
+                                                        [style]="{'min-width': '100%'}">
+                                                        <ng-template let-option pTemplate="item">
+                                                            <p-tag [value]="option"
+                                                                [severity]="option === 'BATCH' ? 'info' : 'help'"></p-tag>
+                                                        </ng-template>
+                                                    </p-dropdown>
+                                                </ng-template>
+                                            </p-columnFilter>
+
+                                        </div>
+                                    </div>
+                                </th>
+
+                                <th>RUT 2</th>
+                                <th style="width: 120px">Acciones</th>
+                            </tr>
+                        </ng-template>
+
+                        <ng-template pTemplate="body" let-v>
+                            <tr>
+                                <td class="font-medium">{{v.rut}}-{{v.dv}}</td>
+                                <td>
+                                    {{v.periodo}}
+                                </td>
+                                <td>
+                                    <p-tag [value]="v.vector" severity="success"></p-tag>
+                                </td>
+                                <td>{{v.valor | number}}</td>
+                                <td>
+                                    <p-tag [value]="v.tipo" [severity]="getSeverityTipo(v.vector)"></p-tag>
+                                </td>
+                                <td>
+                                    <span *ngIf="v.rut2">{{v.rut2}}-{{v.dv2}}</span>
+                                    <span *ngIf="!v.rut2" class="text-surface-400 italic">N/A</span>
+                                </td>
+                                <td>
+                                    <div class="flex gap-2">
+                                        <button pButton pRipple icon="pi pi-pencil" class="p-button-rounded "
+                                            (click)="editarVector(v)" pTooltip="Editar" tooltipPosition="top"></button>
+                                        <button pButton pRipple icon="pi pi-trash" class="p-button-rounded "
+                                            (click)="eliminarVector(v)" pTooltip="Eliminar"
+                                            tooltipPosition="top"></button>
+                                        <i *ngIf="v.usuarioModificacion"
+                                            class="pi pi-info-circle text-gray-400 align-self-center cursor-pointer"
+                                            [pTooltip]="'Modificado por: ' + v.usuarioModificacion + ' (' + (v.fechaModificacion | date:'short') + ')'"
+                                            tooltipPosition="left">
+                                        </i>
+                                    </div>
+                                </td>
+                            </tr>
+                        </ng-template>
+
+                        <ng-template pTemplate="empty">
+                            <tr>
+                                <td colspan="6" class="text-center p-4">No se encontraron vectores con los filtros
+                                    actuales.
+                                </td>
+                            </tr>
+                        </ng-template>
+                    </p-table>
+
+                    <div class="flex justify-end mt-3 pr-2" *ngIf="vectores().length > 0">
+                        <span class="text-sm font-medium text-surface-600 dark:text-surface-400">
+                            Mostrando {{ dt.filteredValue ? dt.filteredValue.length : vectoresVisuales().length }}
+                            de {{ vectores().length }} registros totales
+
+                            <span *ngIf="filtrandoDuplicados()" class="font-bold text-orange-500 ml-1">
+                                (Modo: Duplicados)
+                            </span>
+                        </span>
+                    </div>
+                </div>
+
+            </p-tabPanel>
+            <p-tabPanel header="Catálogo de Vectores" leftIcon="pi pi-list">
+                <div class="card border-none shadow-none p-0">
+                    <h2 class="text-xl font-bold mb-4">Maestro de Vectores</h2>
+                    <p class="mb-4">Define qué vectores son Batch y cuáles son BigData Integrados.</p>
+
+
+                    <div style="display: flex; gap: 20px; flex-wrap: wrap; margin-bottom: 2rem;">
+
                         <div
-                            class="flex flex-column md:flex-row md:justify-content-between md:align-items-center gap-3">
-                            <span class="text-xl font-bold text-900">Listado de Vectores</span>
+                            style="flex: 1; min-width: 280px; background: #fff; border-radius: 8px; padding: 1.5rem; box-shadow: 0 4px 15px rgba(0,0,0,0.05); border-left: 5px solid var(--primary-color); display: flex; justify-content: space-between; align-items: center;">
+                            <div>
+                                <span
+                                    style="display: block; color: #64748b; font-weight: 600; font-size: 0.9rem; margin-bottom: 0.5rem; text-transform: uppercase; letter-spacing: 0.5px;">Total
+                                    de Vectores</span>
+                                <div style="color: #1e293b; font-weight: 700; font-size: 2rem; line-height: 1;">{{
+                                    totalesCatalogo().total }}</div>
+                            </div>
+                            <div
+                                style="display: flex; align-items: center; justify-content: center; background-color: var(--primary-50, #eff6ff); border-radius: 50%; width: 3.5rem; height: 3.5rem;">
+                                <i class="pi pi-list text-primary text-2xl"></i>
+                            </div>
+                        </div>
 
-                            <div class="flex gap-2 align-items-center">
-                                <button pButton label="Limpiar" class="p-button-outlined p-button-sm"
-                                    icon="pi pi-filter-slash" (click)="dt.clear()"></button>
+                        <div
+                            style="flex: 1; min-width: 280px; background: #fff; border-radius: 8px; padding: 1.5rem; box-shadow: 0 4px 15px rgba(0,0,0,0.05); border-left: 5px solid #3B82F6; display: flex; flex-direction: column;">
+                            <div
+                                style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                                <div>
+                                    <span
+                                        style="display: block; color: #64748b; font-weight: 600; font-size: 0.9rem; margin-bottom: 0.5rem; text-transform: uppercase; letter-spacing: 0.5px;">Legacy
+                                        (Batch)</span>
+                                    <div style="color: #1e293b; font-weight: 700; font-size: 2rem; line-height: 1;">{{
+                                        totalesCatalogo().batch }}</div>
+                                </div>
+                                <div
+                                    style="display: flex; align-items: center; justify-content: center; background-color: #DBEAFE; border-radius: 50%; width: 3.5rem; height: 3.5rem;">
+                                    <i class="pi pi-database text-blue-500 text-2xl"></i>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div
+                            style="flex: 1; min-width: 280px; background: #fff; border-radius: 8px; padding: 1.5rem; box-shadow: 0 4px 15px rgba(0,0,0,0.05); border-left: 5px solid #A855F7; display: flex; flex-direction: column;">
+                            <div
+                                style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                                <div>
+                                    <span
+                                        style="display: block; color: #64748b; font-weight: 600; font-size: 0.9rem; margin-bottom: 0.5rem; text-transform: uppercase; letter-spacing: 0.5px;">BigData
+                                        Integrado</span>
+                                    <div style="color: #1e293b; font-weight: 700; font-size: 2rem; line-height: 1;">{{
+                                        totalesCatalogo().bigdata }}</div>
+                                </div>
+                                <div
+                                    style="display: flex; align-items: center; justify-content: center; background-color: #F3E8FF; border-radius: 50%; width: 3.5rem; height: 3.5rem;">
+                                    <i class="pi pi-cloud text-purple-500 text-2xl"></i>
+                                </div>
+                            </div>
+
+                        </div>
+
+                    </div>
+
+
+
+
+                    <p-toolbar styleClass="mb-4">
+                        <ng-template pTemplate="left">
+                            <!-- <button pButton label="Gestión de Versiones" icon="pi pi-cog" class="p-button mr-2"
+                            (click)="abrirGestionVersiones()"></button> -->
+                            <button pButton label="Nuevo Vector" icon="pi pi-plus" class="p-button"
+                                (click)="abrirNuevoCatalogo()"></button>
+                        </ng-template>
+
+                        <ng-template pTemplate="right">
+                            <div class="flex align-items-center gap-2">
+                                <label for="switchHist" class="font-bold text-sm">Mostrar Eliminados</label>
+                                <p-inputSwitch id="switchHist" [(ngModel)]="mostrarEliminados"
+                                    (onChange)="toggleEliminados()"></p-inputSwitch>
+                            </div>
+                        </ng-template>
+                    </p-toolbar>
+
+                    <p-table #dtCatalogo [value]="catalogo()" [rows]="10" [paginator]="true"
+                        [rowsPerPageOptions]="[10, 20, 50]" styleClass="p-datatable-gridlines"
+                        [globalFilterFields]="['vectorId', 'nombre', 'tipoTecnologia','versionIngreso', 'estado']"
+                        [rowHover]="true" dataKey="vectorId">
+
+                        <ng-template pTemplate="caption">
+                            <div class="flex flex-wrap justify-content-between align-items-center gap-3">
+                                <span class="text-xl font-bold">Listado Maestro</span>
                                 <span class="p-input-icon-left">
                                     <i class="pi pi-search"></i>
                                     <input pInputText type="text"
-                                        (input)="dt.filterGlobal($any($event.target).value, 'contains')"
-                                        placeholder="Buscar..." class="p-inputtext-sm" />
+                                        (input)="dtCatalogo.filterGlobal($any($event.target).value, 'contains')"
+                                        placeholder="Buscar en catálogo..." />
                                 </span>
                             </div>
-                        </div>
-                    </ng-template>
+                        </ng-template>
 
-                    <ng-template pTemplate="header">
-                        <tr>
-                            <th pSortableColumn="rut" style="min-width: 100px">
-                                <div class="flex justify-between items-center">
-                                    RUT
-                                    <div class="flex align-items-center gap-1">
-                                        <p-sortIcon field="rut"></p-sortIcon>
-                                        <p-columnFilter type="text" field="rut" display="menu"
-                                            placeholder="Buscar RUT"></p-columnFilter>
+                        <ng-template pTemplate="header">
+                            <tr>
+                                <th pSortableColumn="vectorId" style="min-width: 120px">
+                                    <div class="flex justify-between items-center">
+                                        Vector
+                                        <div class="flex align-items-center gap-1">
+                                            <p-sortIcon field="vectorId"></p-sortIcon>
+                                            <p-columnFilter type="text" field="vectorId" display="menu"
+                                                placeholder="Buscar Vector"></p-columnFilter>
+                                        </div>
                                     </div>
-                                </div>
-                            </th>
-
-                            <th pSortableColumn="periodo" style="min-width: 50px">
-                                <div class="flex justify-between items-center">
-                                    Periodo
-                                    <div class="flex align-items-center gap-1">
-                                        <p-sortIcon field="periodo"></p-sortIcon>
-                                        <p-columnFilter type="text" field="periodo" display="menu"
-                                            placeholder="202600"></p-columnFilter>
+                                </th>
+                                <th pSortableColumn="nombre">
+                                    <div class="flex justify-between items-center">
+                                        Nombre
+                                        <div class="flex align-items-center gap-1">
+                                            <p-sortIcon field="nombre"></p-sortIcon>
+                                            <p-columnFilter type="text" field="nombre" display="menu"
+                                                placeholder="Buscar Nombre"></p-columnFilter>
+                                        </div>
                                     </div>
-                                </div>
-                            </th>
-
-                            <th pSortableColumn="vector" style="min-width: 50px">
-                                <div class="flex justify-between items-center">
-                                    Vector
-                                    <div class="flex align-items-center gap-1">
-                                        <p-sortIcon field="vector"></p-sortIcon>
-                                        <p-columnFilter type="text" field="vector" display="menu"
-                                            placeholder="N° Vector"></p-columnFilter>
+                                </th>
+                                <th pSortableColumn="tipoTecnologia">
+                                    <div class="flex justify-between items-center">
+                                        Tipo
+                                        <div class="flex align-items-center gap-1">
+                                            <p-sortIcon field="tipoTecnologia"></p-sortIcon>
+                                            <p-columnFilter field="tipoTecnologia" matchMode="equals" display="menu"
+                                                [showMatchModes]="false" [showOperator]="false" [showAddButton]="false">
+                                                <ng-template pTemplate="filter" let-value let-filter="filterCallback">
+                                                    <p-dropdown [ngModel]="value"
+                                                        [options]="['BATCH', 'BIGDATA_INTEGRADO']"
+                                                        (onChange)="filter($any($event).value)" placeholder="Todos"
+                                                        [style]="{'min-width': '100%'}">
+                                                        <ng-template let-option pTemplate="item">
+                                                            <p-tag [value]="option"
+                                                                [severity]="option === 'BATCH' ? 'info' : 'help'"></p-tag>
+                                                        </ng-template>
+                                                    </p-dropdown>
+                                                </ng-template>
+                                            </p-columnFilter>
+                                        </div>
                                     </div>
-                                </div>
-                            </th>
-
-                            <th pSortableColumn="valor" style="min-width: 150px">
-                                <div class="flex justify-between items-center">
-                                    Valor
-                                    <div class="flex align-items-center gap-1">
-                                        <p-sortIcon field="valor"></p-sortIcon>
-                                        <p-columnFilter type="numeric" field="valor" display="menu"></p-columnFilter>
+                                </th>
+                                <th pSortableColumn="versionIngreso">
+                                    <div class="flex justify-between items-center">
+                                        Versión
+                                        <div class="flex align-items-center gap-1">
+                                            <p-sortIcon field="versionIngreso"></p-sortIcon>
+                                            <p-columnFilter type="text" field="versionIngreso" display="menu"
+                                                placeholder="Buscar Ver."></p-columnFilter>
+                                        </div>
                                     </div>
-                                </div>
-                            </th>
+                                </th>
 
-                            <th pSortableColumn="tipo">
-                                <div class="flex justify-between items-center">
-                                    Tipo
-                                    <div class="flex align-items-center gap-1">
-                                        <p-sortIcon field="tipo"></p-sortIcon>
+                                <th pSortableColumn="estado">
+                                    <div class="flex justify-between items-center">
+                                        Estado
+                                        <div class="flex align-items-center gap-1">
+                                            <p-sortIcon field="estado"></p-sortIcon>
 
-                                        <p-columnFilter field="tipo" matchMode="equals" display="menu"
-                                            [showMatchModes]="false" [showOperator]="false" [showAddButton]="false">
-                                            <ng-template pTemplate="filter" let-value let-filter="filterCallback">
-                                                <p-dropdown [ngModel]="value" [options]="['BATCH', 'BIGDATA_INTEGRADO']"
-                                                    (onChange)="filter($any($event).value)" placeholder="Todos"
-                                                    [style]="{'min-width': '100%'}">
-                                                    <ng-template let-option pTemplate="item">
-                                                        <p-tag [value]="option"
-                                                            [severity]="option === 'BATCH' ? 'info' : 'help'"></p-tag>
-                                                    </ng-template>
-                                                </p-dropdown>
-                                            </ng-template>
-                                        </p-columnFilter>
-
+                                            <p-columnFilter field="estado" matchMode="equals" display="menu"
+                                                [showMatchModes]="false" [showOperator]="false" [showAddButton]="false">
+                                                <ng-template pTemplate="filter" let-value let-filter="filterCallback">
+                                                    <p-dropdown [ngModel]="value"
+                                                        [options]="[{label: 'Activo', value: true}, {label: 'Eliminado', value: false}]"
+                                                        (onChange)="filter($any($event).value)" placeholder="Todos"
+                                                        optionLabel="label" optionValue="value"
+                                                        [style]="{'min-width': '100%'}">
+                                                        <ng-template let-option pTemplate="item">
+                                                            <p-tag [value]="option.label"
+                                                                [severity]="option.value ? 'success' : 'danger'"
+                                                                [icon]="option.value ? 'pi pi-check' : 'pi pi-trash'"></p-tag>
+                                                        </ng-template>
+                                                    </p-dropdown>
+                                                </ng-template>
+                                            </p-columnFilter>
+                                        </div>
                                     </div>
-                                </div>
-                            </th>
+                                </th>
+                                <th style="width: 100px">Acciones</th>
+                            </tr>
+                        </ng-template>
+                        <ng-template pTemplate="body" let-cat>
+                            <tr>
+                                <td class="font-bold"> <p-tag [value]="cat.vectorId" severity="success"></p-tag></td>
+                                <td>
+                                    {{ cat.nombre }}
+                                    <div *ngIf="!cat.estado" class="text-xs text-red-500 font-bold mt-1">
+                                        <i class="pi pi-trash text-xs"></i> Eliminado en v{{ cat.versionRetiro }}
+                                    </div>
+                                </td>
+                                <td>
+                                    <p-tag [value]="cat.tipoTecnologia"
+                                        [severity]="cat.tipoTecnologia === 'BATCH' ? 'info' : 'help'">
+                                    </p-tag>
+                                </td>
 
-                            <th>RUT 2</th>
-                            <th style="width: 120px">Acciones</th>
-                        </tr>
-                    </ng-template>
-
-                    <ng-template pTemplate="body" let-v>
-                        <tr>
-                            <td class="font-medium">{{v.rut}}-{{v.dv}}</td>
-                            <td>
-                                {{v.periodo}}
-                            </td>
-                            <td>
-                                <p-tag [value]="v.vector" severity="success"></p-tag>
-                            </td>
-                            <td>{{v.valor | number}}</td>
-                            <td>
-                                <p-tag [value]="v.tipo" [severity]="getSeverityTipo(v.vector)"></p-tag>
-                            </td>
-                            <td>
-                                <span *ngIf="v.rut2">{{v.rut2}}-{{v.dv2}}</span>
-                                <span *ngIf="!v.rut2" class="text-surface-400 italic">N/A</span>
-                            </td>
-                            <td>
-                                <div class="flex gap-2">
-                                    <button pButton pRipple icon="pi pi-pencil" class="p-button-rounded "
-                                        (click)="editarVector(v)" pTooltip="Editar" tooltipPosition="top"></button>
-                                    <button pButton pRipple icon="pi pi-trash" class="p-button-rounded "
-                                        (click)="eliminarVector(v)" pTooltip="Eliminar" tooltipPosition="top"></button>
-                                    <i *ngIf="v.usuarioModificacion"
-                                        class="pi pi-info-circle text-gray-400 align-self-center cursor-pointer"
-                                        [pTooltip]="'Modificado por: ' + v.usuarioModificacion + ' (' + (v.fechaModificacion | date:'short') + ')'"
-                                        tooltipPosition="left">
-                                    </i>
-                                </div>
-                            </td>
-                        </tr>
-                    </ng-template>
-
-                    <ng-template pTemplate="empty">
-                        <tr>
-                            <td colspan="6" class="text-center p-4">No se encontraron vectores con los filtros actuales.
-                            </td>
-                        </tr>
-                    </ng-template>
-                </p-table>
-
-                <div class="flex justify-end mt-3 pr-2" *ngIf="vectores().length > 0">
-                    <span class="text-sm font-medium text-surface-600 dark:text-surface-400">
-                        Mostrando {{ dt.filteredValue ? dt.filteredValue.length : vectoresVisuales().length }}
-                        de {{ vectores().length }} registros totales
-
-                        <span *ngIf="filtrandoDuplicados()" class="font-bold text-orange-500 ml-1">
-                            (Modo: Duplicados)
-                        </span>
-                    </span>
+                                <td>
+                                    <p-tag *ngIf="cat.estado" [value]="'v' + cat.versionIngreso"
+                                        severity="success"></p-tag>
+                                    <p-tag *ngIf="!cat.estado" [value]="'Elim. v' + cat.versionRetiro"
+                                        severity="danger"></p-tag>
+                                </td>
+                                <td>
+                                    <i class="pi"
+                                        [ngClass]="{'pi-check-circle text-green-500': cat.estado, 'pi-times-circle text-red-500': !cat.estado}"></i>
+                                    <span class="ml-2 font-bold">{{ cat.estado ? 'Activo' : 'Eliminado' }}</span>
+                                </td>
+                                <td>
+                                    <div *ngIf="cat.estado" class="flex gap-2">
+                                        <button pButton icon="pi pi-pencil" class="p-button-rounded"
+                                            (click)="editarCatalogo(cat)"></button>
+                                        <button pButton icon="pi pi-trash" class="p-button-rounded"
+                                            (click)="confirmarBaja(cat)"></button>
+                                    </div>
+                                </td>
+                            </tr>
+                        </ng-template>
+                    </p-table>
                 </div>
-            </div>
-
-        </p-tabPanel>
-        <p-tabPanel header="Catálogo de Vectores" leftIcon="pi pi-list">
-            <div class="card border-none shadow-none p-0">
-                <h2 class="text-xl font-bold mb-4">Maestro de Vectores</h2>
-                <p class="mb-4">Define qué vectores son Batch y cuáles son BigData Integrados.</p>
-
-
-                <div style="display: flex; gap: 20px; flex-wrap: wrap; margin-bottom: 2rem;">
-
-                    <div
-                        style="flex: 1; min-width: 280px; background: #fff; border-radius: 8px; padding: 1.5rem; box-shadow: 0 4px 15px rgba(0,0,0,0.05); border-left: 5px solid var(--primary-color); display: flex; justify-content: space-between; align-items: center;">
-                        <div>
-                            <span
-                                style="display: block; color: #64748b; font-weight: 600; font-size: 0.9rem; margin-bottom: 0.5rem; text-transform: uppercase; letter-spacing: 0.5px;">Total
-                                de Vectores</span>
-                            <div style="color: #1e293b; font-weight: 700; font-size: 2rem; line-height: 1;">{{
-                                totalesCatalogo().total }}</div>
-                        </div>
-                        <div
-                            style="display: flex; align-items: center; justify-content: center; background-color: var(--primary-50, #eff6ff); border-radius: 50%; width: 3.5rem; height: 3.5rem;">
-                            <i class="pi pi-list text-primary text-2xl"></i>
-                        </div>
-                    </div>
-
-                    <div
-                        style="flex: 1; min-width: 280px; background: #fff; border-radius: 8px; padding: 1.5rem; box-shadow: 0 4px 15px rgba(0,0,0,0.05); border-left: 5px solid #3B82F6; display: flex; flex-direction: column;">
-                        <div
-                            style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
-                            <div>
-                                <span
-                                    style="display: block; color: #64748b; font-weight: 600; font-size: 0.9rem; margin-bottom: 0.5rem; text-transform: uppercase; letter-spacing: 0.5px;">Legacy
-                                    (Batch)</span>
-                                <div style="color: #1e293b; font-weight: 700; font-size: 2rem; line-height: 1;">{{
-                                    totalesCatalogo().batch }}</div>
-                            </div>
-                            <div
-                                style="display: flex; align-items: center; justify-content: center; background-color: #DBEAFE; border-radius: 50%; width: 3.5rem; height: 3.5rem;">
-                                <i class="pi pi-database text-blue-500 text-2xl"></i>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div
-                        style="flex: 1; min-width: 280px; background: #fff; border-radius: 8px; padding: 1.5rem; box-shadow: 0 4px 15px rgba(0,0,0,0.05); border-left: 5px solid #A855F7; display: flex; flex-direction: column;">
-                        <div
-                            style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
-                            <div>
-                                <span
-                                    style="display: block; color: #64748b; font-weight: 600; font-size: 0.9rem; margin-bottom: 0.5rem; text-transform: uppercase; letter-spacing: 0.5px;">BigData
-                                    Integrado</span>
-                                <div style="color: #1e293b; font-weight: 700; font-size: 2rem; line-height: 1;">{{
-                                    totalesCatalogo().bigdata }}</div>
-                            </div>
-                            <div
-                                style="display: flex; align-items: center; justify-content: center; background-color: #F3E8FF; border-radius: 50%; width: 3.5rem; height: 3.5rem;">
-                                <i class="pi pi-cloud text-purple-500 text-2xl"></i>
-                            </div>
-                        </div>
-
-                    </div>
-
-                </div>
-
-
-
-
-                <p-toolbar styleClass="mb-4">
-                    <ng-template pTemplate="left">
-                        <button pButton label="Nuevo Vector en Catálogo" icon="pi pi-plus" class="p-button"
-                            (click)="abrirNuevoCatalogo()"></button>
-                    </ng-template>
-                </p-toolbar>
-
-                <p-table [value]="catalogo()" [rows]="10" [paginator]="true" styleClass="p-datatable-gridlines">
-                    <ng-template pTemplate="header">
-                        <tr>
-                            <th pSortableColumn="vectorId">Vector <p-sortIcon field="vectorId"></p-sortIcon></th>
-                            <th pSortableColumn="nombre">Nombre <p-sortIcon field="nombre"></p-sortIcon></th>
-                            <th pSortableColumn="tipoTecnologia">Tipo <p-sortIcon field="tipoTecnologia"></p-sortIcon>
-                            </th>
-                            <th style="width: 100px">Acciones</th>
-                        </tr>
-                    </ng-template>
-                    <ng-template pTemplate="body" let-cat>
-                        <tr>
-                            <td class="font-bold"> <p-tag [value]="cat.vectorId" severity="success"></p-tag></td>
-                            <td>{{ cat.nombre }}</td>
-                            <td>
-                                <p-tag [value]="cat.tipoTecnologia"
-                                    [severity]="cat.tipoTecnologia === 'BATCH' ? 'info' : 'help'">
-                                </p-tag>
-                            </td>
-                            <td>
-                                <button pButton icon="pi pi-pencil" class="p-button-rounded"
-                                    (click)="editarCatalogo(cat)"></button>
-                            </td>
-                        </tr>
-                    </ng-template>
-                </p-table>
-            </div>
-        </p-tabPanel>
-    </p-tabView>
+            </p-tabPanel>
+        </p-tabView>
+    </div>
 </div>
 
 
@@ -449,6 +592,11 @@
             <label for="catNombre" class="font-bold">Nombre</label>
             <input type="text" pInputText id="catNombre" [(ngModel)]="catalogoItem.nombre" class="w-full" />
         </div>
+        <div class="field col-6">
+            <label for="catVer" class="font-bold">Versión {{ esEdicionCatalogo ? 'Actual' : 'Ingreso' }}</label>
+            <input type="text" pInputText id="catVer" [(ngModel)]="catalogoItem.versionIngreso" placeholder="Ej: 1.2"
+                class="w-full" />
+        </div>
         <div class="field mb-3">
             <label class="font-bold block mb-2">Tipo</label>
             <div class="flex gap-3">
@@ -469,5 +617,83 @@
         <button pButton label="Cancelar" icon="pi pi-times" class="p-button-text"
             (click)="catalogoDialog = false"></button>
         <button pButton label="Guardar" icon="pi pi-check" class="p-button-text" (click)="guardarCatalogo()"></button>
+    </ng-template>
+</p-dialog>
+
+<p-dialog [(visible)]="gestionVersionesDialog" [style]="{width: '600px'}" header="Gestión de Documento Normativo"
+    [modal]="true" class="p-fluid">
+
+    <ng-template pTemplate="content">
+
+        <div class="field mb-4">
+            <label class="font-bold block mb-2">Tipo de Operación</label>
+            <div class="flex gap-4">
+                <div class="flex align-items-center">
+                    <p-radioButton name="tg" value="ALTA" [(ngModel)]="tipoGestion" inputId="tg1"></p-radioButton>
+                    <label for="tg1" class="ml-2 font-bold text-green-600">Nuevos Vectores</label>
+                </div>
+                <div class="flex align-items-center">
+                    <p-radioButton name="tg" value="BAJA" [(ngModel)]="tipoGestion" inputId="tg2"></p-radioButton>
+                    <label for="tg2" class="ml-2 font-bold text-red-600">Eliminar Vectores</label>
+                </div>
+            </div>
+        </div>
+
+        <div class="formgrid grid">
+            <div class="field col-4">
+                <label for="vCodigo" class="font-bold">Versión Dococumento de Vectores</label>
+                <input type="text" pInputText id="vCodigo" [(ngModel)]="versionForm.codigo" placeholder="Ej: 1.2" />
+                <small class="block text-gray-500">Periodo: {{ periodoSeleccionado() }}</small>
+            </div>
+            <div class="field col-8">
+                <label for="vDesc" class="font-bold">Descripción (Opcional)</label>
+                <input type="text" pInputText id="vDesc" [(ngModel)]="versionForm.descripcion"
+                    placeholder="Ej: Se elimina de la versión 1.2" />
+            </div>
+        </div>
+
+        <div class="field mt-3">
+            <label for="vLista" class="font-bold block mb-2">
+                {{ tipoGestion === 'ALTA' ? 'Vectores a Crear' : 'Vectores a Eliminar' }}
+            </label>
+            <textarea pInputTextarea id="vLista" [(ngModel)]="versionForm.listaIds" rows="5"
+                placeholder="Ingrese los números de vector separados por coma o salto de línea.&#10;Ejemplo:&#10;381&#10;400&#10;405"
+                class="w-full"></textarea>
+            <small class="block mt-1">
+                {{ tipoGestion === 'ALTA'
+                ? 'Nota: Se crearán como BATCH y Activos para esta versión.'
+                : 'Nota: Se marcarán como INACTIVOS (Históricos) en esta versión.' }}
+            </small>
+        </div>
+
+    </ng-template>
+
+    <ng-template pTemplate="footer">
+        <button pButton label="Cancelar" icon="pi pi-times" class="p-button-text"
+            (click)="gestionVersionesDialog = false"></button>
+        <button pButton label="Procesar" icon="pi pi-check"
+            [class]="tipoGestion === 'ALTA' ? 'p-button-success' : 'p-button-danger'" (click)="procesarVersion()">
+        </button>
+    </ng-template>
+</p-dialog>
+
+<p-dialog [(visible)]="bajaDialog" header="Confirmar Baja de Vector" [modal]="true" [style]="{width: '600px'}">
+    <ng-template pTemplate="content">
+        <div class="flex flex-column align-items-center justify-content-center text-center">
+            <i class="pi pi-exclamation-triangle text-orange-500 text-4xl mb-3"></i>
+            <p class="mb-2">Vas a eliminar el vector <b>{{ vectorAEliminar?.vectorId }}</b>.</p>
+            <p class="mb-4">Por favor, indica en qué versión del documento ocurre esta eliminación.</p>
+
+            <span class="p-float-label w-full">
+                <input pInputText id="vRetiro" [(ngModel)]="versionRetiroInput" class="w-full" />
+                <label for="vRetiro">Versión de eliminación (Ej: 1.4)</label>
+            </span>
+        </div>
+    </ng-template>
+
+    <ng-template pTemplate="footer">
+        <button pButton label="Cancelar" icon="pi pi-times" class="p-button-text" (click)="bajaDialog = false"></button>
+        <button pButton label="Confirmar Eliminación" icon="pi pi-trash" class="p-button-danger"
+            (click)="ejecutarBaja()"></button>
     </ng-template>
 </p-dialog>

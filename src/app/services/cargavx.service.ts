@@ -6,6 +6,7 @@ import { Observable } from 'rxjs';
 import { AutenticacionService } from './autenticacion.service';
 import { VectorLog } from '../models/vector-log';
 import { CatalogoVector } from '../models/catalogo-vector';
+import { VersionDoc } from '../models/version-doc';
 
 @Injectable({
     providedIn: 'root'
@@ -22,8 +23,9 @@ export class CargaVxService {
         return this.authService.usuarioActual()?.nombreUsuario || 'DESCONOCIDO';
     }
 
-    getVectores(): Observable<VectorData[]> {
-        return this.http.get<VectorData[]>(this.apiUrl);
+    getVectores(periodo: number): Observable<VectorData[]> {
+        const params = new HttpParams().set('periodo', periodo.toString());
+        return this.http.get<VectorData[]>(this.apiUrl, { params });
     }
 
 
@@ -60,8 +62,11 @@ export class CargaVxService {
         return this.http.get<VectorLog[]>(`${this.apiUrl}/logs`);
     }
 
-    getCatalogoVectores(): Observable<CatalogoVector[]> {
-        return this.http.get<CatalogoVector[]>(`${this.apiUrl}/catalogo`);
+    getCatalogoVectores(periodo: number, incluirEliminados: boolean = false): Observable<CatalogoVector[]> {
+        const params = new HttpParams()
+            .set('periodo', periodo.toString())
+            .set('incluirEliminados', incluirEliminados.toString());
+        return this.http.get<CatalogoVector[]>(`${this.apiUrl}/catalogo`, { params });
     }
 
     descargarTXT(): Observable<string> {
@@ -74,5 +79,15 @@ export class CargaVxService {
 
     updateCatalogoVector(id: number, vector: CatalogoVector): Observable<CatalogoVector> {
         return this.http.put<CatalogoVector>(`${this.apiUrl}/catalogo/${id}`, vector);
+    }
+
+    getVersiones(periodo: number): Observable<VersionDoc[]> {
+        const params = new HttpParams().set('periodo', periodo.toString());
+        return this.http.get<VersionDoc[]>(`${this.apiUrl}/versiones`, { params });
+    }
+
+    darBajaVector(idVector: number, versionRetiro: string): Observable<any> {
+        const body = { versionRetiro: versionRetiro };
+        return this.http.post(`${this.apiUrl}/catalogo/${idVector}/baja`, body);
     }
 }

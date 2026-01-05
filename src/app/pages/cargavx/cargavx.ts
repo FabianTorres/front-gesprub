@@ -21,11 +21,13 @@ import { SelectModule } from 'primeng/select';
 import { TabViewModule } from 'primeng/tabview';
 import { RadioButtonModule } from 'primeng/radiobutton';
 import { DropdownModule } from 'primeng/dropdown';
+import { SortMeta } from 'primeng/api';
+import { InputSwitchModule } from 'primeng/inputswitch';
 
 @Component({
     standalone: true,
     imports: [
-        CommonModule, FormsModule, TableModule, ButtonModule, ToolbarModule,
+        CommonModule, FormsModule, TableModule, ButtonModule, ToolbarModule, InputSwitchModule,
         DialogModule, InputTextModule, InputNumberModule, ToastModule, TabViewModule, RadioButtonModule,
         ConfirmDialogModule, FieldsetModule, TagModule, TooltipModule, InputTextModule, SelectModule, DropdownModule
     ],
@@ -33,6 +35,20 @@ import { DropdownModule } from 'primeng/dropdown';
     templateUrl: './cargavx.html'
 })
 export class CargaVxPage implements OnInit {
+
+    periodoSeleccionado = signal<number>(202600);
+
+    periodosDisponibles = [
+        { label: 'AT 2025', value: 202500 },
+        { label: 'AT 2026', value: 202600 }
+    ];
+
+    // Estado catalogo
+    mostrarEliminados = signal<boolean>(false); // Switch para ver historial
+
+    versionRetiroInput: string = '';
+    vectorAEliminar: CatalogoVector | null = null;
+    bajaDialog: boolean = false;
 
     vectores = signal<VectorData[]>([]);
     vectoresVisuales = signal<VectorData[]>([]);
@@ -47,6 +63,8 @@ export class CargaVxPage implements OnInit {
     logs = signal<VectorLog[]>([]);
     logDialog: boolean = false;
     loadingLogs: boolean = false;
+
+    ordenamientoInicial: SortMeta[] = [];
 
     catalogo = signal<CatalogoVector[]>([]);
     catalogoDialog: boolean = false;
@@ -69,10 +87,55 @@ export class CargaVxPage implements OnInit {
     ngOnInit() {
         this.cargarDatos();
         this.cargarCatalogo();
+        this.recargarTodo();
+
+        this.ordenamientoInicial = [
+            { field: 'vector', order: 1 },
+            { field: 'rut', order: 1 },
+            { field: 'valor', order: 1 }
+        ];
+    }
+
+    recargarTodo() {
+        this.loading = true;
+        const periodo = this.periodoSeleccionado();
+
+        // 1. Cargar Vectores de la Pestaña 1 (Carga)
+        this.servicio.getVectores(periodo).subscribe({
+            next: (data) => {
+                // ... tu lógica de mapeo de tipos ...
+                const datosEnriquecidos = data.map(item => ({ ...item, tipo: this.getTipoVector(item.vector) }));
+                this.vectores.set(datosEnriquecidos);
+                this.actualizarVista(); // Filtros de duplicados
+                this.loading = false;
+            }
+        });
+
+        // 2. Cargar Catálogo de la Pestaña 2
+        this.servicio.getCatalogoVectores(periodo, this.mostrarEliminados()).subscribe({
+            next: (data) => this.catalogo.set(data)
+        });
+    }
+
+    cambiarPeriodo() {
+        this.messageService.add({ severity: 'info', summary: 'Cambiando Periodo', detail: `Cargando datos para ${this.periodoSeleccionado()}...` });
+        this.recargarTodo();
+    }
+
+    toggleEliminados() {
+        this.recargarTodo();
     }
 
     cargarCatalogo() {
-        this.servicio.getCatalogoVectores().subscribe(data => this.catalogo.set(data));
+        // Obtenemos el periodo y el estado del switch
+        const periodo = this.periodoSeleccionado();
+        const verEliminados = this.mostrarEliminados();
+
+        // Pasamos ambos argumentos al servicio
+        this.servicio.getCatalogoVectores(periodo, verEliminados).subscribe({
+            next: (data) => this.catalogo.set(data),
+            error: () => console.error('Error cargando catálogo')
+        });
     }
 
     getTipoVector(vectorId: number): string {
@@ -123,7 +186,8 @@ export class CargaVxPage implements OnInit {
 
     cargarDatos() {
         this.loading = true;
-        this.servicio.getVectores().subscribe({
+        const periodo = this.periodoSeleccionado();
+        this.servicio.getVectores(periodo).subscribe({
             next: (data) => {
                 // Recorremos los datos y les agregamos la propiedad 'tipo' calculada
                 const datosEnriquecidos = data.map(item => {
@@ -391,10 +455,18 @@ export class CargaVxPage implements OnInit {
 
     abrirNuevoCatalogo() {
         this.catalogoItem = {
-            tipoTecnologia: 'BATCH' // Valor por defecto
+            tipoTecnologia: 'BATCH',
+            versionIngreso: '',
+            estado: true
         };
         this.esEdicionCatalogo = false;
         this.catalogoDialog = true;
+    }
+
+    confirmarBaja(item: CatalogoVector) {
+        this.vectorAEliminar = item;
+        this.versionRetiroInput = '';
+        this.bajaDialog = true;
     }
 
     editarCatalogo(item: CatalogoVector) {
@@ -403,36 +475,120 @@ export class CargaVxPage implements OnInit {
         this.catalogoDialog = true;
     }
 
+    ejecutarBaja() {
+        if (!this.versionRetiroInput || !this.vectorAEliminar) {
+            this.messageService.add({ severity: 'warn', detail: 'Indique la versión de retiro.' });
+            return;
+        }
+
+        this.servicio.darBajaVector(this.vectorAEliminar.id, this.versionRetiroInput).subscribe({
+            next: () => {
+                this.messageService.add({ severity: 'success', summary: 'Eliminado', detail: `Vector dado de baja en v${this.versionRetiroInput}` });
+
+                // Cerramos el diálogo
+                this.bajaDialog = false;
+
+                // Recargamos la tabla para ver el cambio (ahora saldrá rojo)
+                this.cargarCatalogo();
+
+                this.loading = false;
+            },
+            error: (err) => {
+                console.error(err);
+                this.messageService.add({ severity: 'error', summary: 'Error', detail: 'No se pudo dar de baja el vector.' });
+                this.loading = false;
+            }
+        });
+    }
+
     guardarCatalogo() {
-        // Validaciones simples
+        // 1. Validaciones simples
         if (!this.catalogoItem.vectorId || !this.catalogoItem.nombre) {
             this.messageService.add({ severity: 'warn', summary: 'Atención', detail: 'Complete ID y Nombre del vector.' });
             return;
         }
 
-        const itemAGuardar = this.catalogoItem as CatalogoVector;
+        // 2. Convertir y Asignar Periodo
+        // IMPORTANTE: Aseguramos que el objeto tenga el periodo seleccionado actualmente
+        const itemAGuardar = {
+            ...this.catalogoItem,
+            periodo: this.periodoSeleccionado()
+        } as CatalogoVector;
+
+        this.loading = true; // (Opcional) Activar spinner
 
         if (this.esEdicionCatalogo) {
-            // EDITAR
-            this.servicio.updateCatalogoVector(itemAGuardar.vectorId, itemAGuardar).subscribe({
+            // === EDITAR ===
+            // OJO: Aquí usualmente se usa el ID técnico (PK), asegúrate si tu backend espera 'id' o 'vectorId' en la URL.
+            // Asumo que 'id' es la PK de la tabla.
+            this.servicio.updateCatalogoVector(itemAGuardar.id, itemAGuardar).subscribe({
                 next: () => {
                     this.messageService.add({ severity: 'success', summary: 'Éxito', detail: 'Vector actualizado en catálogo' });
                     this.catalogoDialog = false;
-                    this.cargarCatalogo(); // Recargar lista
+                    this.cargarCatalogo();
+                    this.loading = false;
                 },
-                error: () => this.messageService.add({ severity: 'error', summary: 'Error', detail: 'No se pudo actualizar.' })
+                error: (err) => {
+                    console.error(err);
+                    this.messageService.add({ severity: 'error', summary: 'Error', detail: 'No se pudo actualizar.' });
+                    this.loading = false;
+                }
             });
         } else {
-            // CREAR
+            // === CREAR (Aquí manejamos el 409) ===
             this.servicio.createCatalogoVector(itemAGuardar).subscribe({
                 next: () => {
-                    this.messageService.add({ severity: 'success', summary: 'Éxito', detail: 'Vector creado en catálogo' });
+                    this.messageService.add({ severity: 'success', summary: 'Éxito', detail: `Vector ${itemAGuardar.vectorId} creado.` });
                     this.catalogoDialog = false;
-                    this.cargarCatalogo(); // Recargar lista
+                    this.cargarCatalogo();
+                    this.loading = false;
                 },
-                error: () => this.messageService.add({ severity: 'error', summary: 'Error', detail: 'No se pudo crear. Quizás el ID ya existe.' })
+                error: (err) => {
+                    console.error(err);
+                    this.loading = false;
+
+                    // === CAPTURA DEL ERROR 409 ===
+                    if (err.status === 409) {
+                        this.messageService.add({
+                            severity: 'warn',
+                            summary: 'Ya existe',
+                            detail: `El Vector ${itemAGuardar.vectorId} ya existe en el periodo ${itemAGuardar.periodo}.`
+                        });
+                    } else {
+                        this.messageService.add({
+                            severity: 'error',
+                            summary: 'Error',
+                            detail: 'No se pudo crear el vector.'
+                        });
+                    }
+                }
             });
         }
+    }
+
+    gestionVersionesDialog: boolean = false;
+    tipoGestion: 'ALTA' | 'BAJA' = 'ALTA'; // ALTA = Nuevos, BAJA = Eliminar
+    versionForm = {
+        codigo: '',       // Ej: "1.2"
+        descripcion: '',
+        listaIds: ''      // String para pegar IDs: "381, 400, 405"
+    };
+
+    abrirGestionVersiones() {
+        // Reiniciamos el formulario
+        this.versionForm = {
+            codigo: '',
+            descripcion: '',
+            listaIds: ''
+        };
+        this.tipoGestion = 'ALTA'; // Por defecto Alta
+        this.gestionVersionesDialog = true;
+    }
+
+    procesarVersion() {
+        console.log('Procesando versión:', this.versionForm);
+        // Aquí llamaremos al backend más adelante
+        this.gestionVersionesDialog = false;
     }
 
 

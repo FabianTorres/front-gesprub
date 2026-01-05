@@ -3,6 +3,11 @@ Todos los cambios significativos en este proyecto se documentarán en este archi
 El formato se basa en [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 y este proyecto adhiere al [Versionado Semántico](https://semver.org/lang/es/).
 
+## [2.1.1] - 2026-01-05
+
+### Added
+-   Se agrega la funcionalidad del catalogo de vectores
+
 ## [2.1.0] - 2025-12-31
 
 ### Added

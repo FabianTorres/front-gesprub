@@ -71,6 +71,48 @@ export class CargaVxPage implements OnInit {
     catalogoItem: Partial<CatalogoVector> = {};
     esEdicionCatalogo: boolean = false;
 
+    catalogoMap = computed(() => {
+        const map = new Map<number, CatalogoVector>();
+        this.catalogo().forEach(c => map.set(c.vectorId, c));
+        return map;
+    });
+
+    // Esta señal reemplaza a 'vectoresVisuales'. Se recalcula automáticamente si cambia
+    // la lista de vectores, si llega el catálogo o si activas el filtro de duplicados.
+    listaVectoresEnriquecida = computed(() => {
+        const rawVectores = this.vectores();
+        const mapa = this.catalogoMap();
+        const soloDuplicados = this.filtrandoDuplicados();
+
+        // A. Enriquecimiento (Cruce de datos)
+        let data = rawVectores.map(v => {
+            const def = mapa.get(v.vector);
+            return {
+                ...v,
+                // Aquí ocurre la magia: Si el mapa ya cargó, pone el tipo. Si no, espera.
+                tipo: def ? def.tipoTecnologia : 'DESCONOCIDO',
+                // Opcional: También podrías traer el nombre real si lo necesitas
+                nombreCalculado: def ? def.nombre : ''
+            };
+        });
+
+        // B. Filtrado de Duplicados (Tu lógica original migrada aquí)
+        if (soloDuplicados) {
+            const conteo = new Map<string, number>();
+            data.forEach(v => {
+                const key = `${v.rut}-${v.periodo}-${v.vector}`;
+                conteo.set(key, (conteo.get(key) || 0) + 1);
+            });
+
+            data = data.filter(v => {
+                const key = `${v.rut}-${v.periodo}-${v.vector}`;
+                return (conteo.get(key) || 0) > 1;
+            });
+        }
+
+        return data;
+    });
+
     totalesCatalogo = computed(() => {
         const lista = this.catalogo();
         return {
@@ -189,17 +231,7 @@ export class CargaVxPage implements OnInit {
         const periodo = this.periodoSeleccionado();
         this.servicio.getVectores(periodo).subscribe({
             next: (data) => {
-                // Recorremos los datos y les agregamos la propiedad 'tipo' calculada
-                const datosEnriquecidos = data.map(item => {
-                    return {
-                        ...item,
-
-                        tipo: this.getTipoVector(item.vector)
-                    };
-                });
-
-                this.vectores.set(datosEnriquecidos);
-                this.actualizarVista();
+                this.vectores.set(data);
                 this.loading = false;
             },
             error: (err) => {
@@ -211,7 +243,6 @@ export class CargaVxPage implements OnInit {
 
     toggleFiltroDuplicados() {
         this.filtrandoDuplicados.update(val => !val);
-        this.actualizarVista();
 
         if (this.filtrandoDuplicados()) {
             this.messageService.add({ severity: 'info', summary: 'Filtro Activo', detail: 'Mostrando solo registros duplicados.' });

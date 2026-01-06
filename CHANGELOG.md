@@ -3,6 +3,12 @@ Todos los cambios significativos en este proyecto se documentarán en este archi
 El formato se basa en [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 y este proyecto adhiere al [Versionado Semántico](https://semver.org/lang/es/).
 
+## [2.1.2] - 2026-01-06
+
+### Fixed
+-   Se soluciona un problema con la visualizacion del historial de vectores cargados, donde ahora se muestra correctamente la fecha.
+-   Se soluciona problema visual que hacia que el tipo de vector (batch o integrado), no se viera correctamente en la lista de vectores.
+
 ## [2.1.1] - 2026-01-05
 
 ### Added

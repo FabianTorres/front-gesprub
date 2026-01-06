@@ -57,7 +57,7 @@
                         </ng-template>
                     </p-toolbar>
 
-                    <p-table #dt [value]="vectoresVisuales()" [rows]="10" [paginator]="true"
+                    <p-table #dt [value]="listaVectoresEnriquecida()" [rows]="10" [paginator]="true"
                         [rowsPerPageOptions]="[10, 20, 50, 100]" [loading]="loading" responsiveLayout="scroll"
                         [rowHover]="true" dataKey="id" styleClass="p-datatable-gridlines"
                         [globalFilterFields]="['rut', 'periodo', 'vector', 'valor', 'tipo']" sortMode="multiple"
@@ -202,7 +202,8 @@
 
                     <div class="flex justify-end mt-3 pr-2" *ngIf="vectores().length > 0">
                         <span class="text-sm font-medium text-surface-600 dark:text-surface-400">
-                            Mostrando {{ dt.filteredValue ? dt.filteredValue.length : vectoresVisuales().length }}
+                            Mostrando {{ dt.filteredValue ? dt.filteredValue.length : listaVectoresEnriquecida().length
+                            }}
                             de {{ vectores().length }} registros totales
 
                             <span *ngIf="filtrandoDuplicados()" class="font-bold text-orange-500 ml-1">

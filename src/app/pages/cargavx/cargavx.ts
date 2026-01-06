@@ -591,5 +591,25 @@ export class CargaVxPage implements OnInit {
         this.gestionVersionesDialog = false;
     }
 
+    /**
+     * Convierte la fecha string de Azure (que viene en UTC pero sin la 'Z')
+     * a un objeto Date real interpretado como UTC.
+     * Resultado: El navegador restará 3 o 4 horas automáticamente según corresponda.
+     */
+    fixFechaLog(fechaStr: string): Date {
+        if (!fechaStr) return new Date();
+
+        // 1. Si viene en formato SQL "2026-01-06 12:35:00", cambiamos espacio por 'T'
+        let isoStr = fechaStr.replace(' ', 'T');
+
+        // 2. IMPORTANTE: Si no termina en 'Z', se la agregamos.
+        // La 'Z' le grita al navegador: "¡ESTO ES HORA ZULU (UTC)!"
+        if (!isoStr.endsWith('Z')) {
+            isoStr += 'Z';
+        }
+
+        return new Date(isoStr);
+    }
+
 
 }

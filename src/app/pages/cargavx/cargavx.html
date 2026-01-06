@@ -549,7 +549,7 @@
 
             <ng-template pTemplate="body" let-log>
                 <tr>
-                    <td>{{ log.logFecha | date:'dd/MM/yyyy HH:mm' }}</td>
+                    <td>{{ log.logFecha | date:'dd/MM/yyyy HH:mm':'-0300' }}</td>
                     <td class="font-bold">{{ log.logUsuario }}</td>
                     <td>
                         <p-tag [value]="log.tipoAccion" [severity]="getSeverityAccion(log.tipoAccion)"></p-tag>

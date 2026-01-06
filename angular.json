@@ -29,6 +29,11 @@
                             {
                                 "glob": "**/*",
                                 "input": "public"
+                            },
+                            {
+                                "glob": "CHANGELOG.md",
+                                "input": "./",
+                                "output": "/assets/"
                             }
                         ],
                         "styles": [
@@ -106,6 +111,6 @@
         }
     },
     "cli": {
-      "analytics": false
+        "analytics": false
     }
 }

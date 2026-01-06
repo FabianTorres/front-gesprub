@@ -6,6 +6,7 @@ import Aura from '@primeng/themes/aura';
 import { providePrimeNG } from 'primeng/config';
 import { appRoutes } from './app.routes';
 import { registerLocaleData } from '@angular/common';
+import { provideMarkdown } from 'ngx-markdown';
 import localeEsCL from '@angular/common/locales/es-CL';
 
 import { authInterceptor } from './app/interceptors/auth.interceptor';
@@ -17,11 +18,12 @@ export const appConfig: ApplicationConfig = {
         provideRouter(appRoutes, withInMemoryScrolling({ anchorScrolling: 'enabled', scrollPositionRestoration: 'enabled' }), withEnabledBlockingInitialNavigation()),
         provideHttpClient(withFetch(), withInterceptors([authInterceptor])),
         provideAnimationsAsync(),
-        providePrimeNG({ theme: { 
-                preset: Aura, 
+        providePrimeNG({
+            theme: {
+                preset: Aura,
                 options: { darkModeSelector: '.app-dark' }
             },
-        translation: {
+            translation: {
                 startsWith: 'Comienza con',
                 contains: 'Contiene',
                 notContains: 'No contiene',
@@ -65,13 +67,14 @@ export const appConfig: ApplicationConfig = {
                 weak: 'Débil',
                 medium: 'Media',
                 strong: 'Fuerte'
-            
+
             }
-        
-        
-        
+
+
+
         }),
 
-        { provide: LOCALE_ID, useValue: 'es-CL' }
+        { provide: LOCALE_ID, useValue: 'es-CL' },
+        provideMarkdown()
     ]
 };

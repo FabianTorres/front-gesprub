@@ -9,6 +9,9 @@ y este proyecto adhiere al [Versionado Semántico](https://semver.org/lang/es/).
 -   Se soluciona un problema con la visualizacion del historial de vectores cargados, donde ahora se muestra correctamente la fecha.
 -   Se soluciona problema visual que hacia que el tipo de vector (batch o integrado), no se viera correctamente en la lista de vectores.
 
+### Added
+-   Se agrega la funcionalidad de mostrar el changelog en el footer
+
 ## [2.1.1] - 2026-01-05
 
 ### Added

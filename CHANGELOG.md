@@ -3,6 +3,11 @@ Todos los cambios significativos en este proyecto se documentarán en este archi
 El formato se basa en [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 y este proyecto adhiere al [Versionado Semántico](https://semver.org/lang/es/).
 
+## [2.1.3] - 2026-01-13
+
+### Changed
+-   Se cambia la logica de descarga masiva, para que ahora se adapte al limite de tamaño seleccionado
+
 ## [2.1.2] - 2026-01-06
 
 ### Fixed

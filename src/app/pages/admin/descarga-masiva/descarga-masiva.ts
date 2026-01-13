@@ -6,6 +6,8 @@ import { CardModule } from 'primeng/card';
 import { ButtonModule } from 'primeng/button';
 import { SelectModule } from 'primeng/select';
 import { ToastModule } from 'primeng/toast';
+import { InputNumberModule } from 'primeng/inputnumber';
+import { TooltipModule } from 'primeng/tooltip';
 import { ProyectoService } from '../../../services/proyecto.service';
 import { ComponenteService } from '../../../services/componente.service';
 import { Proyecto } from '../../../models/proyecto';
@@ -19,7 +21,9 @@ import { Componente } from '../../../models/componente';
         CardModule,
         ButtonModule,
         SelectModule,
-        ToastModule
+        ToastModule,
+        InputNumberModule,
+        TooltipModule
     ],
     providers: [MessageService],
     templateUrl: './descarga-masiva.html'
@@ -44,6 +48,9 @@ export class DescargaMasivaPage implements OnInit {
 
     //Variable para el filtro de estado
     estadoSeleccionadoId = signal<number | null>(null);
+
+    //Variable para el limite de tamaño de archivo
+    limiteMb: number = 10;
 
     // Opciones basadas en tus IDs de base de datos
     opcionesEstado = [
@@ -88,7 +95,7 @@ export class DescargaMasivaPage implements OnInit {
         const estadoLabel = this.opcionesEstado.find(e => e.value === this.estadoSeleccionadoId())?.label || 'Total';
         this.messageService.add({ severity: 'info', summary: 'Procesando', detail: `Generando ZIP (${estadoLabel}), espere...` });
 
-        this.componenteService.descargarZipEvidencias(this.componenteSeleccionadoId, this.estadoSeleccionadoId()).subscribe({
+        this.componenteService.descargarZipEvidencias(this.componenteSeleccionadoId, this.estadoSeleccionadoId(), this.limiteMb).subscribe({
             next: (blob) => {
                 // Crear nombre del archivo con fecha
                 const nombreComponente = this.componentes().find(c => c.id_componente === this.componenteSeleccionadoId)?.nombre_componente || 'componente';

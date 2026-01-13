@@ -33,15 +33,26 @@ export class ComponenteService {
     }
 
     /**
-     * Descarga un ZIP con todas las evidencias del componente o por idEstadoModificacion
+     * Descarga un ZIP con todas las evidencias.
+     * Soporta filtro por estado y límite de tamaño para particionado (Jira).
      * Endpoint: GET /api/componente/{id}/descargar-zip
+     * * @param idComponente ID del componente
+     * @param idEstadoModificacion (Opcional) ID del estado para filtrar
+     * @param limiteMb (Opcional) Límite en Megabytes para dividir el archivo. Default 20MB.
      */
-    descargarZipEvidencias(idComponente: number, idEstadoModificacion?: number | null) {
+    descargarZipEvidencias(idComponente: number, idEstadoModificacion?: number | null, limiteMb: number = 20): Observable<Blob> {
         let params = new HttpParams();
 
-        // Si el usuario seleccionó un filtro específico, lo agregamos a la URL
+        // 1. Filtro de Estado
         if (idEstadoModificacion) {
             params = params.set('idEstadoModificacion', idEstadoModificacion.toString());
+        }
+
+        // 2. Límite de Tamaño (Conversión MB -> Bytes)
+        // El backend espera 'limiteBytes' (long)
+        if (limiteMb) {
+            const limiteBytes = limiteMb * 1024 * 1024;
+            params = params.set('limiteBytes', limiteBytes.toString());
         }
 
         return this.http.get(`${this.apiUrl}/${idComponente}/descargar-zip`, {

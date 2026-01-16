@@ -56,7 +56,7 @@
                             </button>
 
                             <button pButton pRipple label="Exportar Modif. 599" icon="pi pi-file-edit"
-                                class="p-button-warning mr-2" (click)="descargarModificaciones599()"
+                                class="p-button-warning mr-2" (click)="descargarModificaciones599()" [disabled]="true"
                                 pTooltip="Descarga Excel con vectores 599 para Graciela">
                             </button>
                         </ng-template>
@@ -755,19 +755,20 @@
                 </div>
             </div>
 
-            <div class="w-full surface-card p-3 border-round border-1 border-300 hover:surface-hover transition-colors cursor-pointer flex align-items-center"
-                (click)="rutaSeleccionada599 = 'UPDATE'"
-                [ngClass]="{'border-orange-500 bg-orange-50 shadow-md': rutaSeleccionada599 === 'UPDATE'}">
+            <div
+                class="w-full surface-card p-3 border-round border-1 border-300 flex align-items-center opacity-60 cursor-not-allowed">
 
-                <p-radioButton name="ruta599" value="UPDATE" [(ngModel)]="rutaSeleccionada599"
-                    inputId="rutaUpdate"></p-radioButton>
+                <p-radioButton name="ruta599" value="UPDATE" [disabled]="true" [(ngModel)]="rutaSeleccionada599"
+                    inputId="rutaUpdate">
+                </p-radioButton>
 
                 <div class="ml-3">
-                    <label for="rutaUpdate" class="font-bold text-orange-700 text-lg cursor-pointer block mb-1">SÍ
-                        existe, quiero modificarlo</label>
+                    <label for="rutaUpdate" class="font-bold text-orange-700 text-lg block mb-1">
+                        SÍ existe, quiero modificarlo
+                    </label>
                     <span class="text-gray-600 text-sm block">
-                        Ya existe en la Herramienta de Propuesta. Se separará en el <strong>Excel Modif. 599</strong> y
-                        se enviará a Graciela Saur.
+                        Si ya existe en la Herramienta de Propuesta, debes modificarlo en el RIAC a través de un
+                        requerimiento al área de Calidad. Hablar con Fabián Torres para detalles.
                     </span>
                 </div>
             </div>

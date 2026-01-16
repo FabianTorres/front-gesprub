@@ -3,6 +3,11 @@ Todos los cambios significativos en este proyecto se documentarán en este archi
 El formato se basa en [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 y este proyecto adhiere al [Versionado Semántico](https://semver.org/lang/es/).
 
+## [2.1.4] - 2026-01-16
+
+### Changed
+-   Se mejora la funcionalidad de exportar en modulo de Carga VX. Ahora se exporta el Vx599 dependiendo del flujo seleccionado.
+
 ## [2.1.3] - 2026-01-13
 
 ### Changed

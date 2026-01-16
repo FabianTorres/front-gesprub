@@ -69,8 +69,13 @@ export class CargaVxService {
         return this.http.get<CatalogoVector[]>(`${this.apiUrl}/catalogo`, { params });
     }
 
-    descargarTXT(): Observable<string> {
-        return this.http.get(`${this.apiUrl}/descargar-txt`, { responseType: 'text' });
+    descargarTXT(periodo: number): Observable<string> {
+        const params = new HttpParams().set('periodo', periodo.toString());
+
+        return this.http.get(`${this.apiUrl}/descargar-txt`, {
+            params: params,       // <--- Aquí enviamos ?periodo=202600
+            responseType: 'text'  // <--- Esto es vital para que no falle el parseo JSON
+        });
     }
 
     createCatalogoVector(vector: CatalogoVector): Observable<CatalogoVector> {
@@ -89,5 +94,22 @@ export class CargaVxService {
     darBajaVector(idVector: number, versionRetiro: string): Observable<any> {
         const body = { versionRetiro: versionRetiro };
         return this.http.post(`${this.apiUrl}/catalogo/${idVector}/baja`, body);
+    }
+
+    descargarModificaciones599(periodo: number): Observable<string> {
+        const params = new HttpParams().set('periodo', periodo.toString());
+
+        // CAMBIO CLAVE: responseType: 'text'
+        // Esto asume que el backend enviará un String con formato CSV
+        return this.http.get(`${this.apiUrl}/descargar-modif-599`, {
+            params: params,
+            responseType: 'text'
+        });
+    }
+
+    // Actualiza el estado a procesado=TRUE
+    marcar599ComoEnviados(periodo: number): Observable<void> {
+        const params = new HttpParams().set('periodo', periodo.toString());
+        return this.http.post<void>(`${this.apiUrl}/marcar-enviados-599`, {}, { params });
     }
 }

@@ -43,6 +43,11 @@ export class CargaVxPage implements OnInit {
         { label: 'AT 2026', value: 202600 }
     ];
 
+    //VARIABLES PARA EL VX599
+    dialogoDecision599 = false;
+    rutaSeleccionada599: 'INSERT' | 'UPDATE' | null = null;
+    tempVector599: any = null; // Guarda los datos temporalmente
+
     // Estado catalogo
     mostrarEliminados = signal<boolean>(false); // Switch para ver historial
 
@@ -194,8 +199,8 @@ export class CargaVxPage implements OnInit {
     // Exportar TXT
     exportarTXT() {
         this.messageService.add({ severity: 'info', summary: 'Generando', detail: 'Solicitando archivo BigData...' });
-
-        this.servicio.descargarTXT().subscribe({
+        this.loading = true;
+        this.servicio.descargarTXT(this.periodoSeleccionado()).subscribe({
             next: (data: string) => {
                 // 1. Validar si llegó texto
                 if (!data || data.trim().length === 0) {
@@ -218,10 +223,12 @@ export class CargaVxPage implements OnInit {
                 window.URL.revokeObjectURL(url);
 
                 this.messageService.add({ severity: 'success', summary: 'Descargado', detail: 'Archivo TXT generado correctamente.' });
+                this.loading = false;
             },
             error: (err) => {
                 console.error(err);
                 this.messageService.add({ severity: 'error', summary: 'Error', detail: 'No se pudo descargar el archivo.' });
+                this.loading = false;
             }
         });
     }
@@ -249,6 +256,13 @@ export class CargaVxPage implements OnInit {
         } else {
             this.messageService.add({ severity: 'info', summary: 'Filtro Inactivo', detail: 'Mostrando todos los registros.' });
         }
+    }
+
+    // Helper para saber si un vector está "en espera" de ser exportado a Excel
+    esPendienteDeEnvio(v: VectorData): boolean {
+        return v.vector === 599 &&
+            v.intencionCarga === 'UPDATE' &&
+            !v.procesado; // Si ya fue procesado, deja de ser pendiente
     }
 
     // Función auxiliar para calcular qué mostrar
@@ -324,6 +338,24 @@ export class CargaVxPage implements OnInit {
             return;
         }
 
+        // Buscamos si este vector ya existe en la lista que estamos viendo en pantalla
+        if (!this.esEdicion) {
+            const yaExiste = this.vectores().find(v =>
+                v.rut === this.vector.rut &&
+                v.vector === this.vector.vector &&
+                v.periodo === this.vector.periodo
+            );
+
+            if (yaExiste) {
+                this.messageService.add({
+                    severity: 'error',
+                    summary: 'Duplicado Detectado',
+                    detail: `El RUT ${this.vector.rut} ya tiene el vector ${this.vector.vector} cargado en esta lista.`
+                });
+                return; // 🛑 DETENEMOS TODO AQUÍ
+            }
+        }
+
         // Si es edición, actualizamos directamente (asumimos que el usuario sabe lo que hace al editar)
         // Opcional: Podrías validar también en edición si cambian los campos clave.
         if (this.esEdicion) {
@@ -331,40 +363,107 @@ export class CargaVxPage implements OnInit {
             return;
         }
 
-        // === FLUJO NUEVO: VERIFICACIÓN PREVIA ===
-        // Antes de guardar, consultamos al backend
-        this.loading = true; // Feedback visual sutil
+        // Si el usuario intenta crear un 599, pausamos y mostramos el diálogo.
+        if (this.vector.vector === 599) {
+            this.tempVector599 = { ...this.vector }; // Copia de seguridad
+            this.rutaSeleccionada599 = null;         // Resetear radio buttons
+            this.dialogoDecision599 = true;
+            return;
+        }
 
-        this.servicio.verificarExistencia(this.vector.rut, this.vector.periodo, this.vector.vector)
+        // Si no es 599, sigue el flujo normal de verificación que ya tenías
+        this.verificarYGuardarNormal();
+    }
+
+    // Verificacion de duplicacion
+    verificarYGuardarNormal() {
+        this.loading = true;
+        this.servicio.verificarExistencia(this.vector.rut!, this.vector.periodo!, this.vector.vector!)
             .subscribe({
                 next: (existe) => {
                     this.loading = false;
-
                     if (existe) {
-                        // CASO: YA EXISTE -> PREGUNTAR AL USUARIO
                         this.confirmationService.confirm({
                             header: 'Registro Duplicado',
-                            message: `Ya existe un registro con RUT ${this.vector.rut}, Periodo ${this.vector.periodo} y Vector ${this.vector.vector}.<br><br>¿Desea guardarlo de todas formas?`,
-                            icon: 'pi pi-exclamation-circle',
-                            acceptLabel: 'Sí, Guardar',
-                            rejectLabel: 'Cancelar',
-                            acceptButtonStyleClass: 'p-button-warning', // Color amarillo de advertencia
-                            accept: () => {
-                                // Si acepta, procedemos a guardar
-                                this.ejecutarGuardado();
-                            }
+                            message: 'Este registro ya existe. ¿Guardar de todas formas?',
+                            accept: () => this.ejecutarGuardado()
                         });
                     } else {
-                        // CASO: NO EXISTE -> GUARDAR DIRECTAMENTE
                         this.ejecutarGuardado();
                     }
-                    this.cargarDatos()
                 },
-                error: (err) => {
-                    this.loading = false;
-                    this.messageService.add({ severity: 'error', summary: 'Error', detail: 'No se pudo verificar la existencia del registro.' });
-                }
+                error: () => this.loading = false
             });
+    }
+
+    //FUNCIONES PARA EL DIALOGO 599 ===
+
+    cancelarDecision599() {
+        this.dialogoDecision599 = false;
+        this.tempVector599 = null;
+    }
+
+    confirmarDecision599() {
+        if (!this.rutaSeleccionada599 || !this.tempVector599) return;
+
+        // Asignamos la intención elegida por el usuario
+        this.vector = {
+            ...this.tempVector599,
+            intencionCarga: this.rutaSeleccionada599 // <--- ESTO VA AL BACKEND
+        };
+
+        // Cerramos diálogo y procedemos a guardar sin verificar existencia (porque el usuario ya decidió)
+        this.dialogoDecision599 = false;
+        this.ejecutarGuardado();
+    }
+
+    //FUNCIÓN DE EXPORTACIÓN Y CIERRE 
+    descargarModificaciones599() {
+        this.loading = true;
+        this.servicio.descargarModificaciones599(this.periodoSeleccionado()).subscribe({
+            next: (data: string) => {
+                if (!data || data.trim().length === 0) { // Validación simple de archivo vacío
+                    this.messageService.add({ severity: 'info', summary: 'Al día', detail: 'No hay pendientes.' });
+                    this.loading = false;
+                    return;
+                }
+
+                // Agregamos \uFEFF al inicio
+                const BOM = '\uFEFF';
+                const contenidoCsv = BOM + data;
+
+                const blob = new Blob([contenidoCsv], { type: 'text/csv;charset=utf-8' });
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                // Cambiamos extensión a .csv
+                a.download = `MODIF_599_${this.periodoSeleccionado()}.csv`;
+                a.click();
+                this.loading = false;
+
+                // PREGUNTA DE CIERRE
+                setTimeout(() => {
+                    this.confirmationService.confirm({
+                        header: 'Confirmar Envío',
+                        message: '¿Marcar registros como "ENVIADOS" para que no salgan la próxima vez?',
+                        icon: 'pi pi-check-circle',
+                        acceptLabel: 'Sí, Marcar',
+                        accept: () => this.marcarComoProcesados()
+                    });
+                }, 4500);
+            },
+            error: () => {
+                this.loading = false;
+                this.messageService.add({ severity: 'error', summary: 'Error', detail: 'Falló la descarga.' });
+            }
+        });
+    }
+
+    marcarComoProcesados() {
+        this.servicio.marcar599ComoEnviados(this.periodoSeleccionado()).subscribe(() => {
+            this.messageService.add({ severity: 'success', summary: 'Listo', detail: 'Registros marcados.' });
+            this.cargarDatos(); // Recargar tabla para actualizar colores
+        });
     }
 
     /**

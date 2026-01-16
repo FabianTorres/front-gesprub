@@ -54,6 +54,11 @@
                                 class="p-button mr-2" (click)="exportarTXT()"
                                 pTooltip="Exportar vectores BigData para Integración" tooltipPosition="top">
                             </button>
+
+                            <button pButton pRipple label="Exportar Modif. 599" icon="pi pi-file-edit"
+                                class="p-button-warning mr-2" (click)="descargarModificaciones599()"
+                                pTooltip="Descarga Excel con vectores 599 para Graciela">
+                            </button>
                         </ng-template>
                     </p-toolbar>
 
@@ -167,8 +172,19 @@
                                     <p-tag [value]="v.vector" severity="success"></p-tag>
                                 </td>
                                 <td>{{v.valor | number}}</td>
-                                <td>
-                                    <p-tag [value]="v.tipo" [severity]="getSeverityTipo(v.vector)"></p-tag>
+                                <td style="min-width: 100px;">
+                                    <div class="flex align-items-center gap-2">
+                                        <span class="font-bold text-lg">{{ v.vector }}</span>
+
+                                        <p-tag *ngIf="esPendienteDeEnvio(v)" severity="warning" icon="pi pi-clock"
+                                            value="PENDIENTE"
+                                            pTooltip="Registro de modificación manual pendiente de enviar a Graciela Saud.">
+                                        </p-tag>
+
+                                        <p-tag *ngIf="!esPendienteDeEnvio(v)" [value]="v.tipo"
+                                            [severity]="getSeverityTipo(v.vector)">
+                                        </p-tag>
+                                    </div>
                                 </td>
                                 <td>
                                     <span *ngIf="v.rut2">{{v.rut2}}-{{v.dv2}}</span>
@@ -525,7 +541,7 @@
     <ng-template pTemplate="footer">
         <button pButton pRipple label="Cancelar" icon="pi pi-times" class="p-button-text"
             (click)="vectorDialog = false"></button>
-        <button pButton pRipple label="Guardar" icon="pi pi-check" class="p-button-text"
+        <button pButton pRipple label="Guardar" icon="pi pi-check" class="p-button-primary"
             (click)="guardarVector()"></button>
     </ng-template>
 </p-dialog>
@@ -696,5 +712,77 @@
         <button pButton label="Cancelar" icon="pi pi-times" class="p-button-text" (click)="bajaDialog = false"></button>
         <button pButton label="Confirmar Eliminación" icon="pi pi-trash" class="p-button-danger"
             (click)="ejecutarBaja()"></button>
+    </ng-template>
+</p-dialog>
+<p-dialog header="⚠️ Vector 599 Detectado - Decisión de Ruta" [(visible)]="dialogoDecision599" [modal]="true"
+    [style]="{width: '600px'}" [closable]="false" [draggable]="false">
+
+    <div class="flex flex-col gap-4 pt-2">
+
+        <div class="p-3 border-round bg-blue-50 text-blue-900 border-blue-200 border-1 flex items-start gap-3">
+            <i class="pi pi-info-circle text-2xl mt-1"></i>
+            <div>
+                <span class="font-bold text-lg block mb-1">Atención: Vector Especial</span>
+                <p class="m-0 line-height-3 text-base">
+                    Estás cargando el <strong>Vector 599</strong>. Este requiere un tratamiento diferenciado para evitar
+                    duplicidad.
+                </p>
+            </div>
+        </div>
+
+        <div class="text-center">
+            <h3 class="text-xl font-bold text-900 m-0">¿Este registro ya existe en el SII?</h3>
+            <p class="text-gray-600 mt-2 mb-0">Para comprobarlo, debes ir a la Herramienta de Propuesta del SII y
+                verificar que el Rut no tenga el vector 599</p>
+        </div>
+
+        <div class="flex flex-col gap-3 w-full">
+
+            <div class="w-full surface-card p-3 border-round border-1 border-300 hover:surface-hover transition-colors cursor-pointer flex align-items-center"
+                (click)="rutaSeleccionada599 = 'INSERT'"
+                [ngClass]="{'border-green-500 bg-green-50 shadow-md' : rutaSeleccionada599 === 'INSERT'}">
+
+                <p-radioButton name="ruta599" value="INSERT" [(ngModel)]="rutaSeleccionada599"
+                    inputId="rutaInsert"></p-radioButton>
+
+                <div class="ml-3">
+                    <label for="rutaInsert" class="font-bold text-green-700 text-lg cursor-pointer block mb-1">NO, es un
+                        dato Nuevo</label>
+                    <span class="text-gray-600 text-sm block">
+                        No existe en la Herramienta de Propuesta. Se incluirá en el archivo <strong>TXT Bigdata</strong>
+                        a cargar de forma normal.
+                    </span>
+                </div>
+            </div>
+
+            <div class="w-full surface-card p-3 border-round border-1 border-300 hover:surface-hover transition-colors cursor-pointer flex align-items-center"
+                (click)="rutaSeleccionada599 = 'UPDATE'"
+                [ngClass]="{'border-orange-500 bg-orange-50 shadow-md': rutaSeleccionada599 === 'UPDATE'}">
+
+                <p-radioButton name="ruta599" value="UPDATE" [(ngModel)]="rutaSeleccionada599"
+                    inputId="rutaUpdate"></p-radioButton>
+
+                <div class="ml-3">
+                    <label for="rutaUpdate" class="font-bold text-orange-700 text-lg cursor-pointer block mb-1">SÍ
+                        existe, quiero modificarlo</label>
+                    <span class="text-gray-600 text-sm block">
+                        Ya existe en la Herramienta de Propuesta. Se separará en el <strong>Excel Modif. 599</strong> y
+                        se enviará a Graciela Saur.
+                    </span>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <ng-template pTemplate="footer">
+        <div class="flex justify-end gap-2 mt-3">
+            <button pButton label="Cancelar Operación" icon="pi pi-times" class="p-button-text p-button"
+                (click)="cancelarDecision599()">
+            </button>
+            <button pButton label="Confirmar Decisión" icon="pi pi-check" class="p-button-primary px-4"
+                [disabled]="!rutaSeleccionada599" (click)="confirmarDecision599()">
+            </button>
+        </div>
     </ng-template>
 </p-dialog>

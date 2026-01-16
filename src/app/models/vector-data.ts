@@ -13,4 +13,7 @@ export interface VectorData {
     fechaModificacion?: string;
 
     tipo?: string;
+
+    intencionCarga?: 'INSERT' | 'UPDATE';
+    procesado?: boolean;
 }

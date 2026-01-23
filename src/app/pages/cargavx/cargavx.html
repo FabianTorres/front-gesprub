@@ -164,7 +164,7 @@
 
                         <ng-template pTemplate="body" let-v>
                             <tr>
-                                <td class="font-medium">{{v.rut}}-{{v.dv}}</td>
+                                <td class="font-medium">{{v.rut}}-{{v.dv | uppercase}}</td>
                                 <td>
                                     {{v.periodo}}
                                 </td>
@@ -187,7 +187,7 @@
                                     </div>
                                 </td>
                                 <td>
-                                    <span *ngIf="v.rut2">{{v.rut2}}-{{v.dv2}}</span>
+                                    <span *ngIf="v.rut2">{{v.rut2}}-{{v.dv2 | uppercase}}</span>
                                     <span *ngIf="!v.rut2" class="text-surface-400 italic">N/A</span>
                                 </td>
                                 <td>

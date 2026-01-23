@@ -328,7 +328,15 @@ export class CargaVxPage implements OnInit {
     guardarVector() {
         this.submitted = true;
 
-        // Validaciones básicas
+        // Se cambia la k minuscula a mayuscula
+        if (this.vector.dv) {
+            this.vector.dv = this.vector.dv.toUpperCase();
+        }
+        if (this.vector.dv2) {
+            this.vector.dv2 = this.vector.dv2.toUpperCase();
+        }
+
+        // Validaciones basicas
         if (!this.vector.rut || !this.vector.dv || !this.vector.periodo || !this.vector.vector) {
             return;
         }
@@ -352,7 +360,7 @@ export class CargaVxPage implements OnInit {
                     summary: 'Duplicado Detectado',
                     detail: `El RUT ${this.vector.rut} ya tiene el vector ${this.vector.vector} cargado en esta lista.`
                 });
-                return; // 🛑 DETENEMOS TODO AQUÍ
+                return;
             }
         }
 
@@ -522,12 +530,14 @@ export class CargaVxPage implements OnInit {
         if (valor && valor.includes('-')) {
             const partes = valor.split('-');
             if (partes.length === 2) {
+                const dvMayuscula = partes[1].trim().toUpperCase();
+
                 if (campo === 'principal') {
                     this.vector.rut = Number(partes[0]);
-                    this.vector.dv = partes[1];
+                    this.vector.dv = dvMayuscula;
                 } else {
                     this.vector.rut2 = Number(partes[0]);
-                    this.vector.dv2 = partes[1];
+                    this.vector.dv2 = dvMayuscula;
                 }
             }
         }

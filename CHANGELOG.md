@@ -3,6 +3,11 @@ Todos los cambios significativos en este proyecto se documentarán en este archi
 El formato se basa en [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 y este proyecto adhiere al [Versionado Semántico](https://semver.org/lang/es/).
 
+## [2.1.5] - 2026-01-23
+
+### Fixed (Hotfix)
+-   Se corrige el problema que permitia agregar un rut con DV 'k' en miniscula. Ahora siempre se considerará el dv en mayuscula.
+
 ## [2.1.4] - 2026-01-16
 
 ### Changed

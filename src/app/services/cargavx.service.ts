@@ -54,8 +54,14 @@ export class CargaVxService {
         return this.http.delete<void>(`${this.apiUrl}/${id}`, { params });
     }
 
-    descargarSQL(): Observable<Blob> {
-        return this.http.get(`${this.apiUrl}/descargar-sql`, { responseType: 'blob' });
+    descargarSQL(periodo: number): Observable<Blob> {
+        // Creamos el parámetro HTTP
+        const params = new HttpParams().set('periodo', periodo.toString());
+
+        return this.http.get(`${this.apiUrl}/descargar-sql`, {
+            params: params,       // <--- Enviamos el periodo al backend
+            responseType: 'blob'  // Importante para la descarga de archivos
+        });
     }
 
     getLogs(): Observable<VectorLog[]> {

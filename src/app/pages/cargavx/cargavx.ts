@@ -507,7 +507,7 @@ export class CargaVxPage implements OnInit {
     exportarSQL() {
         this.messageService.add({ severity: 'info', summary: 'Generando', detail: 'Solicitando archivo SQL...' });
 
-        this.servicio.descargarSQL().subscribe({
+        this.servicio.descargarSQL(this.periodoSeleccionado()).subscribe({
             next: (blob) => {
                 const url = window.URL.createObjectURL(blob);
                 const a = document.createElement('a');

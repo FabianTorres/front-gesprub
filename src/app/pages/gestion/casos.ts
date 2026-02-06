@@ -1464,8 +1464,6 @@ export class CasosPage implements OnInit {
 
     exportarPlanDePruebas() {
         // 1. Determinar la fuente de datos correcta
-        // Si la tabla tiene un filtro aplicado (filteredValue no es null), usamos eso.
-        // Si no, usamos la señal completa (this.casos()).
         let casosVisibles: any[] = [];
 
         if (this.dt && this.dt.filteredValue) {
@@ -1480,7 +1478,6 @@ export class CasosPage implements OnInit {
         }
 
         // 2. Filtrar SOLO los activos y extraer sus IDs
-        // Esto se aplica tanto si viene de la tabla filtrada como si viene de la lista completa.
         const idsParaExportar = casosVisibles
             .filter(item => item.caso.activo === 1)
             .map(item => item.caso.id_caso!);
@@ -1490,12 +1487,22 @@ export class CasosPage implements OnInit {
             return;
         }
 
+        // === PASO 1: Capturar el "Tipo de actualización" de la lista visible ===
+        // Creamos un mapa: ID_CASO -> ESTADO_MODIFICACION
+        const mapaEstados: Record<number, string> = {};
+        casosVisibles.forEach(item => {
+            if (item.caso && item.caso.id_caso) {
+                mapaEstados[item.caso.id_caso] = item.caso.nombre_estado_modificacion || 'Sin cambios';
+            }
+        });
+
         this.messageService.add({ severity: 'info', summary: 'Generando Reporte', detail: `Exportando ${idsParaExportar.length} casos...` });
 
         // 3. Llamar al backend
         this.casoService.getDetallesPlanPruebas(idsParaExportar).subscribe({
             next: (datosBackend) => {
-                this.generarExcelConEstilos(datosBackend);
+                // === PASO 2: Pasamos el mapa a la función generadora ===
+                this.generarExcelConEstilos(datosBackend, mapaEstados);
                 this.messageService.add({ severity: 'success', summary: 'Éxito', detail: 'Plan de Pruebas descargado.' });
             },
             error: (err) => {
@@ -1506,8 +1513,8 @@ export class CasosPage implements OnInit {
     }
 
     // Método auxiliar privado para manejar la logica de estilos y Excel
-    private generarExcelConEstilos(datos: any[]) {
-        // A. Definición de Estilos (Rojo y Verde Claro segun tu foto)
+    private generarExcelConEstilos(datos: any[], mapaEstados?: Record<number, string>) {
+        // A. Definición de Estilos
         const styleRojo = {
             fill: { fgColor: { rgb: "FF2500" } }, // Fondo Rojo Fuerte
             font: { color: { rgb: "080808" }, bold: true, sz: 14 }, // Texto Negro
@@ -1535,7 +1542,9 @@ export class CasosPage implements OnInit {
             { title: "Analista responsable", style: styleVerde, key: "nombre_analista" },
             { title: "Resultado de la prueba (OK/NOK)", style: styleRojo, key: "resultado_evidencia" },
             { title: "Comentarios Adicionales", style: styleRojo, key: "id_jira" },
-            { title: "Archivo", style: styleVerde, key: "nombres_archivos" }
+            { title: "Archivo", style: styleVerde, key: "nombres_archivos" },
+            // === NUEVA COLUMNA ===
+            { title: "Tipo de actualización", style: styleVerde, key: "tipo_actualizacion" }
         ];
 
         // C. Construcción de la Hoja de Datos
@@ -1546,18 +1555,20 @@ export class CasosPage implements OnInit {
 
         // Fila 2 en adelante: Datos
         datos.forEach(item => {
+            // === PASO 3: Inyectar el valor del mapa si existe ===
+            if (mapaEstados && item.id_caso) {
+                item['tipo_actualizacion'] = mapaEstados[item.id_caso] || 'Sin cambios';
+            }
+
             const row: any[] = [];
             headers.forEach(col => {
                 let valor = col.staticValue !== undefined ? col.staticValue : (item[col.key] || '');
 
                 // Ajuste especifico para NOK
                 if (col.key === 'resultado_evidencia') {
-                    // Si viene vacio, null o 'N/A', lo marcamos como Sin Ejecutar
                     if (!valor || valor === 'N/A') {
                         valor = 'Sin Ejecutar';
-                    }
-                    // Ajuste para NOK
-                    else if (valor === 'NK') {
+                    } else if (valor === 'NK') {
                         valor = 'NOK';
                     }
                 }
@@ -1566,7 +1577,7 @@ export class CasosPage implements OnInit {
                     valor = `CERTRTA26-${valor}`;
                 }
 
-                // Estilo simple para las celdas de datos (bordes y ajuste de texto)
+                // Estilo simple para las celdas de datos
                 const cellStyle = {
                     alignment: { wrapText: true, vertical: "center" },
                     border: { top: { style: "thin" }, bottom: { style: "thin" }, left: { style: "thin" }, right: { style: "thin" } }
@@ -1581,7 +1592,7 @@ export class CasosPage implements OnInit {
         const wb = XLSXStyle.utils.book_new();
         const ws = XLSXStyle.utils.aoa_to_sheet(wsData);
 
-        // E. Ajustar Ancho de Columnas (Opcional pero recomendado para legibilidad)
+        // E. Ajustar Ancho de Columnas y OCULTAR la última
         ws['!cols'] = [
             { wch: 30 }, // Requerimiento
             { wch: 30 }, // Caso
@@ -1594,7 +1605,9 @@ export class CasosPage implements OnInit {
             { wch: 20 }, // Analista
             { wch: 15 }, // Resultado
             { wch: 30 }, // Comentarios
-            { wch: 30 }  // Archivo
+            { wch: 30 }, // Archivo
+            // === COLUMNA OCULTA (Index 12) ===
+            { wch: 20, hidden: true }
         ];
 
         XLSXStyle.utils.book_append_sheet(wb, ws, "Plan de Pruebas");

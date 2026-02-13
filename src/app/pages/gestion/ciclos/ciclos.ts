@@ -448,21 +448,42 @@ export class CiclosPage implements OnInit {
 
     // 5. Método para "Seleccionar Todos" los del componente actual
     toggleTodosComponente(event: any) {
-        const casos = this.casosDelComponente();
+        // Paso 1: Determinar con qué lista estamos trabajando
+        // Si la tabla tiene filtros activos, 'filteredValue' tendrá los datos filtrados.
+        // Si no, usamos la lista completa 'casosDelComponente'.
+        let casosVisibles = this.casosDelComponente();
+
+        if (this.dtAlcance && this.dtAlcance.filteredValue) {
+            casosVisibles = this.dtAlcance.filteredValue;
+        }
+
+        // Paso 2: Aplicar la selección/deselección SOLO a los visibles
         if (event.checked) {
-            // Agregar todos los IDs visibles al Set Global
-            casos.forEach(c => this.idsSeleccionadosGlobal.add(c.caso.id_caso!));
+            // Agregar solo los que el usuario está viendo
+            casosVisibles.forEach(c => {
+                if (c.caso.id_caso) this.idsSeleccionadosGlobal.add(c.caso.id_caso);
+            });
         } else {
-            // Quitar todos los IDs visibles del Set Global
-            casos.forEach(c => this.idsSeleccionadosGlobal.delete(c.caso.id_caso!));
+            // Quitar solo los que el usuario está viendo (mantiene los de otras páginas/filtros)
+            casosVisibles.forEach(c => {
+                if (c.caso.id_caso) this.idsSeleccionadosGlobal.delete(c.caso.id_caso);
+            });
         }
     }
 
     // 6. Verificar si todos los visibles están seleccionados (para el checkbox maestro)
     areAllSelected(): boolean {
-        const casos = this.casosDelComponente();
-        if (casos.length === 0) return false;
-        return casos.every(c => this.idsSeleccionadosGlobal.has(c.caso.id_caso!));
+        // Misma lógica: miramos solo lo visible
+        let casosVisibles = this.casosDelComponente();
+
+        if (this.dtAlcance && this.dtAlcance.filteredValue) {
+            casosVisibles = this.dtAlcance.filteredValue;
+        }
+
+        if (casosVisibles.length === 0) return false;
+
+        // El checkbox maestro se marca solo si TODOS los casos visibles están en tu Set de seleccionados
+        return casosVisibles.every(c => c.caso.id_caso && this.idsSeleccionadosGlobal.has(c.caso.id_caso));
     }
 
     // 7. Guardar cambios

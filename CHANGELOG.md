@@ -7,6 +7,7 @@ y este proyecto adhiere al [Versionado Semántico](https://semver.org/lang/es/).
 
 ### Fixed 
 -   Se corrige problema al importar casos que no dejaba seleccionar el campo "Precondiciones"
+-   En ciclos de prueba se corrige un error al seleccionar todos los casos filtrados
 
 ## [2.1.7] - 2026-02-06
 

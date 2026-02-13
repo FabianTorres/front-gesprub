@@ -3,13 +3,18 @@ Todos los cambios significativos en este proyecto se documentarán en este archi
 El formato se basa en [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 y este proyecto adhiere al [Versionado Semántico](https://semver.org/lang/es/).
 
-## [2.1.7] - 2026-04-06
+## [2.1.8] - 2026-02-13
+
+### Fixed 
+-   Se corrige problema al importar casos que no dejaba seleccionar el campo "Precondiciones"
+
+## [2.1.7] - 2026-02-06
 
 ### Added 
 -   Se agrega columna de Tipo de Actualizacion el excel de Plan de pruebas
 
 
-## [2.1.6] - 2026-04-04
+## [2.1.6] - 2026-02-04
 
 ### Fixed (Hotfix)
 -   Se corrige problema que permitia descargar los vectores insertados de bigdata como batch y al reves.

@@ -415,7 +415,7 @@
                     <span *ngIf="campo.obligatorio" class="text-red-500">*</span>
                 </label>
                 <div class="col-12 md:col-8">
-                    <p-select [options]="excelEncabezados" [(ngModel)]="mapeoColumnas[campo.campo]"
+                    <p-select appendTo="body" [options]="excelEncabezados" [(ngModel)]="mapeoColumnas[campo.campo]"
                         placeholder="-- Ignorar esta columna --" [showClear]="true">
                     </p-select>
                 </div>

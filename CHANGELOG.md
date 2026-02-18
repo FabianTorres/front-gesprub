@@ -3,11 +3,10 @@ Todos los cambios significativos en este proyecto se documentarán en este archi
 El formato se basa en [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 y este proyecto adhiere al [Versionado Semántico](https://semver.org/lang/es/).
 
-## [2.1.8] - 2026-02-13
+## [2.1.9] - 2026-02-18
 
-### Fixed 
--   Se corrige problema al importar casos que no dejaba seleccionar el campo "Precondiciones"
--   En ciclos de prueba se corrige un error al seleccionar todos los casos filtrados
+### Added 
+-   Se agrega la funcionalidad de importacion masiva de vectores
 
 ## [2.1.7] - 2026-02-06
 

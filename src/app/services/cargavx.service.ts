@@ -118,4 +118,10 @@ export class CargaVxService {
         const params = new HttpParams().set('periodo', periodo.toString());
         return this.http.post<void>(`${this.apiUrl}/marcar-enviados-599`, {}, { params });
     }
+
+    // Nuevo método para carga masiva
+    importarVectoresMasivos(vectores: VectorData[]): Observable<any> {
+        // El backend recibirá una lista: List<VectorCargaDTO>
+        return this.http.post(`${this.apiUrl}/importar-masivo`, vectores);
+    }
 }

@@ -23,13 +23,16 @@ import { RadioButtonModule } from 'primeng/radiobutton';
 import { DropdownModule } from 'primeng/dropdown';
 import { SortMeta } from 'primeng/api';
 import { InputSwitchModule } from 'primeng/inputswitch';
+import * as XLSX from 'xlsx';
+import { FileUploadModule } from 'primeng/fileupload';
+import { DividerModule } from 'primeng/divider';
 
 @Component({
     standalone: true,
     imports: [
-        CommonModule, FormsModule, TableModule, ButtonModule, ToolbarModule, InputSwitchModule,
+        CommonModule, FormsModule, TableModule, ButtonModule, ToolbarModule, InputSwitchModule, FileUploadModule,
         DialogModule, InputTextModule, InputNumberModule, ToastModule, TabViewModule, RadioButtonModule,
-        ConfirmDialogModule, FieldsetModule, TagModule, TooltipModule, InputTextModule, SelectModule, DropdownModule
+        ConfirmDialogModule, FieldsetModule, TagModule, TooltipModule, InputTextModule, SelectModule, DropdownModule, DividerModule
     ],
     providers: [MessageService, ConfirmationService],
     templateUrl: './cargavx.html'
@@ -63,6 +66,12 @@ export class CargaVxPage implements OnInit {
     submitted: boolean = false;
     esEdicion: boolean = false;
     loading: boolean = false;
+
+    // Variables para Importación Masiva
+    importDialog: boolean = false;
+    vectoresParaImportar: VectorData[] = [];
+    resumenImportacion: { total: number, validos: number, errores: string[] } = { total: 0, validos: 0, errores: [] };
+    loadingImport: boolean = false;
 
     // Señales para los logs
     logs = signal<VectorLog[]>([]);
@@ -749,6 +758,166 @@ export class CargaVxPage implements OnInit {
         }
 
         return new Date(isoStr);
+    }
+
+    //Importacion masiva
+    // 1. Abrir el diálogo
+    abrirImportar() {
+        this.importDialog = true;
+        this.vectoresParaImportar = [];
+        this.resumenImportacion = { total: 0, validos: 0, errores: [] };
+    }
+
+    // 2. Procesar el archivo Excel seleccionado
+    onArchivoSeleccionado(event: any) {
+        const file = event.files[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = (e: any) => {
+            const data = new Uint8Array(e.target.result);
+            const workbook = XLSX.read(data, { type: 'array' });
+            const sheetName = workbook.SheetNames[0];
+            const worksheet = workbook.Sheets[sheetName];
+
+            // Leemos el Excel como JSON
+            const jsonData = XLSX.utils.sheet_to_json(worksheet, { defval: '' });
+            this.procesarDatosImportados(jsonData);
+        };
+        reader.readAsArrayBuffer(file);
+
+        // Limpiamos el uploader visualmente
+        event.originalEvent.target.value = '';
+    }
+
+    // 3. Validar y transformar datos
+    procesarDatosImportados(data: any[]) {
+        this.vectoresParaImportar = [];
+        const errores: string[] = [];
+        const periodoActual = this.periodoSeleccionado();
+
+        data.forEach((row: any, index) => {
+            const fila = index + 2; // Ajuste por cabecera Excel
+
+            // Validar campos obligatorios
+            if (!row['RUT'] || !row['VECTOR'] || row['VALOR'] === undefined) {
+                errores.push(`Fila ${fila}: Faltan datos obligatorios (RUT, VECTOR o VALOR).`);
+                return;
+            }
+
+            // Normalizar RUT y DV
+            const rutRaw = String(row['RUT']).replace(/\./g, '').replace(/-/g, '');
+            let rut = 0;
+            let dv = '';
+
+            // Si el RUT viene con DV pegado (ej: 12345678K) o separado
+            if (row['DV']) {
+                rut = parseInt(rutRaw, 10);
+                dv = String(row['DV']).toUpperCase();
+            } else {
+                // Intentar deducir si viene junto
+                const cuerpo = rutRaw.slice(0, -1);
+                const digito = rutRaw.slice(-1).toUpperCase();
+                if (!isNaN(Number(cuerpo))) {
+                    rut = parseInt(cuerpo, 10);
+                    dv = digito;
+                } else {
+                    rut = parseInt(rutRaw, 10);
+                    // Si no hay DV, lo calculamos nosotros (opcional, o marcamos error)
+                    dv = this.calcularDV(rut);
+                }
+            }
+
+            // Validar periodo (Si el excel no trae, usamos el seleccionado)
+            const periodo = row['PERIODO'] ? parseInt(row['PERIODO'], 10) : periodoActual;
+
+            // Construir objeto VectorData
+            const vector: VectorData = {
+                rut: rut,
+                dv: dv,
+                vector: parseInt(row['VECTOR'], 10),
+                valor: Number(row['VALOR']),
+                periodo: periodo,
+                elvc_seq: 'CARGA_MASIVA', // Marca de origen
+                intencionCarga: 'INSERT' // Por defecto, asumimos carga nueva
+            };
+
+            // Detección especial Vector 599 en Excel
+            if (vector.vector === 599) {
+                // Podrías agregar lógica aquí si quieres leer una columna "INTENCION" del Excel
+                // Por ahora, lo forzamos a INSERT o pedimos que lo separen.
+                if (String(row['TIPO']).toUpperCase() === 'MODIFICACION') {
+                    vector.intencionCarga = 'UPDATE';
+                }
+            }
+
+            this.vectoresParaImportar.push(vector);
+        });
+
+        this.resumenImportacion = {
+            total: data.length,
+            validos: this.vectoresParaImportar.length,
+            errores: errores
+        };
+
+        if (errores.length > 0) {
+            this.messageService.add({ severity: 'warn', summary: 'Advertencia', detail: `Se detectaron ${errores.length} filas con errores.` });
+        }
+    }
+
+    // 4. Enviar al Backend
+    confirmarImportacion() {
+        if (this.vectoresParaImportar.length === 0) return;
+
+        this.loadingImport = true;
+        this.servicio.importarVectoresMasivos(this.vectoresParaImportar).subscribe({
+            next: (resp) => {
+                this.messageService.add({ severity: 'success', summary: 'Importación Exitosa', detail: `Se procesaron ${this.vectoresParaImportar.length} registros.` });
+                this.importDialog = false;
+                this.loadingImport = false;
+                this.cargarDatos(); // Recargar tabla
+            },
+            error: (err) => {
+                this.loadingImport = false;
+                console.error('Error Import:', err);
+                // Prioridad 1: Mensaje explícito enviado por el Backend (ej: "El vector 800 no existe")
+                let detalleError = 'Ocurrió un error inesperado al procesar el archivo.';
+
+                if (err.error) {
+                    // A veces viene como objeto JSON { message: "...", ... }
+                    if (err.error.mensaje) {
+                        detalleError = err.error.mensaje;
+                    }
+                    // A veces viene como string plano si el backend devuelve text/plain
+                    else if (typeof err.error === 'string') {
+                        detalleError = err.error;
+                    }
+                }
+
+                // Mostramos exactamente lo que dijo el Backend
+                this.messageService.add({
+                    severity: 'error',
+                    summary: 'No se pudo cargar',
+                    detail: detalleError,
+                    life: 10000 // 10 segundos para que alcancen a leer
+                });
+            }
+        });
+    }
+
+    // Helper para calcular DV si falta (opcional)
+    calcularDV(rut: number): string {
+        let suma = 0;
+        let multiplicador = 2;
+        const rutReverso = rut.toString().split('').reverse();
+        for (let digit of rutReverso) {
+            suma += parseInt(digit) * multiplicador;
+            multiplicador = multiplicador === 7 ? 2 : multiplicador + 1;
+        }
+        const resto = 11 - (suma % 11);
+        if (resto === 11) return '0';
+        if (resto === 10) return 'K';
+        return resto.toString();
     }
 
 

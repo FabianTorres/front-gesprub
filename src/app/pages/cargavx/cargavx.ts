@@ -806,27 +806,37 @@ export class CargaVxPage implements OnInit {
             }
 
             // Normalizar RUT y DV
-            const rutRaw = String(row['RUT']).replace(/\./g, '').replace(/-/g, '');
+            const rutRaw = String(row['RUT']).replace(/\./g, '').replace(/-/g, '').trim();
             let rut = 0;
             let dv = '';
 
             // Si el RUT viene con DV pegado (ej: 12345678K) o separado
             if (row['DV']) {
+                // Caso A: Columnas separadas (RUT: 123, DV: K)
                 rut = parseInt(rutRaw, 10);
-                dv = String(row['DV']).toUpperCase();
+                dv = String(row['DV']).trim().toUpperCase();
             } else {
-                // Intentar deducir si viene junto
+                // Caso B: Todo en la columna RUT (12345678K)
                 const cuerpo = rutRaw.slice(0, -1);
                 const digito = rutRaw.slice(-1).toUpperCase();
-                if (!isNaN(Number(cuerpo))) {
+
+                if (!isNaN(Number(cuerpo)) && cuerpo.length > 0) {
                     rut = parseInt(cuerpo, 10);
                     dv = digito;
                 } else {
+                    // Si no pudimos separar cuerpo y dígito, asumimos que es un RUT sin DV o inválido
                     rut = parseInt(rutRaw, 10);
-                    // Si no hay DV, lo calculamos nosotros (opcional, o marcamos error)
-                    dv = this.calcularDV(rut);
+                    // Opcional: Podríamos marcar error aquí si exigimos DV
                 }
             }
+
+            // 3. Validar que el RUT sea un número válido
+            if (isNaN(rut)) {
+                errores.push(`Fila ${fila}: El RUT no tiene un formato numérico válido.`);
+                return;
+            }
+
+
 
             // Validar periodo (Si el excel no trae, usamos el seleccionado)
             const periodo = row['PERIODO'] ? parseInt(row['PERIODO'], 10) : periodoActual;
@@ -841,6 +851,12 @@ export class CargaVxPage implements OnInit {
                 elvc_seq: 'CARGA_MASIVA', // Marca de origen
                 intencionCarga: 'INSERT' // Por defecto, asumimos carga nueva
             };
+
+
+            if (!this.validarRutChileno(vector.rut, vector.dv)) {
+                errores.push(`Fila ${fila}: El RUT ${vector.rut}-${vector.dv} es inválido (Dígito Verificador incorrecto).`);
+                return;
+            }
 
             // Detección especial Vector 599 en Excel
             if (vector.vector === 599) {

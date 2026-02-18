@@ -121,7 +121,17 @@ export class CargaVxService {
 
     // Nuevo método para carga masiva
     importarVectoresMasivos(vectores: VectorData[]): Observable<any> {
-        // El backend recibirá una lista: List<VectorCargaDTO>
-        return this.http.post(`${this.apiUrl}/importar-masivo`, vectores);
+        // Obtenemos el usuario una sola vez usando tu getter existente
+        const usuario = this.usuarioActual;
+
+        // Generamos un nuevo array (payload) donde cada vector tiene la firma del usuario
+        const payload = vectores.map(v => ({
+            ...v,
+            // Usamos el campo que definimos en la interfaz VectorData
+            usuarioResponsable: usuario
+        }));
+
+        // Enviamos la lista ya "firmada" al backend
+        return this.http.post(`${this.apiUrl}/importar-masivo`, payload);
     }
 }

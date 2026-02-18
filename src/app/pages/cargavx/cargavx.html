@@ -793,130 +793,134 @@
 </p-dialog>
 
 <p-dialog header="📂 Importación Masiva de Vectores" [(visible)]="importDialog" [modal]="true"
-    [style]="{width: '900px'}" [maximizable]="true" [draggable]="false" [resizable]="false"
-    [breakpoints]="{'960px': '90vw'}">
+    [style]="{width: '1000px'}" [maximizable]="true" [draggable]="false" [resizable]="false"
+    [breakpoints]="{'960px': '95vw'}">
 
-    <div class="flex flex-column gap-4 pt-2">
+    <div class="flex flex-col gap-6 pt-2">
 
-        <div class="grid formgrid">
+        <div class="grid grid-cols-1 md:grid-cols-12 gap-4">
 
-            <div class="col-12 md:col-7">
-                <div class="p-3 border-round-xl bg-blue-50 text-blue-900 border-1 border-blue-200 h-full">
-                    <div class="flex align-items-center gap-2 mb-2">
+            <div class="md:col-span-7">
+                <div class="p-4 rounded-xl bg-blue-50 text-blue-900 border border-blue-200 h-full">
+                    <div class="flex items-center gap-2 mb-3">
                         <i class="pi pi-info-circle text-xl"></i>
                         <span class="font-bold text-lg">Requisitos del Archivo</span>
                     </div>
-                    <p class="m-0 mb-3 text-sm line-height-3">
+                    <p class="m-0 mb-4 text-sm leading-relaxed">
                         El archivo Excel debe contener las siguientes columnas (el orden no importa):
                     </p>
 
-                    <div class="flex flex-wrap gap-2 mb-3">
+                    <div class="flex flex-wrap gap-2 mb-4">
                         <p-tag value="RUT" severity="info" pTooltip="Obligatorio"></p-tag>
                         <p-tag value="DV" severity="secondary" pTooltip="Opcional"></p-tag>
                         <p-tag value="VECTOR" severity="warning" pTooltip="Obligatorio"></p-tag>
                         <p-tag value="VALOR" severity="success" pTooltip="Obligatorio"></p-tag>
                     </div>
 
-                    <div class="text-xs text-gray-600 flex align-items-center gap-1">
+                    <div class="text-xs text-gray-600 flex items-center gap-1 mt-auto">
                         <i class="pi pi-calendar"></i>
-                        <span>Si omite la columna PERIODO, se usará el seleccionado:
-                            <strong>{{periodoSeleccionado()}}</strong>.</span>
+                        <span>Si omite la columna PERIODO, se usará: <strong>{{periodoSeleccionado()}}</strong>.</span>
                     </div>
                 </div>
             </div>
 
-            <div class="col-12 md:col-5 flex align-items-center justify-content-center">
+            <div class="md:col-span-5 flex items-center justify-center">
                 <div
-                    class="w-full text-center p-4 border-2 border-dashed border-300 border-round-xl hover:bg-gray-50 transition-colors bg-white">
-                    <i class="pi pi-cloud-upload text-4xl text-gray-400 mb-3"></i>
-                    <div class="font-semibold text-gray-700 mb-3">Sube tu archivo Excel aquí</div>
+                    class="w-full text-center p-6 border-2 border-dashed border-gray-300 rounded-xl hover:bg-gray-50 transition-colors bg-white">
+                    <i class="pi pi-cloud-upload text-4xl text-gray-400 mb-3 block"></i>
+                    <div class="font-semibold text-gray-700 mb-4">Sube tu archivo Excel aquí</div>
 
                     <p-fileUpload mode="basic" chooseLabel="Seleccionar .xlsx" accept=".xlsx" [auto]="true"
                         [customUpload]="true" (uploadHandler)="onArchivoSeleccionado($event)"
-                        chooseIcon="pi pi-file-excel" styleClass="p-button-outlined w-full p-button-secondary">
+                        chooseIcon="pi pi-file-excel" styleClass="w-full">
                     </p-fileUpload>
                 </div>
             </div>
         </div>
 
         <p-divider align="center" *ngIf="vectoresParaImportar.length > 0 || resumenImportacion.errores.length > 0">
-            <span class="p-tag p-tag-rounded px-3">Resultados del Análisis</span>
+            <span class="px-3 text-sm font-medium text-gray-500">Resultados del Análisis</span>
         </p-divider>
 
-        <div *ngIf="vectoresParaImportar.length > 0 || resumenImportacion.errores.length > 0" class="animation-fade-in">
+        <div class="flex flex-col gap-4"
+            *ngIf="vectoresParaImportar.length > 0 || resumenImportacion.errores.length > 0">
 
-            <div class="grid mb-3">
-                <div class="col-4">
-                    <div class="surface-card p-3 shadow-1 border-round text-center border-bottom-3 border-blue-500">
-                        <div class="text-blue-500 font-medium mb-1">Total Leídos</div>
-                        <div class="text-2xl font-bold text-900">{{resumenImportacion.total}}</div>
-                    </div>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div
+                    class="p-4 shadow-sm rounded-lg text-center border-b-4 border-blue-500 bg-white border border-gray-100">
+                    <div class="text-blue-500 font-medium mb-1">Total Leídos</div>
+                    <div class="text-3xl font-bold text-gray-900">{{resumenImportacion.total}}</div>
                 </div>
-                <div class="col-4">
-                    <div class="surface-card p-3 shadow-1 border-round text-center border-bottom-3 border-green-500">
-                        <div class="text-green-500 font-medium mb-1">Válidos</div>
-                        <div class="text-2xl font-bold text-900">{{resumenImportacion.validos}}</div>
-                    </div>
+
+                <div
+                    class="p-4 shadow-sm rounded-lg text-center border-b-4 border-green-500 bg-white border border-gray-100">
+                    <div class="text-green-500 font-medium mb-1">Válidos para Carga</div>
+                    <div class="text-3xl font-bold text-gray-900">{{resumenImportacion.validos}}</div>
                 </div>
-                <div class="col-4">
-                    <div class="surface-card p-3 shadow-1 border-round text-center border-bottom-3"
-                        [ngClass]="{'border-red-500': resumenImportacion.errores.length > 0, 'border-gray-300': resumenImportacion.errores.length === 0}">
-                        <div class="font-medium mb-1"
-                            [ngClass]="{'text-red-500': resumenImportacion.errores.length > 0, 'text-gray-500': resumenImportacion.errores.length === 0}">
-                            Errores
-                        </div>
-                        <div class="text-2xl font-bold text-900">{{resumenImportacion.errores.length}}</div>
+
+                <div class="p-4 shadow-sm rounded-lg text-center border-b-4 bg-white border border-gray-100"
+                    [ngClass]="{'border-red-500': resumenImportacion.errores.length > 0, 'border-gray-300': resumenImportacion.errores.length === 0}">
+                    <div class="font-medium mb-1"
+                        [ngClass]="{'text-red-500': resumenImportacion.errores.length > 0, 'text-gray-500': resumenImportacion.errores.length === 0}">
+                        Errores Detectados
                     </div>
+                    <div class="text-3xl font-bold text-gray-900">{{resumenImportacion.errores.length}}</div>
                 </div>
             </div>
 
-            <div class="border-1 border-300 border-round overflow-hidden mb-3" *ngIf="vectoresParaImportar.length > 0">
-                <p-table [value]="vectoresParaImportar" [scrollable]="true" scrollHeight="250px"
-                    styleClass="p-datatable-sm p-datatable-striped">
-                    <ng-template pTemplate="header">
-                        <tr>
-                            <th style="min-width:120px" class="bg-gray-50">RUT</th>
-                            <th style="min-width:100px" class="bg-gray-50">Vector</th>
-                            <th style="min-width:120px" class="bg-gray-50">Valor</th>
-                            <th style="min-width:100px" class="bg-gray-50 text-center">Estado</th>
-                        </tr>
-                    </ng-template>
-                    <ng-template pTemplate="body" let-v>
-                        <tr>
-                            <td class="font-medium">{{v.rut}}-{{v.dv}}</td>
-                            <td><span
-                                    class="font-bold text-blue-700 bg-blue-50 px-2 py-1 border-round">{{v.vector}}</span>
-                            </td>
-                            <td>{{v.valor | number}}</td>
-                            <td class="text-center">
-                                <i class="pi pi-check-circle text-green-500 text-xl"></i>
-                            </td>
-                        </tr>
-                    </ng-template>
-                </p-table>
+            <div class="w-full" *ngIf="vectoresParaImportar.length > 0">
+                <div class="border border-gray-300 rounded-lg overflow-hidden shadow-sm">
+                    <p-table [value]="vectoresParaImportar" [scrollable]="true" scrollHeight="300px"
+                        styleClass="p-datatable-sm p-datatable-striped">
+                        <ng-template pTemplate="header">
+                            <tr>
+                                <th style="min-width:120px" class="bg-gray-50">RUT</th>
+                                <th style="min-width:100px" class="bg-gray-50">Vector</th>
+                                <th style="min-width:120px" class="bg-gray-50">Valor</th>
+                                <th style="min-width:100px" class="bg-gray-50 text-center">Estado</th>
+                            </tr>
+                        </ng-template>
+                        <ng-template pTemplate="body" let-v>
+                            <tr>
+                                <td class="font-medium">{{v.rut}}-{{v.dv}}</td>
+                                <td>
+                                    <span class="font-bold text-blue-700 bg-blue-50 px-2 py-1 rounded text-xs">
+                                        {{v.vector}}
+                                    </span>
+                                </td>
+                                <td>{{v.valor | number}}</td>
+                                <td class="text-center">
+                                    <i class="pi pi-check-circle text-green-500 text-xl"
+                                        pTooltip="Listo para cargar"></i>
+                                </td>
+                            </tr>
+                        </ng-template>
+                    </p-table>
+                </div>
             </div>
 
-            <div *ngIf="resumenImportacion.errores.length > 0"
-                class="p-3 bg-red-50 border-1 border-red-200 border-round">
-                <div class="font-bold text-red-800 mb-2 flex align-items-center gap-2">
-                    <i class="pi pi-times-circle text-xl"></i> Errores Detectados
-                    ({{resumenImportacion.errores.length}})
+            <div class="w-full" *ngIf="resumenImportacion.errores.length > 0">
+                <div class="p-4 bg-red-50 border border-red-200 rounded-lg shadow-sm">
+                    <div class="font-bold text-red-800 mb-2 flex items-center gap-2">
+                        <i class="pi pi-times-circle text-xl"></i> Detalle de Errores
+                    </div>
+                    <ul class="m-0 pl-5 text-sm text-red-700 max-h-40 overflow-y-auto list-disc">
+                        <li *ngFor="let err of resumenImportacion.errores" class="mb-1">{{err}}</li>
+                    </ul>
                 </div>
-                <ul class="m-0 pl-3 text-sm text-red-700 max-h-10rem overflow-y-auto">
-                    <li *ngFor="let err of resumenImportacion.errores" class="mb-1">{{err}}</li>
-                </ul>
             </div>
 
         </div>
     </div>
 
     <ng-template pTemplate="footer">
-        <div class="flex justify-content-end gap-2 pt-3">
+        <div class="flex justify-end gap-3 pt-4 border-t border-gray-200 mt-4">
             <button pButton label="Cancelar" icon="pi pi-times" class="p-button-text p-button-secondary"
-                (click)="importDialog = false"></button>
-            <button pButton label="Confirmar e Importar" icon="pi pi-cloud-upload" class="p-button-primary px-4"
-                [disabled]="vectoresParaImportar.length === 0 || loadingImport" (click)="confirmarImportacion()"
-                [loading]="loadingImport">
+                (click)="importDialog = false">
+            </button>
+            <button pButton label="Confirmar e Importar" icon="pi pi-cloud-upload"
+                class="p-button-primary px-6 shadow-md" [disabled]="vectoresParaImportar.length === 0 || loadingImport"
+                (click)="confirmarImportacion()" [loading]="loadingImport">
             </button>
         </div>
     </ng-template>

@@ -199,6 +199,24 @@ export class CasosPage implements OnInit {
 
     private accionConfirmada: 'importar' | 'guardarManual' = 'importar';
 
+
+    // === NUEVAS VARIABLES PARA EL SELECTOR DE CICLOS ===
+    todosLosCiclosActivos = signal<Ciclo[]>([]);
+    cicloSeleccionadoParaAsignar: any = null;
+    asignandoCiclo = signal<boolean>(false);
+    procesandoCicloId = signal<number | null>(null);
+
+    // Computed que filtra los ciclos activos para no mostrar los que ya tiene el caso
+    ciclosNoAsignados = computed(() => {
+        const asignadosIds = this.ciclosDisponibles().map(c => c.idCiclo);
+        return this.todosLosCiclosActivos()
+            .filter(c => !asignadosIds.includes(c.idCiclo))
+            .map(c => ({
+                ...c,
+                nombreMostrado: `${c.jiraKey} | ${c.nombre}`
+            }));
+    });
+
     // Controla el estado/paso actual del proceso de importación
     importStep: 'selection' | 'mapping' | 'preview' = 'selection';
 
@@ -1761,65 +1779,155 @@ export class CasosPage implements OnInit {
     }
 
     /**
-     * Intercepta la acción de ejecutar para verificar si el caso pertenece a un ciclo.
-     */
-    /**
-     * Intercepta la acción de ejecutar para verificar si el caso pertenece a un ciclo.
+     * Intercepta la acción de ejecutar para verificar y gestionar ciclos.
      */
     verificarContextoEjecucion(caso: any) {
         this.casoParaEjecutar = caso;
+        const proyectoActual = this.proyectoService.proyectoSeleccionado();
 
-        // Consultamos al backend si este caso tiene "dueños" activos
+        if (!proyectoActual) {
+            this.messageService.add({ severity: 'error', summary: 'Error', detail: 'Seleccione un proyecto primero.' });
+            return;
+        }
+
+        // Limpiamos selecciones previas
+        this.cicloSeleccionadoParaAsignar = null;
+        this.asignandoCiclo.set(false);
+
+        // 1. Consultamos los ciclos donde el caso YA está asignado
         this.cicloService.getCiclosActivosPorCaso(caso.id_caso).subscribe({
-            next: (ciclos) => {
-                this.ciclosDisponibles.set(ciclos);
+            next: (ciclosAsignados) => {
+                this.ciclosDisponibles.set(ciclosAsignados);
 
-                if (ciclos.length > 0) {
-                    // ESCENARIO A: Hay ciclos -> Mostramos el selector
-                    this.mostrarSelectorContexto.set(true);
-                } else {
-                    // ESCENARIO B: No hay ciclos -> ADVERTENCIA DE SEGURIDAD
-                    // (Antes tenías navegación directa aquí, por eso no veías el diálogo)
-                    this.confirmationService.confirm({
-                        key: 'confirmacionCasos',
-                        message: 'Esta ejecución no estará asignada a ningún Jira de Liberación (Ciclo). ¿Desea continuar con una ejecución libre?',
-                        header: 'Advertencia de Ejecución',
-                        icon: 'pi pi-exclamation-triangle',
-                        acceptLabel: 'Sí, continuar',
-                        rejectLabel: 'Cancelar',
-                        accept: () => {
-                            this.navegarAEjecucion(null);
-                        },
-                        reject: () => {
-                            this.casoParaEjecutar = null;
-                        }
-                    });
-                }
+                // 2. Consultamos TODOS los ciclos activos del proyecto
+                this.cicloService.getCiclos(proyectoActual.id_proyecto, 'activos').subscribe({
+                    next: (todosActivos) => {
+                        this.todosLosCiclosActivos.set(todosActivos);
+                        // Abrimos el diálogo siempre, haya o no haya ciclos asignados
+                        this.mostrarSelectorContexto.set(true);
+                    },
+                    error: (err) => {
+                        console.error('Error obteniendo ciclos del proyecto', err);
+                        // Abrimos el diálogo igual para permitir la ejecución libre
+                        this.mostrarSelectorContexto.set(true);
+                    }
+                });
             },
             error: (err) => {
                 console.error('Error verificando contextos', err);
-                // En caso de error, dejamos pasar (o podrías mostrar un error)
                 this.navegarAEjecucion(null);
             }
         });
     }
 
     /**
+     * Vincula el caso a un nuevo ciclo sin perder los filtros de la tabla principal.
+     */
+    vincularCiclo() {
+        if (!this.cicloSeleccionadoParaAsignar || !this.casoParaEjecutar) return;
+
+        this.asignandoCiclo.set(true);
+        const cicloNuevo = this.cicloSeleccionadoParaAsignar;
+        const idCiclo = cicloNuevo.idCiclo;
+        const idCaso = this.casoParaEjecutar.id_caso;
+
+        // 1. Obtenemos el alcance actual
+        this.cicloService.getAlcance(idCiclo).subscribe({
+            next: (idsActuales) => {
+                // 2. Agregamos el ID
+                const nuevosIds = [...new Set([...idsActuales, idCaso])];
+
+                // 3. Guardamos
+                this.cicloService.asignarAlcance(idCiclo, nuevosIds).subscribe({
+                    next: () => {
+                        this.asignandoCiclo.set(false);
+                        this.messageService.add({ severity: 'success', summary: 'Vinculado', detail: 'Caso agregado al ciclo exitosamente.' });
+
+                        // Movemos el ciclo a la lista del cuadro flotante
+                        this.ciclosDisponibles.update(list => [...list, cicloNuevo]);
+                        this.cicloSeleccionadoParaAsignar = null;
+
+                        // 4. MAGIA: Actualizamos la tabla de fondo localmente sin recargar ni perder el filtro
+                        this.todosLosCasosMaestros.update(casos => casos.map(item => {
+                            if (item.caso.id_caso === idCaso) {
+                                const ciclosActuales = item.caso.ciclosActivos || [];
+                                const nuevoCicloVisual = {
+                                    idCiclo: cicloNuevo.idCiclo,
+                                    jiraKey: cicloNuevo.jiraKey,
+                                    nombre: cicloNuevo.nombre
+                                };
+                                return { ...item, caso: { ...item.caso, ciclosActivos: [...ciclosActuales, nuevoCicloVisual] } };
+                            }
+                            return item;
+                        }));
+                    },
+                    error: () => {
+                        this.asignandoCiclo.set(false);
+                        this.messageService.add({ severity: 'error', summary: 'Error', detail: 'No se pudo vincular el caso.' });
+                    }
+                });
+            },
+            error: () => {
+                this.asignandoCiclo.set(false);
+                this.messageService.add({ severity: 'error', summary: 'Error', detail: 'No se pudo obtener el alcance previo.' });
+            }
+        });
+    }
+
+    /**
+     * Desvincula (elimina) el caso de un ciclo sin perder los filtros.
+     */
+    desvincularCiclo(idCiclo: number) {
+        if (!this.casoParaEjecutar) return;
+
+        this.procesandoCicloId.set(idCiclo);
+        const idCaso = this.casoParaEjecutar.id_caso;
+
+        this.cicloService.getAlcance(idCiclo).subscribe({
+            next: (idsActuales) => {
+                // Sacamos el ID de nuestro caso de la lista
+                const nuevosIds = idsActuales.filter(id => id !== idCaso);
+
+                this.cicloService.asignarAlcance(idCiclo, nuevosIds).subscribe({
+                    next: () => {
+                        this.procesandoCicloId.set(null);
+                        this.messageService.add({ severity: 'success', summary: 'Desvinculado', detail: 'Caso removido del ciclo.' });
+
+                        // Quitamos el ciclo de la lista del cuadro flotante
+                        this.ciclosDisponibles.update(list => list.filter(c => c.idCiclo !== idCiclo));
+
+                        // MAGIA: Removemos la etiqueta azul de la tabla principal localmente
+                        this.todosLosCasosMaestros.update(casos => casos.map(item => {
+                            if (item.caso.id_caso === idCaso) {
+                                const ciclosActuales = item.caso.ciclosActivos || [];
+                                return { ...item, caso: { ...item.caso, ciclosActivos: ciclosActuales.filter((c: any) => c.idCiclo !== idCiclo) } };
+                            }
+                            return item;
+                        }));
+                    },
+                    error: () => {
+                        this.procesandoCicloId.set(null);
+                        this.messageService.add({ severity: 'error', summary: 'Error', detail: 'No se pudo desvincular el caso.' });
+                    }
+                });
+            },
+            error: () => {
+                this.procesandoCicloId.set(null);
+                this.messageService.add({ severity: 'error', summary: 'Error', detail: 'No se pudo leer el ciclo.' });
+            }
+        });
+    }
+
+    /**
      * Realiza la navegación final a la pantalla de ejecución.
-     * @param idCiclo El ID del ciclo seleccionado (o null para ejecución libre).
      */
     navegarAEjecucion(idCiclo: number | null) {
-        this.mostrarSelectorContexto.set(false); // Cerramos el diálogo si estaba abierto
+        this.mostrarSelectorContexto.set(false);
 
         if (this.casoParaEjecutar) {
             const idCaso = this.casoParaEjecutar.id_caso;
-
-            // Construimos los Query Params solo si hay ciclo
             const queryParams = idCiclo ? { idCiclo: idCiclo } : {};
-
             this.router.navigate(['/pages/ejecucion', idCaso], { queryParams });
-
-            // Limpiamos la referencia
             this.casoParaEjecutar = null;
         }
     }

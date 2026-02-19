@@ -3,6 +3,11 @@ Todos los cambios significativos en este proyecto se documentarán en este archi
 El formato se basa en [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 y este proyecto adhiere al [Versionado Semántico](https://semver.org/lang/es/).
 
+## [2.2.0] - 2026-02-19
+
+### Added 
+-   Se agrega la funcionalidad de vincular y desvincular casos de prueba a los ciclos en la misma pantalla de casos de prueba, para evitar tener que hacerlo desde el modulo de ciclos de pruebas. Se mantiene igualmente la funcionalidad de hacerlo desde el modulo de ciclos de pruebas.
+
 ## [2.1.9] - 2026-02-18
 
 ### Added 

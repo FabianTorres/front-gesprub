@@ -3,6 +3,12 @@ Todos los cambios significativos en este proyecto se documentarán en este archi
 El formato se basa en [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 y este proyecto adhiere al [Versionado Semántico](https://semver.org/lang/es/).
 
+## [2.2.1] - 2026-02-20
+
+### Fixed (Hotfix)
+-   Se corrige problema que dejaba con un campo erroneo la carga de vectores.
+
+
 ## [2.2.0] - 2026-02-19
 
 ### Added 

@@ -848,8 +848,8 @@ export class CargaVxPage implements OnInit {
                 vector: parseInt(row['VECTOR'], 10),
                 valor: Number(row['VALOR']),
                 periodo: periodo,
-                elvc_seq: 'CARGA_MASIVA', // Marca de origen
-                intencionCarga: 'INSERT' // Por defecto, asumimos carga nueva
+                elvc_seq: 'NOMCES',
+                intencionCarga: 'INSERT'
             };
 
 

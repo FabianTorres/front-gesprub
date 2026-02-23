@@ -119,6 +119,7 @@
                         <p-tag [value]="'Total: ' + ciclo.totalCasosAsignados" severity="info"></p-tag>
                         <p-tag [value]="'OK: ' + ciclo.casosCertificados" severity="success"></p-tag>
                         <p-tag [value]="'NK: ' + ciclo.casosError" severity="danger"></p-tag>
+                        <p-tag [value]="'N/A: ' + (ciclo.casosNA || 0)" severity="secondary"></p-tag>
                     </div>
                 </td>
 

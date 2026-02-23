@@ -13,6 +13,7 @@ export interface Ciclo {
     casosCertificados: number;
     casosError: number;
     casosSinEjecutar: number;
+    casosNA: number;
     idProyecto: number;
     componentesInvolucrados?: string[];
 }

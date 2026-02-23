@@ -3,6 +3,11 @@ Todos los cambios significativos en este proyecto se documentarán en este archi
 El formato se basa en [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 y este proyecto adhiere al [Versionado Semántico](https://semver.org/lang/es/).
 
+## [2.2.2] - 2026-02-23
+
+### Changed
+-   Se agrega la funcionalidad de mostrar casos N/A en el listado de ciclos de pruebas.
+
 ## [2.2.1] - 2026-02-20
 
 ### Fixed (Hotfix)

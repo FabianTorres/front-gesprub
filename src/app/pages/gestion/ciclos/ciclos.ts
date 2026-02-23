@@ -74,6 +74,9 @@ export class CiclosPage implements OnInit {
     // Referencia a la tabla del diálogo (le pondremos el ID #dtAlcance en el HTML)
     @ViewChild('dtAlcance') dtAlcance!: Table;
 
+    // Variable para evitar el doble clic al guardar
+    guardandoCiclo = signal<boolean>(false);
+
     // Variables para filtros y estados
     estadosModificacion = signal<EstadoModificacion[]>([]);
     opcionesFiltroModificacion: any[] = [];
@@ -291,6 +294,10 @@ export class CiclosPage implements OnInit {
             return;
         }
 
+        // Proteccion contra doble clic
+        if (this.guardandoCiclo()) return;
+        this.guardandoCiclo.set(true);
+
         // Preparar objeto para el backend
         const request: CicloRequest = {
             jiraKey: this.nuevoCiclo.jiraKey,
@@ -307,6 +314,7 @@ export class CiclosPage implements OnInit {
             // --- LÓGICA DE ACTUALIZACIÓN ---
             this.cicloService.updateCiclo(this.idCicloEnEdicion!, request).subscribe({
                 next: (cicloActualizado) => {
+                    this.guardandoCiclo.set(false);
                     this.messageService.add({ severity: 'success', summary: 'Actualizado', detail: 'Ciclo modificado correctamente.' });
 
                     // Actualizamos la lista localmente sin recargar todo
@@ -317,6 +325,7 @@ export class CiclosPage implements OnInit {
                     this.cerrarDialogo();
                 },
                 error: (err) => {
+                    this.guardandoCiclo.set(false);
                     this.messageService.add({ severity: 'error', summary: 'Error', detail: 'No se pudo actualizar el ciclo.' });
                 }
             });
@@ -324,11 +333,13 @@ export class CiclosPage implements OnInit {
             // --- LÓGICA DE CREACIÓN (La que ya tenías) ---
             this.cicloService.createCiclo(request).subscribe({
                 next: (cicloCreado) => {
+                    this.guardandoCiclo.set(false);
                     this.messageService.add({ severity: 'success', summary: 'Éxito', detail: 'Ciclo creado correctamente.' });
                     this.ciclos.update(lista => [cicloCreado, ...lista]);
                     this.cerrarDialogo();
                 },
                 error: (err) => {
+                    this.guardandoCiclo.set(false);
                     this.messageService.add({ severity: 'error', summary: 'Error', detail: 'No se pudo crear el ciclo.' });
                 }
             });

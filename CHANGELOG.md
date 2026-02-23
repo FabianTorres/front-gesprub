@@ -7,6 +7,7 @@ y este proyecto adhiere al [Versionado Semántico](https://semver.org/lang/es/).
 
 ### Changed
 -   Se agrega la funcionalidad de mostrar casos N/A en el listado de ciclos de pruebas.
+-   Se mejora la funcionalidad de guardar y cancelar en el dialogo de creacion de ciclos.
 
 ## [2.2.1] - 2026-02-20
 

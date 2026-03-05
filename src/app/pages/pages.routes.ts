@@ -30,9 +30,14 @@ export default [
     {
         path: 'admin/usuarios',
         loadComponent: () => import('./admin/usuarios').then(m => m.UsuariosPage)
-    }, {
+    },
+    {
         path: 'admin/descargas',
         loadComponent: () => import('./admin/descarga-masiva/descarga-masiva').then(m => m.DescargaMasivaPage)
+    },
+    {
+        path: 'admin/casos',
+        loadComponent: () => import('./admin/admin-casos').then(m => m.AdminCasosPage)
     },
     {
         path: 'perfil',

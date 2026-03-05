@@ -1,0 +1,156 @@
+<p-toast></p-toast>
+<p-confirmDialog [style]="{width: '450px'}"></p-confirmDialog>
+
+<div class="card">
+    <div class="flex items-center gap-3 mb-4">
+        <i class="pi pi-wrench text-3xl text-primary"></i>
+        <div>
+            <h2 class="text-2xl font-semibold m-0">Administración Avanzada de Casos</h2>
+            <p class="text-muted-color m-0">Mueva casos entre componentes o elimínelos de forma definitiva.</p>
+        </div>
+    </div>
+
+    <div
+        class="p-3 bg-yellow-50 dark:bg-yellow-900/30 border border-yellow-200 dark:border-yellow-700 rounded-lg mb-4 flex items-center gap-3">
+        <i class="pi pi-exclamation-circle text-yellow-600 text-2xl"></i>
+        <div class="text-sm text-yellow-800 dark:text-yellow-200">
+            <strong>Atención:</strong> Las acciones realizadas en este panel afectan directamente la base de datos de
+            producción. La eliminación de casos es irreversible.
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+        <div>
+            <label class="block font-bold mb-2">1. Seleccione Proyecto</label>
+            <p-select [options]="proyectos()" [(ngModel)]="proyectoSeleccionadoId" (onChange)="onProyectoChange()"
+                optionLabel="nombre_proyecto" optionValue="id_proyecto" placeholder="Elegir Proyecto..."
+                styleClass="w-full">
+            </p-select>
+        </div>
+        <div>
+            <label class="block font-bold mb-2">2. Seleccione Componente Origen</label>
+            <p-select [options]="componentes()" [(ngModel)]="componenteOrigenId" (onChange)="onComponenteOrigenChange()"
+                optionLabel="nombre_componente" optionValue="id_componente" placeholder="Elegir Componente..."
+                [disabled]="!proyectoSeleccionadoId" [filter]="true" filterBy="nombre_componente" styleClass="w-full">
+            </p-select>
+        </div>
+    </div>
+
+    <div *ngIf="componenteOrigenId" class="animate-fade-in mt-6">
+
+        <p-toolbar styleClass="mb-4 bg-surface-50 dark:bg-surface-800">
+            <ng-template pTemplate="left">
+                <span class="font-bold text-lg mr-4">Acciones Lote ({{ casosSeleccionados.length }})</span>
+
+                <button pButton pRipple label="Mover Seleccionados" icon="pi pi-folder-open"
+                    class="p-button-primary mr-2" [disabled]="casosSeleccionados.length === 0"
+                    (click)="abrirDialogoMover()">
+                </button>
+
+                <button pButton pRipple label="Eliminar Definitivamente" icon="pi pi-trash" class="p-button-danger"
+                    [disabled]="casosSeleccionados.length === 0" (click)="confirmarEliminacion()">
+                </button>
+            </ng-template>
+        </p-toolbar>
+
+        <p-table #dt [value]="casos()" [rows]="10" [paginator]="true" responsiveLayout="scroll" dataKey="caso.id_caso"
+            [(selection)]="casosSeleccionados" selectionMode="multiple" [rowHover]="true"
+            [globalFilterFields]="['caso.id_caso', 'caso.nombre_caso', 'caso.version', 'caso.fuente_str', 'caso.activo']"
+            [loading]="cargandoCasos()" styleClass="p-datatable-sm p-datatable-gridlines">
+
+            <ng-template pTemplate="caption">
+                <div class="flex justify-between items-center">
+                    <span class="text-xl font-bold">Casos del Componente</span>
+                    <p-iconfield>
+                        <p-inputicon styleClass="pi pi-search" />
+                        <input pInputText type="text" (input)="dt.filterGlobal($any($event.target).value, 'contains')"
+                            placeholder="Buscar en la tabla..." />
+                    </p-iconfield>
+                </div>
+            </ng-template>
+
+            <ng-template pTemplate="header">
+                <tr>
+                    <th style="width: 3rem">
+                        <p-tableHeaderCheckbox></p-tableHeaderCheckbox>
+                    </th>
+                    <th pSortableColumn="caso.id_caso" style="width: 8%">ID <p-sortIcon
+                            field="caso.id_caso"></p-sortIcon></th>
+                    <th pSortableColumn="caso.nombre_caso">Nombre del Caso <p-sortIcon
+                            field="caso.nombre_caso"></p-sortIcon></th>
+                    <th pSortableColumn="caso.fuente_str">Fuentes <p-sortIcon field="caso.fuente_str"></p-sortIcon></th>
+                    <th pSortableColumn="caso.version" style="width: 8%" class="text-center">Versión <p-sortIcon
+                            field="caso.version"></p-sortIcon></th>
+                    <th pSortableColumn="caso.activo" style="width: 10%" class="text-center">Activo <p-sortIcon
+                            field="caso.activo"></p-sortIcon></th>
+                    <th style="width: 12%" class="text-center">Evidencias</th>
+                </tr>
+            </ng-template>
+
+            <ng-template pTemplate="body" let-item>
+                <tr [ngClass]="{'surface-hover': casosSeleccionados.includes(item)}">
+                    <td>
+                        <p-tableCheckbox [value]="item"></p-tableCheckbox>
+                    </td>
+                    <td class="font-bold text-primary">{{item.caso.id_caso}}</td>
+                    <td class="font-medium">{{item.caso.nombre_caso}}</td>
+
+                    <td class="text-sm text-surface-600 dark:text-surface-300">
+                        {{item.caso.fuente_str || 'Sin fuente'}}
+                    </td>
+
+                    <td class="text-center">{{item.caso.version || 'N/A'}}</td>
+
+                    <td class="text-center">
+                        <i class="pi text-xl"
+                            [ngClass]="item.caso.activo === 1 ? 'pi-check-circle text-green-500' : 'pi-times-circle text-red-500'"
+                            [pTooltip]="item.caso.activo === 1 ? 'Caso Activo' : 'Caso Inactivo'">
+                        </i>
+                    </td>
+
+                    <td class="text-center">
+                        <p-tag [value]="item.ultimaEvidencia ? 'Sí' : 'No'"
+                            [severity]="item.ultimaEvidencia ? 'success' : 'secondary'">
+                        </p-tag>
+                    </td>
+                </tr>
+            </ng-template>
+
+            <ng-template pTemplate="emptymessage">
+                <tr>
+                    <td colspan="7" class="text-center p-4 text-surface-500">No se encontraron casos de prueba en este
+                        componente.</td>
+                </tr>
+            </ng-template>
+        </p-table>
+
+
+
+    </div>
+</div>
+
+<p-dialog [(visible)]="moverDialog" header="Mover Casos a otro Componente" [modal]="true" [style]="{width: '500px'}">
+    <div class="flex flex-col gap-4 pt-2">
+        <div
+            class="bg-blue-50 dark:bg-blue-900/30 text-blue-800 dark:text-blue-200 p-3 rounded border border-blue-200 text-sm">
+            <i class="pi pi-info-circle mr-1"></i>
+            Se moverán <strong>{{ casosSeleccionados.length }}</strong> casos. Esta acción conservará las evidencias y
+            las asignaciones a ciclos Jira.
+        </div>
+
+        <div>
+            <label class="block font-bold mb-2">Seleccione el Componente de Destino:</label>
+            <p-select [options]="componentesDestino()" [(ngModel)]="componenteDestinoId" optionLabel="nombre_componente"
+                optionValue="id_componente" placeholder="Buscar componente destino..." [filter]="true"
+                filterBy="nombre_componente" styleClass="w-full" appendTo="body">
+            </p-select>
+        </div>
+    </div>
+
+    <ng-template pTemplate="footer">
+        <button pButton label="Cancelar" icon="pi pi-times" class="p-button-text p-button-secondary"
+            (click)="moverDialog = false"></button>
+        <button pButton label="Confirmar Traslado" icon="pi pi-check" class="p-button-primary"
+            (click)="confirmarMover()" [disabled]="!componenteDestinoId" [loading]="procesando()"></button>
+    </ng-template>
+</p-dialog>

@@ -107,4 +107,18 @@ export class CasoService {
         const url = `${environment.apiUrl}/reportes/plan-pruebas/detalles`;
         return this.http.post<any[]>(url, { ids_casos: idsCasos });
     }
+
+    /**
+     * ADMINISTRADOR: Mueve un lote de casos a un nuevo componente.
+     */
+    moverCasosMasivo(idsCasos: number[], idComponenteDestino: number): Observable<any> {
+        return this.http.patch(`${this.apiUrl}/mover-masivo`, { idsCasos, idComponenteDestino });
+    }
+
+    /**
+     * ADMINISTRADOR: Elimina definitivamente un lote de casos y sus evidencias.
+     */
+    eliminarCasosMasivo(idsCasos: number[]): Observable<any> {
+        return this.http.post(`${this.apiUrl}/eliminar-masivo`, { idsCasos });
+    }
 }

@@ -3,6 +3,11 @@ Todos los cambios significativos en este proyecto se documentarán en este archi
 El formato se basa en [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 y este proyecto adhiere al [Versionado Semántico](https://semver.org/lang/es/).
 
+## [2.3.0] - 2026-03-05
+
+### Added
+-   Se agrega la funcionalidad de administracion de casos avanzada
+
 ## [2.2.2] - 2026-02-23
 
 ### Changed

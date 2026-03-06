@@ -96,14 +96,25 @@ export class AdminCasosPage implements OnInit {
         this.cargandoCasos.set(true);
         this.casoService.getCasosPorComponente(this.componenteOrigenId!).subscribe({
             next: (data) => {
-                // Mapeamos los datos para aplanar el array de fuentes en un texto simple
                 const datosProcesados = data.map(item => {
-                    const casoAsAny = item.caso as any; // Usamos as any para inyectar una variable no definida en el modelo
+                    const casoAsAny = item.caso as any;
 
-                    // Si tiene fuentes, extraemos los nombres y los unimos con comas
+                    // 1. Aplanar las fuentes
                     casoAsAny.fuente_str = (item.caso.fuentes && item.caso.fuentes.length > 0)
-                        ? item.caso.fuentes.map(f => f.nombre_fuente).join(', ')
+                        ? item.caso.fuentes.map((f: any) => f.nombre_fuente).join(', ')
                         : '';
+
+                    // 2. Mapear el Tipo de Modificación a texto
+                    // (Cambia estos números si en tu BD corresponden a otros IDs)
+                    switch (item.caso.id_estado_modificacion) {
+                        case 1: casoAsAny.estado_mod_str = 'Nuevo'; break;
+                        case 2: casoAsAny.estado_mod_str = 'Modificado'; break;
+                        case 3: casoAsAny.estado_mod_str = 'Sin Cambios'; break;
+                        default: casoAsAny.estado_mod_str = 'Sin Asignar';
+                    }
+
+                    // 3. Mapear Evidencias a texto para el filtro
+                    casoAsAny.tiene_evidencia_str = item.ultimaEvidencia ? 'Sí' : 'No';
 
                     return item;
                 });

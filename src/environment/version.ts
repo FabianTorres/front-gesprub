@@ -1,2 +1,2 @@
 // src/environment/version.ts
-export const version = '2.3.0';
+export const version = '2.3.1';

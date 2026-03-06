@@ -3,6 +3,11 @@ Todos los cambios significativos en este proyecto se documentarán en este archi
 El formato se basa en [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 y este proyecto adhiere al [Versionado Semántico](https://semver.org/lang/es/).
 
+## [2.3.1] - 2026-03-06
+
+### Changed
+-   Ahora se mantienen los filtros activos cuando se modifican o agregan casos.
+
 ## [2.3.0] - 2026-03-05
 
 ### Added

@@ -471,8 +471,8 @@ export class CasosPage implements OnInit {
     }
 
     // Se activa al seleccionar un componente, cargando los casos correspondientes.
-    onComponenteSeleccionado() {
-        if (this.dt) {
+    onComponenteSeleccionado(limpiarFiltros: boolean = true) {
+        if (limpiarFiltros && this.dt) {
             this.dt.clear();
         }
 
@@ -487,12 +487,12 @@ export class CasosPage implements OnInit {
             this.tableStateKey.set('estado-tabla-casos-sin-seleccion');
         }
 
+        if (limpiarFiltros) {
+            this.todosLosCasosMaestros.set([]);
+        }
 
-        //this.casos.set([]);
-        //Modificacion preliminar
-        this.todosLosCasosMaestros.set([]);
         if (this.componenteSeleccionadoId) {
-            this.cargandoCasos.set(true);
+            if (limpiarFiltros) this.cargandoCasos.set(true);
             this.casoService.getCasosPorComponente(this.componenteSeleccionadoId)
                 .subscribe(data => {
 
@@ -576,7 +576,7 @@ export class CasosPage implements OnInit {
             const ultimoComponenteId = localStorage.getItem(key);
             if (ultimoComponenteId) {
                 this.componenteSeleccionadoId = +ultimoComponenteId;
-                this.onComponenteSeleccionado(); // Se cargan los casos automáticamente.
+                this.onComponenteSeleccionado(false); // Se cargan los casos automáticamente.
             }
         });
     }
@@ -1228,7 +1228,7 @@ export class CasosPage implements OnInit {
                 this.messageService.add({ severity: 'success', summary: 'Éxito', detail: res.mensaje || 'Lote procesado correctamente.' });
                 this.previsualizacionDialog = false;
                 this.cerrarDialogoImportarModificar();
-                this.onComponenteSeleccionado();
+                this.onComponenteSeleccionado(false);
             },
             error: (err) => {
                 this.messageService.add({ severity: 'error', summary: 'Error al procesar', detail: err.error?.mensaje || 'No se pudo procesar el lote.' });
@@ -1316,7 +1316,7 @@ export class CasosPage implements OnInit {
         this.casoService.importarCasos(casosParaEnviar, this.componenteSeleccionadoId!).subscribe({
             next: () => {
                 this.messageService.add({ severity: 'success', summary: 'Importación Completada', detail: `Se importaron ${casosParaEnviar.length} casos.` });
-                this.onComponenteSeleccionado();
+                this.onComponenteSeleccionado(false);
                 this.cerrarDialogoImportar();
                 this.cerrarDialogoAdvertencia();
             },
@@ -1386,7 +1386,7 @@ export class CasosPage implements OnInit {
                     summary: 'Éxito',
                     detail: 'Caso de prueba guardado correctamente.'
                 });
-                this.onComponenteSeleccionado();
+                this.onComponenteSeleccionado(false);
                 this.cerrarDialogo();
                 this.cerrarDialogoAdvertencia(); // Cerramos también el diálogo de advertencia por si estaba abierto
             },
@@ -1715,7 +1715,7 @@ export class CasosPage implements OnInit {
                 this.messageService.add({ severity: 'success', summary: 'Éxito', detail: res.mensaje || 'Lote procesado correctamente.' });
                 this.resumenImportacionDialog = false;
                 this.cerrarDialogoImportar();
-                this.onComponenteSeleccionado();
+                this.onComponenteSeleccionado(false);
             },
             error: (err) => {
                 this.messageService.add({ severity: 'error', summary: 'Error al procesar', detail: err.error?.mensaje || 'No se pudo procesar el lote.' });

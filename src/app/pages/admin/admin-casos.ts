@@ -76,7 +76,14 @@ export class AdminCasosPage implements OnInit {
 
         if (this.proyectoSeleccionadoId) {
             this.componenteService.getComponentesPorProyecto(this.proyectoSeleccionadoId).subscribe(data => {
-                this.componentes.set(data);
+                // Aplicamos el mismo Natural Sort aquí
+                const componentesOrdenados = data.sort((a, b) => {
+                    const nombreA = a.nombre_componente || '';
+                    const nombreB = b.nombre_componente || '';
+                    return nombreA.localeCompare(nombreB, undefined, { numeric: true, sensitivity: 'base' });
+                });
+
+                this.componentes.set(componentesOrdenados);
             });
         } else {
             this.componentes.set([]);

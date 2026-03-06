@@ -568,15 +568,22 @@ export class CasosPage implements OnInit {
     // Carga la lista completa de componentes desde el servicio.
     cargarComponentes(proyectoId: number) {
         this.componenteService.getComponentesPorProyecto(proyectoId).subscribe(data => {
+
+            // ORDENAMIENTO ALFANUMERICO (NATURAL SORT) ===
+            const componentesOrdenados = data.sort((a, b) => {
+                const nombreA = a.nombre_componente || '';
+                const nombreB = b.nombre_componente || '';
+                return nombreA.localeCompare(nombreB, undefined, { numeric: true, sensitivity: 'base' });
+            });
             this.componentes.set(data);
             this.cargarHitos(data);
 
-            // CAMBIO: Se intenta restaurar el último componente guardado para ESTE proyecto.
+            // Se intenta restaurar el último componente guardado para ESTE proyecto.
             const key = `ultimoComponente_${proyectoId}`;
             const ultimoComponenteId = localStorage.getItem(key);
             if (ultimoComponenteId) {
                 this.componenteSeleccionadoId = +ultimoComponenteId;
-                this.onComponenteSeleccionado(false); // Se cargan los casos automáticamente.
+                this.onComponenteSeleccionado(false);
             }
         });
     }

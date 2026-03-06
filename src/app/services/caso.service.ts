@@ -92,7 +92,7 @@ export class CasoService {
     }
 
     /**
-    * Envía un lote de casos para ser creados y/o actualizados en el backend.
+    * Envia un lote de casos para ser creados y/o actualizados en el backend.
     * @param lote Un objeto que contiene dos arrays: casosParaCrear y casosParaActualizar.
     */
     procesarLoteCasos(lote: { casosParaCrear: any[], casosParaActualizar: any[] }): Observable<any> {

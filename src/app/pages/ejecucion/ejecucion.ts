@@ -339,7 +339,37 @@ export class EjecucionPage implements OnInit {
             error: (err) => {
                 this.guardandoEvidencia.set(false);
 
-                this.messageService.add({ severity: 'error', summary: 'Error', detail: 'No se pudo guardar la evidencia.' });
+                // 1. Error de Red puro (Micro-corte, balanceador de Azure, Firewall)
+                if (err.status === 0) {
+                    this.messageService.add({
+                        severity: 'error',
+                        summary: 'Error de Conexión',
+                        detail: 'Se perdió la conexión con el servidor durante la subida. Por favor, revisa tu red e inténtalo de nuevo.',
+                        life: 8000 // Le damos más tiempo para que el usuario lo lea
+                    });
+                }
+                // 2. Error del Backend (400 Bad Request, 500 Internal Server Error)
+                else if (err.status >= 400 && err.status <= 599) {
+                    // Intentamos leer el mensaje que el backend nos manda en su JSON
+                    const mensajeBackend = err.error?.mensaje || err.error?.message || 'El servidor rechazó el archivo.';
+
+                    this.messageService.add({
+                        severity: 'error',
+                        summary: `Error del Servidor (${err.status})`,
+                        detail: mensajeBackend,
+                        life: 8000
+                    });
+                }
+                // 3. Cualquier otra cosa extraña
+                else {
+                    this.messageService.add({
+                        severity: 'error',
+                        summary: 'Error Inesperado',
+                        detail: 'No se pudo guardar la evidencia. Por favor, contacta a soporte.'
+                    });
+                }
+
+                console.error('Detalle del error al guardar evidencia:', err);
             }
         });
     }

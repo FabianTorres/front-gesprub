@@ -27,7 +27,7 @@ import { TagModule } from 'primeng/tag';
 import { ProyectoService } from '../../services/proyecto.service';
 import { VersionFormatDirective } from '../../directives/version-format.directive';
 import { map, switchMap } from 'rxjs/operators';
-import { catchError, forkJoin, of } from 'rxjs';
+import { catchError, forkJoin, of, throwError } from 'rxjs';
 import { RutValidatorDirective } from '../../directives/rut-validator.directive';
 import { CatalogoService } from '../../services/catalogo.service';
 import { HistorialCaso } from '../../models/historial-caso';
@@ -305,8 +305,8 @@ export class EjecucionPage implements OnInit {
                         return this.evidenciaService.uploadArchivo(idEvidencia, file).pipe(
                             catchError(err => {
                                 console.error('Error subiendo archivo:', file.name, err);
-                                // Devolvemos of(null) para que forkJoin no se cancele si un archivo falla.
-                                return of(null);
+
+                                return throwError(() => err);
                             })
                         );
                     });

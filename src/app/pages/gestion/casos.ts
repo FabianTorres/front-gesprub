@@ -1216,17 +1216,17 @@ export class CasosPage implements OnInit {
 
         const loteFinal = {
             casosParaCrear: this.casosParaCrearDetectados.map(fila => ({
-                nombre_caso: String(fila['Nombre del Caso'] || ''),
-                descripcion_caso: String(fila['Descripción'] || ''),
+                nombre_caso: String(fila['Nombre del Caso'] || '').trim(),
+                descripcion_caso: String(fila['Descripción'] || '').trim(),
                 version: String(fila['Versión'] || '').replace(',', '.'),
                 id_componente: this.componenteSeleccionadoId!,
                 id_usuario_creador: usuarioLogueado.idUsuario,
                 jp_responsable: usuarioLogueado.idUsuario,
-                nombre_estado_modificacion: String(fila['Estado Modificación'] || 'Nuevo'),
-                precondiciones: String(fila['Precondiciones'] || ''),
-                pasos: String(fila['Pasos'] || ''),
-                resultado_esperado: String(fila['Resultado Esperado'] || ''),
-            })),
+                nombre_estado_modificacion: String(fila['Estado Modificación'] || 'Nuevo').trim(),
+                precondiciones: String(fila['Precondiciones'] || '').trim(),
+                pasos: String(fila['Pasos'] || '').trim(),
+                resultado_esperado: String(fila['Resultado Esperado'] || '').trim(),
+            })).filter(caso => caso.nombre_caso !== '' || caso.descripcion_caso !== ''),
             casosParaActualizar: this.casosConCambios.map(c => c.datosParaEnviar)
         };
 
@@ -1300,17 +1300,17 @@ export class CasosPage implements OnInit {
 
         // Usamos los casos que habíamos guardado temporalmente en this.casosValidadosTemporalmente
         const casosParaEnviar = this.casosValidadosTemporalmente.map((fila: any) => ({
-            nombre_caso: String(fila['Nombre del Caso'] || ''),
-            descripcion_caso: String(fila['Descripción'] || ''),
-            version: String(fila['Versión']).replace(',', '.'),
-            nombre_estado_modificacion: String(fila['Estado Modificación'] || ''),
+            nombre_caso: String(fila['Nombre del Caso'] || '').trim(),
+            descripcion_caso: String(fila['Descripción'] || '').trim(),
+            version: String(fila['Versión'] || '').replace(',', '.'),
+            nombre_estado_modificacion: String(fila['Estado Modificación'] || '').trim(),
             nombres_fuentes: String(fila['Fuentes'] || '').replace(/;/g, ','),
-            precondiciones: String(fila['Precondiciones'] || ''),
-            pasos: String(fila['Pasos'] || ''),
-            resultado_esperado: String(fila['Resultado Esperado'] || ''),
+            precondiciones: String(fila['Precondiciones'] || '').trim(),
+            pasos: String(fila['Pasos'] || '').trim(),
+            resultado_esperado: String(fila['Resultado Esperado'] || '').trim(),
             id_usuario_creador: usuarioLogueado.idUsuario,
             jp_responsable: usuarioLogueado.idUsuario
-        }));
+        })).filter(caso => caso.nombre_caso !== '' || caso.descripcion_caso !== '');
 
         console.log('Datos finales a enviar al backend:', casosParaEnviar);
 
@@ -1691,18 +1691,20 @@ export class CasosPage implements OnInit {
 
         const loteFinal = {
             casosParaCrear: this.loteParaProcesar.casosParaCrear.map(fila => ({
-                nombre_caso: String(fila['Nombre del Caso'] || ''),
-                descripcion_caso: String(fila['Descripción'] || ''),
+                nombre_caso: String(fila['Nombre del Caso'] || '').trim(),
+                descripcion_caso: String(fila['Descripción'] || '').trim(),
                 version: String(fila['Versión'] || '').replace(',', '.'),
                 id_componente: this.componenteSeleccionadoId!,
                 id_usuario_creador: usuarioLogueado.idUsuario,
                 jp_responsable: usuarioLogueado.idUsuario,
-                nombre_estado_modificacion: String(fila['Estado Modificación'] || ''),
+                nombre_estado_modificacion: String(fila['Estado Modificación'] || '').trim(),
                 nombres_fuentes: String(fila['Fuentes'] || '').replace(/;/g, ','),
-                precondiciones: String(fila['Precondiciones'] || ''),
-                pasos: String(fila['Pasos'] || ''),
-                resultado_esperado: String(fila['Resultado Esperado'] || ''),
-            })),
+                precondiciones: String(fila['Precondiciones'] || '').trim(),
+                pasos: String(fila['Pasos'] || '').trim(),
+                resultado_esperado: String(fila['Resultado Esperado'] || '').trim(),
+            }))
+                .filter(caso => caso.nombre_caso !== '' || caso.descripcion_caso !== ''),
+
             casosParaActualizar: this.loteParaProcesar.casosParaActualizar.map(fila => {
                 const casoActualizado: any = { id_caso: Number(fila['ID Caso']) };
                 if (fila['Nombre del Caso']) casoActualizado.nombre_caso = String(fila['Nombre del Caso']);

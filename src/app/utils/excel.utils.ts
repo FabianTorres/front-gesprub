@@ -27,14 +27,29 @@ export function leerYValidarExcel(file: File, messageService: MessageService): P
         }
         const encabezadosReales = (datosParaEncabezados[0] as string[]).map(h => String(h).trim());
         const encabezadosEsperados = ['Nombre del Caso', 'Descripción', 'Versión', 'Estado Modificación', 'Fuentes', 'Precondiciones', 'Pasos', 'Resultado Esperado'];
-        
+
         if (!encabezadosEsperados.every(h => encabezadosReales.includes(h))) {
-            messageService.add({ severity: 'error', summary: 'Plantilla incorrecta', detail: 'El archivo no tiene los encabezados esperados.', sticky: true });
-            return reject('Encabezados incorrectos');
+          messageService.add({ severity: 'error', summary: 'Plantilla incorrecta', detail: 'El archivo no tiene los encabezados esperados.', sticky: true });
+          return reject('Encabezados incorrectos');
         }
 
         // Leer datos como texto plano
-        const casosLeidos = XLSX.utils.sheet_to_json(worksheet, { raw: false, blankrows: false });
+        let casosLeidos = XLSX.utils.sheet_to_json(worksheet, { raw: false, blankrows: false });
+
+        // Filtramos y eliminamos cualquier fila que esté completamente vacía
+        // o que sus campos obligatorios no tengan texto real.
+        casosLeidos = casosLeidos.filter((fila: any) => {
+          const nombre = String(fila['Nombre del Caso'] || '').trim();
+          const desc = String(fila['Descripción'] || '').trim();
+          // Si al menos uno de los campos principales tiene texto, consideramos que la fila "existe"
+          return nombre !== '' || desc !== '';
+        });
+
+        // Si después de limpiar los fantasmas quedó vacío, detenemos todo
+        if (casosLeidos.length === 0) {
+          messageService.add({ severity: 'error', summary: 'Archivo sin registros', detail: 'El archivo Excel no tiene casos válidos con datos.' });
+          return reject('Sin registros válidos');
+        }
 
         // Validar contenido
         const errores: string[] = [];
@@ -58,7 +73,7 @@ export function leerYValidarExcel(file: File, messageService: MessageService): P
           });
           return reject('Errores de validación');
         }
-        
+
         resolve(casosLeidos);
 
       } catch (error) {
@@ -77,13 +92,13 @@ export function leerYValidarExcel(file: File, messageService: MessageService): P
 export function descargarPlantillaCasos(): void {
   const encabezados = ['Nombre del Caso', 'Descripción', 'Versión', 'Estado Modificación', 'Fuentes', 'Precondiciones', 'Pasos', 'Resultado Esperado'];
   const filaEjemplo = ['Ej: Caso de Prueba 1', 'Ej: Descripción detallada.', '1.0', 'Nuevo', '1928; 1929', 'Ej: El usuario debe estar logueado.', 'Ej: 1. Hacer clic en X.', 'Ej: Se muestra un mensaje de éxito.'];
-  
+
   const worksheet: XLSX.WorkSheet = XLSX.utils.aoa_to_sheet([encabezados, filaEjemplo]);
   worksheet['!cols'] = [{ wch: 30 }, { wch: 50 }, { wch: 10 }, { wch: 20 }, { wch: 30 }, { wch: 40 }, { wch: 50 }, { wch: 40 }];
-  
+
   const workbook: XLSX.WorkBook = { Sheets: { 'Plantilla': worksheet }, SheetNames: ['Plantilla'] };
   const excelBuffer: any = XLSX.write(workbook, { bookType: 'xlsx', type: 'array' });
-  
+
   guardarArchivo(excelBuffer, "Plantilla_Importacion_Casos.xlsx");
 }
 
@@ -94,7 +109,7 @@ export function exportarAExcel(datos: any[], nombreArchivo: string): void {
   const worksheet: XLSX.WorkSheet = XLSX.utils.json_to_sheet(datos);
   const workbook: XLSX.WorkBook = { Sheets: { 'Datos': worksheet }, SheetNames: ['Datos'] };
   const excelBuffer: any = XLSX.write(workbook, { bookType: 'xlsx', type: 'array' });
-  
+
   guardarArchivo(excelBuffer, `${nombreArchivo}_${new Date().getTime()}.xlsx`);
 }
 

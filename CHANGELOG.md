@@ -3,6 +3,11 @@ Todos los cambios significativos en este proyecto se documentarán en este archi
 El formato se basa en [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 y este proyecto adhiere al [Versionado Semántico](https://semver.org/lang/es/).
 
+## [2.3.4] - 2026-04-01
+
+### Fixed
+-   Se soluciona problema que impedia importar casos de un excel cuando habia registros con espacios en blanco. Ahora ignora esos espacios.
+
 ## [2.3.3] - 2026-03-06
 
 ### Fixed

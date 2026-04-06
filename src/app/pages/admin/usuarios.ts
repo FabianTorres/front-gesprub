@@ -11,6 +11,8 @@ import { InputSwitchModule } from 'primeng/inputswitch';
 import { SelectModule } from 'primeng/select';
 import { ToastModule } from 'primeng/toast';
 import { TagModule } from 'primeng/tag';
+import { InputIconModule } from 'primeng/inputicon';
+import { IconFieldModule } from 'primeng/iconfield';
 import { TooltipModule } from 'primeng/tooltip';
 import { Usuario } from '../../models/usuario';
 import { UsuarioService } from '../../services/usuario.service';
@@ -18,8 +20,8 @@ import { UsuarioService } from '../../services/usuario.service';
 @Component({
     standalone: true,
     imports: [
-        CommonModule, FormsModule,AvatarModule , TableModule, ButtonModule, DialogModule,
-        InputTextModule, InputSwitchModule, SelectModule, ToastModule, TagModule, TooltipModule
+        CommonModule, FormsModule, AvatarModule, TableModule, ButtonModule, DialogModule,
+        InputTextModule, InputSwitchModule, SelectModule, ToastModule, TagModule, TooltipModule, InputIconModule, IconFieldModule
     ],
     providers: [MessageService],
     templateUrl: './usuarios.html'
@@ -30,7 +32,7 @@ export class UsuariosPage implements OnInit {
     usuarioDialog: boolean = false;
     activoDialog: boolean = true;
     listaRoles: any[];
-    
+
     // roles: any[] = [
     //     { label: 'Tester', value: 'Tester' },
     //     { label: 'Jefe de Proyecto', value: 'Jefe de Proyecto' },
@@ -39,6 +41,12 @@ export class UsuariosPage implements OnInit {
 
     private usuarioService = inject(UsuarioService);
     private messageService = inject(MessageService);
+
+    // === Variables para reseteo de contraseña ===
+    resetPasswordDialog: boolean = false;
+    usuarioParaReset: Usuario | null = null;
+    nuevaPasswordTemp: string = '';
+    procesandoPassword = signal<boolean>(false);
 
 
     constructor() {
@@ -78,22 +86,22 @@ export class UsuariosPage implements OnInit {
 
         //  ID de usuario antes de enviar.
         if (!usuarioParaEnviar.idUsuario) {
-            this.messageService.add({severity: 'error', summary: 'Error', detail: 'ID de usuario no encontrado.'});
+            this.messageService.add({ severity: 'error', summary: 'Error', detail: 'ID de usuario no encontrado.' });
             return;
         }
-        
-        
+
+
         // Se envia el objeto COMPLETO al servicio de actualización.
         this.usuarioService.updateUsuario(usuarioParaEnviar.idUsuario, usuarioParaEnviar as Usuario)
             .subscribe({
                 next: (usuarioActualizado) => {
-                    this.messageService.add({severity: 'success', summary: 'Éxito', detail: 'Usuario actualizado'});
+                    this.messageService.add({ severity: 'success', summary: 'Éxito', detail: 'Usuario actualizado' });
                     // Actualiza la lista sin recargar todo.
                     this.actualizarUsuarioEnLista(usuarioActualizado);
                     this.cerrarDialogo();
                 },
                 error: (err) => {
-                    this.messageService.add({severity: 'error', summary: 'Error', detail: 'No se pudo actualizar el usuario'});
+                    this.messageService.add({ severity: 'error', summary: 'Error', detail: 'No se pudo actualizar el usuario' });
                     this.cerrarDialogo();
                 }
             });
@@ -109,12 +117,39 @@ export class UsuariosPage implements OnInit {
             return [...lista];
         });
     }
-    
+
     getSeverityForRol(rol: string): string {
         switch (rol) {
             case 'Administrador': return 'danger';
             case 'Certificador': return 'info';
             default: return 'secondary';
         }
+    }
+
+    // === MÉTODOS DE RESETEO DE CONTRASEÑA ===
+    abrirDialogoResetPassword(usuario: Usuario) {
+        this.usuarioParaReset = { ...usuario };
+        this.nuevaPasswordTemp = ''; // Limpiamos el input
+        this.resetPasswordDialog = true;
+    }
+
+    guardarNuevaPasswordTemp() {
+        if (!this.nuevaPasswordTemp || this.nuevaPasswordTemp.trim() === '') {
+            this.messageService.add({ severity: 'warn', summary: 'Atención', detail: 'Debe ingresar una contraseña temporal.' });
+            return;
+        }
+
+        this.procesandoPassword.set(true);
+        this.usuarioService.resetearPasswordAdmin(this.usuarioParaReset!.idUsuario!, this.nuevaPasswordTemp).subscribe({
+            next: () => {
+                this.messageService.add({ severity: 'success', summary: 'Éxito', detail: `Contraseña de ${this.usuarioParaReset!.nombreUsuario} actualizada.` });
+                this.resetPasswordDialog = false;
+                this.procesandoPassword.set(false);
+            },
+            error: () => {
+                this.messageService.add({ severity: 'error', summary: 'Error', detail: 'No se pudo resetear la contraseña.' });
+                this.procesandoPassword.set(false);
+            }
+        });
     }
 }

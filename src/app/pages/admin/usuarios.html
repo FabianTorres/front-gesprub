@@ -1,77 +1,106 @@
-    <p-toast></p-toast>
-    <div class="card">
-        <h2 class="text-2xl font-semibold mb-4">Gestión de Usuarios</h2>
-        
-        <p-table [value]="usuarios()" [rows]="10" [paginator]="true" responsiveLayout="scroll" dataKey="idUsuario">
-            <ng-template pTemplate="header" class="p-datatable-gridlines">
-                <tr>
-                    <th pSortableColumn="nombreUsuario">Nombre de Usuario</th>
-                    <th pSortableColumn="correo">Correo</th>
-                    <th pSortableColumn="rolUsuario">Rol</th>
-                    <th pSortableColumn="activo">Activo</th>
-                    <th>Acciones</th>
-                </tr>
-            </ng-template>
-            <ng-template pTemplate="body" let-usuario>
-                <tr>
-                    <td>
-                        <div class="flex items-center gap-3">
-                            <p-avatar 
-                                [label]="(usuario.nombreUsuario || 'A').charAt(0).toUpperCase()"
-                                shape="circle"
-                                styleClass="bg-primary text-white font-bold">
-                            </p-avatar>
-                            <span>{{ usuario.nombreUsuario }}</span>
-                        </div>
-                    </td>
-                    <td>{{usuario.correo}}</td>
-                    <td>
-                        <p-tag [value]="usuario.rolUsuario" [severity]="getSeverityForRol(usuario.rolUsuario)"></p-tag>
-                    </td>
-                    <td class="text-center">
-                        <i class="pi" [ngClass]="{
+<p-toast></p-toast>
+<div class="card">
+    <h2 class="text-2xl font-semibold mb-4">Gestión de Usuarios</h2>
+
+    <p-table [value]="usuarios()" [rows]="10" [paginator]="true" responsiveLayout="scroll" dataKey="idUsuario">
+        <ng-template pTemplate="header" class="p-datatable-gridlines">
+            <tr>
+                <th pSortableColumn="nombreUsuario">Nombre de Usuario</th>
+                <th pSortableColumn="correo">Correo</th>
+                <th pSortableColumn="rolUsuario">Rol</th>
+                <th pSortableColumn="activo">Activo</th>
+                <th>Acciones</th>
+            </tr>
+        </ng-template>
+        <ng-template pTemplate="body" let-usuario>
+            <tr>
+                <td>
+                    <div class="flex items-center gap-3">
+                        <p-avatar [label]="(usuario.nombreUsuario || 'A').charAt(0).toUpperCase()" shape="circle"
+                            styleClass="bg-primary text-white font-bold">
+                        </p-avatar>
+                        <span>{{ usuario.nombreUsuario }}</span>
+                    </div>
+                </td>
+                <td>{{usuario.correo}}</td>
+                <td>
+                    <p-tag [value]="usuario.rolUsuario" [severity]="getSeverityForRol(usuario.rolUsuario)"></p-tag>
+                </td>
+                <td class="text-center">
+                    <i class="pi" [ngClass]="{
                             'pi-check-circle text-green-500': usuario.activo === 1,
                             'pi-ban text-red-500': usuario.activo !== 1
                         }"></i>
-                    </td>
-                    <td>
-                        <button pButton pRipple icon="pi pi-pencil" class="p-button-rounded" (click)="editarUsuario(usuario)" pTooltip="Editar Usuario"></button>
-                    </td>
-                </tr>
-            </ng-template>
-        </p-table>
+                </td>
+                <td>
+                    <button pButton pRipple icon="pi pi-key" class="p-button-rounded p-button-warning mr-2"
+                        pTooltip="Asignar Contraseña Temporal" tooltipPosition="top"
+                        (click)="abrirDialogoResetPassword(usuario)"></button>
+                    <button pButton pRipple icon="pi pi-pencil" class="p-button-rounded"
+                        (click)="editarUsuario(usuario)" pTooltip="Editar Usuario"></button>
+                </td>
+            </tr>
+        </ng-template>
+    </p-table>
+</div>
+
+<p-dialog [(visible)]="usuarioDialog" [style]="{width: '600px', height: '450px', maxHeight: '600px', overflowY: 'auto'}"
+    header="Editar Usuario" [modal]="true" class="p-fluid">
+    <ng-template pTemplate="content">
+        <div class="flex flex-col gap-4">
+            <div>
+                <label class="block font-bold mb-2">Nombre de Usuario</label>
+                <input type="text" pInputText [(ngModel)]="usuario.nombreUsuario" readonly
+                    class="bg-surface-100 dark:bg-surface-800" />
+            </div>
+            <div>
+                <label class="block font-bold mb-2">Correo</label>
+                <input type="email" pInputText [(ngModel)]="usuario.correo" readonly
+                    class="bg-surface-100 dark:bg-surface-800" />
+            </div>
+            <div class="field">
+                <label for="rol" class="font-bold">Rol</label>
+                <p-select id="rol" [options]="listaRoles" [(ngModel)]="usuario.rolUsuario"
+                    placeholder="Seleccione un rol" required styleClass="w-full">
+                </p-select>
+            </div>
+            <div class="flex items-center mt-2">
+                <p-inputSwitch [(ngModel)]="activoDialog"></p-inputSwitch>
+                <label for="activo" class="ml-2">Activo</label>
+            </div>
+        </div>
+    </ng-template>
+
+    <ng-template pTemplate="footer">
+        <button pButton pRipple label="Cancelar" icon="pi pi-times" class="p-button-text"
+            (click)="cerrarDialogo()"></button>
+        <button pButton pRipple label="Guardar Cambios" icon="pi pi-check" class="p-button-text"
+            (click)="guardarUsuario()"></button>
+    </ng-template>
+</p-dialog>
+
+<p-dialog [(visible)]="resetPasswordDialog"
+    [header]="'Restablecer Contraseña: ' + (usuarioParaReset?.nombreUsuario || '')" [modal]="true"
+    [style]="{width: '400px'}">
+
+    <div class="flex flex-col gap-3 pt-2">
+        <div class="bg-yellow-50 text-yellow-800 p-3 rounded border border-yellow-200 text-sm mb-2">
+            <i class="pi pi-info-circle mr-1"></i>
+            Esta acción cambiará inmediatamente la contraseña del usuario. Anótela y compártala de forma segura.
+        </div>
+
+        <label for="newPass" class="block font-bold">Nueva Contraseña Temporal</label>
+        <p-iconfield>
+            <p-inputicon styleClass="pi pi-lock" />
+            <input pInputText id="newPass" [(ngModel)]="nuevaPasswordTemp" type="text" placeholder="Ej: Temporal2026*"
+                class="w-full" />
+        </p-iconfield>
     </div>
 
-    <p-dialog [(visible)]="usuarioDialog" [style]="{width: '600px', height: '450px', maxHeight: '600px', overflowY: 'auto'}" header="Editar Usuario" [modal]="true" class="p-fluid">
-        <ng-template pTemplate="content">
-            <div class="flex flex-col gap-4">
-                <div>
-                    <label class="block font-bold mb-2">Nombre de Usuario</label>
-                    <input type="text" pInputText [(ngModel)]="usuario.nombreUsuario" readonly class="bg-surface-100 dark:bg-surface-800" />
-                </div>
-                <div>
-                    <label class="block font-bold mb-2">Correo</label>
-                    <input type="email" pInputText [(ngModel)]="usuario.correo" readonly class="bg-surface-100 dark:bg-surface-800" />
-                </div>
-                <div class="field">
-                    <label for="rol" class="font-bold">Rol</label>
-                    <p-select id="rol"
-                            [options]="listaRoles"
-                            [(ngModel)]="usuario.rolUsuario"
-                            placeholder="Seleccione un rol"
-                            required
-                            styleClass="w-full">
-                    </p-select>
-                </div>
-                <div class="flex items-center mt-2">
-                    <p-inputSwitch [(ngModel)]="activoDialog"></p-inputSwitch>
-                    <label for="activo" class="ml-2">Activo</label>
-                </div>
-            </div>
-        </ng-template>
-
-        <ng-template pTemplate="footer">
-            <button pButton pRipple label="Cancelar" icon="pi pi-times" class="p-button-text" (click)="cerrarDialogo()"></button>
-            <button pButton pRipple label="Guardar Cambios" icon="pi pi-check" class="p-button-text" (click)="guardarUsuario()"></button>
-        </ng-template>
-    </p-dialog>
+    <ng-template pTemplate="footer">
+        <button pButton label="Cancelar" icon="pi pi-times" class="p-button-text p-button-secondary"
+            (click)="resetPasswordDialog = false"></button>
+        <button pButton label="Aplicar Cambio" icon="pi pi-check" class="p-button-warning"
+            (click)="guardarNuevaPasswordTemp()" [loading]="procesandoPassword()"></button>
+    </ng-template>
+</p-dialog>

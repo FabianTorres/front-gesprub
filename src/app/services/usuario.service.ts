@@ -32,8 +32,8 @@ export class UsuarioService {
   }
 
   cambiarPassword(datos: any): Observable<any> {
-      const urlCambioPassword = `${environment.apiUrl}/usuario/cambiar-password`;
-      return this.http.patch(urlCambioPassword, datos); 
+    const urlCambioPassword = `${environment.apiUrl}/usuario/cambiar-password`;
+    return this.http.patch(urlCambioPassword, datos);
   }
 
 
@@ -43,7 +43,14 @@ export class UsuarioService {
   }
 
   actualizarUltimoLogin(idUsuario: number): Observable<any> {
-      // Este método no necesita enviar un cuerpo, solo la petición PATCH a la URL.
-      return this.http.patch(`${this.apiUrl}/${idUsuario}/ultimo-login`, {});
+    // Este método no necesita enviar un cuerpo, solo la petición PATCH a la URL.
+    return this.http.patch(`${this.apiUrl}/${idUsuario}/ultimo-login`, {});
+  }
+
+  /**
+     * Permite a un administrador forzar el cambio de contraseña de cualquier usuario.
+     */
+  resetearPasswordAdmin(idUsuario: number, nuevaPassword: string): Observable<any> {
+    return this.http.patch(`${this.apiUrl}/${idUsuario}/reset-password`, { password: nuevaPassword });
   }
 }

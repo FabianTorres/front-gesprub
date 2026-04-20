@@ -40,6 +40,10 @@ export default [
         loadComponent: () => import('./admin/admin-casos').then(m => m.AdminCasosPage)
     },
     {
+        path: 'admin/carga-evidencias',
+        loadComponent: () => import('./admin/carga-evidencias/carga-evidencias').then(m => m.CargaEvidenciasPage)
+    },
+    {
         path: 'perfil',
         loadComponent: () => import('./perfil/perfil').then(m => m.PerfilPage)
     },

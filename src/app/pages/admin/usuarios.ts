@@ -33,12 +33,6 @@ export class UsuariosPage implements OnInit {
     activoDialog: boolean = true;
     listaRoles: any[];
 
-    // roles: any[] = [
-    //     { label: 'Tester', value: 'Tester' },
-    //     { label: 'Jefe de Proyecto', value: 'Jefe de Proyecto' },
-    //     { label: 'Administrador', value: 'Administrador' }
-    // ];
-
     private usuarioService = inject(UsuarioService);
     private messageService = inject(MessageService);
 
@@ -50,13 +44,11 @@ export class UsuariosPage implements OnInit {
 
 
     constructor() {
-        // ===== INICIO DE LA LÍNEA AÑADIDA =====
         // Inicializamos la lista de roles en el constructor.
         this.listaRoles = [
             { label: 'Certificador', value: 'Certificador' },
             { label: 'Administrador', value: 'Administrador' }
         ];
-        // ===== FIN DE LA LÍNEA AÑADIDA =====
     }
 
     ngOnInit() {
@@ -126,7 +118,7 @@ export class UsuariosPage implements OnInit {
         }
     }
 
-    // === MÉTODOS DE RESETEO DE CONTRASEÑA ===
+    // === METODOS DE RESETEO DE CONTRASEÑA ===
     abrirDialogoResetPassword(usuario: Usuario) {
         this.usuarioParaReset = { ...usuario };
         this.nuevaPasswordTemp = ''; // Limpiamos el input

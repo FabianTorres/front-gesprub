@@ -1,0 +1,132 @@
+<p-toast></p-toast>
+
+<div class="card">
+    <div class="flex items-center gap-3 mb-4">
+        <i class="pi pi-cloud-upload text-3xl text-primary"></i>
+        <div>
+            <h2 class="text-2xl font-semibold m-0">Carga Masiva de Evidencias</h2>
+            <p class="text-muted-color m-0">Importe múltiples ejecuciones de pruebas con sus archivos adjuntos en un
+                solo lote.</p>
+        </div>
+    </div>
+
+    <div
+        class="p-4 border border-surface-200 dark:border-surface-700 rounded-lg mb-4 bg-surface-50 dark:bg-surface-900">
+        <h3 class="text-lg font-bold mb-3"><span class="bg-primary text-white px-2 py-1 rounded mr-2">1</span> Subir
+            Datos (Excel)</h3>
+        <p class="text-sm mb-3">Descargue la plantilla, complete los datos de las ejecuciones y escriba los nombres
+            exactos de los archivos que adjuntará.</p>
+
+        <div class="flex gap-3 items-center">
+            <button pButton label="Descargar Plantilla" icon="pi pi-download"
+                class="p-button-secondary p-button-outlined" (click)="descargarPlantilla()"></button>
+
+            <p-fileUpload mode="basic" chooseLabel="Subir Excel Lleno" chooseIcon="pi pi-file-excel"
+                accept=".xlsx, .xls" [maxFileSize]="5000000" (onSelect)="onExcelSelect($event)" [auto]="true"
+                [disabled]="procesando()">
+            </p-fileUpload>
+
+            <div *ngIf="filasExcel().length > 0" class="ml-4 font-bold text-green-600">
+                <i class="pi pi-check-circle"></i> Excel cargado: {{ filasExcel().length }} registros.
+            </div>
+        </div>
+    </div>
+
+    <div *ngIf="filasExcel().length > 0"
+        class="animate-fade-in p-4 border border-surface-200 dark:border-surface-700 rounded-lg mb-4 bg-surface-50 dark:bg-surface-900">
+        <h3 class="text-lg font-bold mb-3"><span class="bg-primary text-white px-2 py-1 rounded mr-2">2</span> Adjuntar
+            Archivos (Imágenes, PDFs, etc.)</h3>
+        <p class="text-sm mb-3">Arrastre aquí <strong>TODOS</strong> los archivos mencionados en el Excel. El sistema
+            los asociará automáticamente por nombre.</p>
+
+        <p-fileUpload name="demo[]" [multiple]="true" accept="image/*,.pdf,.txt,.log,.xlsx,.xls,.docx,.doc,.sql"
+            [maxFileSize]="10000000" (onSelect)="onArchivosSelect($event)"
+            (onClear)="archivosFisicos.set([]); cruzarArchivos()" [showUploadButton]="false"
+            chooseLabel="Seleccionar Archivos" cancelLabel="Limpiar" [disabled]="procesando()">
+            <ng-template pTemplate="content">
+                <div *ngIf="archivosFisicos().length === 0"
+                    class="flex flex-col items-center justify-center p-8 text-surface-400">
+                    <i class="pi pi-images text-5xl mb-3"></i>
+                    <span>Arrastre los archivos aquí</span>
+                </div>
+            </ng-template>
+        </p-fileUpload>
+    </div>
+
+    <div *ngIf="filasExcel().length > 0" class="animate-fade-in">
+        <div class="flex justify-between items-center mb-3">
+            <h3 class="text-lg font-bold m-0"><span class="bg-primary text-white px-2 py-1 rounded mr-2">3</span>
+                Validación y Procesamiento</h3>
+
+            <button pButton label="Procesar Carga Masiva ({{ filasListasParaSubir.length }} válidos)"
+                icon="pi pi-cloud-upload" class="p-button-success p-button-lg"
+                [disabled]="filasListasParaSubir.length === 0 || procesando()" [loading]="procesando()"
+                (click)="procesarLote()">
+            </button>
+        </div>
+
+        <p-progressBar *ngIf="procesando()" [value]="progresoActual()" [showValue]="true" class="mb-3"></p-progressBar>
+
+        <p-table [value]="filasExcel()" [tableStyle]="{'min-width': '50rem'}"
+            styleClass="p-datatable-sm p-datatable-gridlines">
+            <ng-template pTemplate="header">
+                <tr>
+                    <th style="width: 10%">ID Caso</th>
+                    <th style="width: 10%">Resultado</th>
+                    <th style="width: 10%">Versión</th>
+                    <th style="width: 12%">RUT</th>
+                    <th style="width: 35%">Cruce de Archivos</th>
+                    <th style="width: 15%">Estado Subida</th>
+                </tr>
+            </ng-template>
+            <ng-template pTemplate="body" let-fila>
+                <tr>
+                    <td class="font-bold">{{ fila['ID Caso'] }}</td>
+                    <td>
+                        <p-tag [value]="fila['Resultado (OK/NK/NA)']"
+                            [severity]="fila['Resultado (OK/NK/NA)'] === 'OK' ? 'success' : (fila['Resultado (OK/NK/NA)'] === 'NK' ? 'danger' : 'secondary')">
+                        </p-tag>
+                    </td>
+                    <td>{{ fila['Versión Ejecución'] }}</td>
+                    <td class="text-surface-600 font-medium">
+                        {{ fila['RUT'] || 'N/A' }}
+                    </td>
+
+                    <td>
+                        <div *ngIf="fila['ArchivosLimpios'].length === 0" class="text-surface-500 italic text-sm">
+                            Sin archivos requeridos
+                        </div>
+                        <div *ngIf="fila['ArchivosLimpios'].length > 0" class="flex flex-wrap gap-1">
+                            <span *ngFor="let nombre of fila['ArchivosLimpios']"
+                                class="px-2 py-1 text-xs rounded border"
+                                [ngClass]="!tieneArchivo(fila, nombre) ? 'bg-red-50 text-red-700 border-red-200' : 'bg-green-50 text-green-700 border-green-200'">
+                                <i class="pi mr-1"
+                                    [ngClass]="!tieneArchivo(fila, nombre) ? 'pi-times' : 'pi-check'"></i>
+                                {{ nombre }}
+                            </span>
+                        </div>
+                    </td>
+
+                    <td>
+                        <span *ngIf="fila.estadoSubida === 'Pendiente' && !fila.faltanArchivos"
+                            class="text-blue-500 font-bold"><i class="pi pi-clock mr-1"></i> Listo</span>
+                        <span *ngIf="fila.estadoSubida === 'Pendiente' && fila.faltanArchivos"
+                            class="text-red-500 font-bold"><i class="pi pi-exclamation-triangle mr-1"></i> Faltan
+                            archivos</span>
+                        <span *ngIf="fila.estadoSubida === 'Subiendo'"
+                            class="text-orange-500 font-bold animate-pulse"><i class="pi pi-spin pi-spinner mr-1"></i>
+                            Procesando...</span>
+                        <span *ngIf="fila.estadoSubida === 'Exitoso'" class="text-green-600 font-bold"><i
+                                class="pi pi-check-circle mr-1"></i> Completado</span>
+
+                        <div *ngIf="fila.estadoSubida === 'Error'"
+                            class="bg-red-50 text-red-700 px-2 py-1 rounded border border-red-200 inline-block font-medium cursor-help"
+                            [pTooltip]="fila.mensajeError" tooltipPosition="left">
+                            <i class="pi pi-times-circle mr-1"></i> Error (Ver)
+                        </div>
+                    </td>
+                </tr>
+            </ng-template>
+        </p-table>
+    </div>
+</div>

@@ -156,7 +156,8 @@ export class AppMenu implements OnInit {
                         icon: 'pi pi-fw pi-cloud-download',
                         routerLink: ['/pages/admin/descargas']
                     },
-                    { label: 'Admin. Casos', icon: 'pi pi-fw pi-wrench', routerLink: ['/pages/admin/casos'] }
+                    { label: 'Admin. Casos', icon: 'pi pi-fw pi-wrench', routerLink: ['/pages/admin/casos'] },
+                    { label: 'Carga Evidencias', icon: 'pi pi-fw pi-cloud-upload', routerLink: ['/pages/admin/carga-evidencias'] }
                 ]
             });
         }

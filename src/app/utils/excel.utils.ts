@@ -118,3 +118,81 @@ function guardarArchivo(buffer: any, nombreArchivo: string): void {
   const data: Blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;charset=UTF-8' });
   saveAs(data, nombreArchivo);
 }
+
+/**
+ * Genera y descarga una plantilla de Excel para la importación masiva de EVIDENCIAS.
+ */
+export function descargarPlantillaEvidencias(): void {
+  const encabezados = ['ID Caso', 'Resultado (OK/NK/NA)', 'Versión Ejecución', 'Archivos (separados por coma)', 'RUT', 'Criticidad (Leve/Medio/Grave/Crítico)', 'Jira', 'Descripción'];
+  const filaEjemplo = ['150', 'NK', '1.0', 'caso_1.xlsx, log.txt', '12345678-9', 'Grave', 'CERTRTA26-1261', 'Prueba exitosa'];
+
+  const worksheet: XLSX.WorkSheet = XLSX.utils.aoa_to_sheet([encabezados, filaEjemplo]);
+  worksheet['!cols'] = [{ wch: 10 }, { wch: 20 }, { wch: 18 }, { wch: 40 }, { wch: 15 }, { wch: 35 }, { wch: 15 }, { wch: 40 }];
+
+  const workbook: XLSX.WorkBook = { Sheets: { 'Plantilla': worksheet }, SheetNames: ['Plantilla'] };
+  const excelBuffer: any = XLSX.write(workbook, { bookType: 'xlsx', type: 'array' });
+
+  guardarArchivo(excelBuffer, "Plantilla_Carga_Evidencias.xlsx");
+}
+
+/**
+ * Lee y valida la plantilla de evidencias.
+ */
+export function leerYValidarExcelEvidencias(file: File, messageService: MessageService): Promise<any[]> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+
+    reader.onload = (e: any) => {
+      try {
+        const bstr: ArrayBuffer = e.target.result;
+        const workbook: XLSX.WorkBook = XLSX.read(bstr, { type: 'array' });
+        const worksheet = workbook.Sheets[workbook.SheetNames[0]];
+
+        // Leer datos
+        let datosLeidos = XLSX.utils.sheet_to_json(worksheet, { raw: false, blankrows: false });
+
+        // === BOMBA NUCLEAR ANTI-FANTASMAS ===
+        datosLeidos = datosLeidos.filter((fila: any) => {
+          return Object.values(fila).some(valor => valor !== null && valor !== undefined && String(valor).trim() !== '');
+        });
+
+        if (datosLeidos.length === 0) {
+          messageService.add({ severity: 'error', summary: 'Archivo vacío', detail: 'El archivo Excel no tiene datos válidos.' });
+          return reject('Sin registros');
+        }
+
+        // Validar contenido básico
+        const errores: string[] = [];
+        datosLeidos.forEach((fila: any, index: number) => {
+          const numeroFila = index + 2;
+
+          if (!fila['ID Caso'] || String(fila['ID Caso']).trim() === '') errores.push(`Fila ${numeroFila}: ID Caso está vacío.`);
+          if (!fila['Resultado (OK/NK/NA)'] || String(fila['Resultado (OK/NK/NA)']).trim() === '') errores.push(`Fila ${numeroFila}: Resultado está vacío.`);
+          if (!fila['Versión Ejecución'] || String(fila['Versión Ejecución']).trim() === '') errores.push(`Fila ${numeroFila}: Versión está vacío.`);
+
+          // Limpieza de espacios en los nombres de archivos
+          if (fila['Archivos (separados por coma)']) {
+            fila['ArchivosLimpios'] = String(fila['Archivos (separados por coma)'])
+              .split(',')
+              .map(nombre => nombre.trim())
+              .filter(nombre => nombre !== '');
+          } else {
+            fila['ArchivosLimpios'] = [];
+          }
+        });
+
+        if (errores.length > 0) {
+          messageService.add({ severity: 'error', summary: `Se encontraron ${errores.length} errores`, detail: 'Revisa la plantilla.', sticky: true });
+          errores.slice(0, 5).forEach(err => messageService.add({ severity: 'warn', summary: err, sticky: true }));
+          return reject('Errores de validación');
+        }
+
+        resolve(datosLeidos);
+      } catch (error) {
+        reject(error);
+      }
+    };
+    reader.onerror = (error) => reject(error);
+    reader.readAsArrayBuffer(file);
+  });
+}

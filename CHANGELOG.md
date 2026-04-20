@@ -3,6 +3,11 @@ Todos los cambios significativos en este proyecto se documentarán en este archi
 El formato se basa en [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 y este proyecto adhiere al [Versionado Semántico](https://semver.org/lang/es/).
 
+## [2.4.0] - 2026-04-06
+
+### Added
+-   Se agrega una forma de cargar pruebas masivamente
+
 ## [2.3.5] - 2026-04-06
 
 ### Added

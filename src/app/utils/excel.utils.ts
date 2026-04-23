@@ -196,3 +196,18 @@ export function leerYValidarExcelEvidencias(file: File, messageService: MessageS
     reader.readAsArrayBuffer(file);
   });
 }
+
+/**
+ * Exporta un arreglo de objetos a un archivo Excel.
+ * @param data Arreglo de datos a exportar.
+ * @param fileName Nombre del archivo de salida (ej: 'datos.xlsx').
+ */
+export function exportarDatosAExcel(data: any[], fileName: string): void {
+  const worksheet: XLSX.WorkSheet = XLSX.utils.json_to_sheet(data);
+  const workbook: XLSX.WorkBook = {
+    Sheets: { 'Datos': worksheet },
+    SheetNames: ['Datos']
+  };
+  const excelBuffer: any = XLSX.write(workbook, { bookType: 'xlsx', type: 'array' });
+  guardarArchivo(excelBuffer, fileName);
+}

@@ -1,5 +1,6 @@
 import { Component, OnInit, inject, signal, effect, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { lastValueFrom } from 'rxjs';
 import { FormsModule } from '@angular/forms';
 import { TableModule } from 'primeng/table';
 import { ButtonModule } from 'primeng/button';
@@ -10,6 +11,7 @@ import { InputNumberModule } from 'primeng/inputnumber';
 import { ToastModule } from 'primeng/toast';
 import { MessageService, ConfirmationService } from 'primeng/api';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
+import { MessagesModule } from 'primeng/messages';
 import { VectorData } from '../../models/vector-data';
 import { CargaVxService } from '../../services/cargavx.service';
 import { FieldsetModule } from 'primeng/fieldset';
@@ -26,12 +28,13 @@ import { InputSwitchModule } from 'primeng/inputswitch';
 import * as XLSX from 'xlsx';
 import { FileUploadModule } from 'primeng/fileupload';
 import { DividerModule } from 'primeng/divider';
+import { leerYValidarExcel, exportarAExcel } from '../../utils/excel.utils';
 
 @Component({
     standalone: true,
     imports: [
         CommonModule, FormsModule, TableModule, ButtonModule, ToolbarModule, InputSwitchModule, FileUploadModule,
-        DialogModule, InputTextModule, InputNumberModule, ToastModule, TabViewModule, RadioButtonModule,
+        DialogModule, InputTextModule, MessagesModule, InputNumberModule, ToastModule, TabViewModule, RadioButtonModule,
         ConfirmDialogModule, FieldsetModule, TagModule, TooltipModule, InputTextModule, SelectModule, DropdownModule, DividerModule
     ],
     providers: [MessageService, ConfirmationService],
@@ -39,12 +42,27 @@ import { DividerModule } from 'primeng/divider';
 })
 export class CargaVxPage implements OnInit {
 
+    private cargaVxService = inject(CargaVxService);
+
     periodoSeleccionado = signal<number>(202600);
 
     periodosDisponibles = [
         { label: 'AT 2025', value: 202500 },
         { label: 'AT 2026', value: 202600 }
     ];
+
+    // MOTOR DE COMPARACION DE CATALOGO (DIFF ENGINE)    
+    dialogoRevisionCatalogo: boolean = false;
+    procesandoDiff: boolean = false;
+
+    // Se guardara el resultado del cruce de datos
+    resumenDiff = {
+        totalLeidos: 0,
+        ignorados: 0,
+        nuevos: [] as any[],
+        modificados: [] as any[],
+        errores: [] as string[]
+    };
 
     //VARIABLES PARA EL VX599
     dialogoDecision599 = false;
@@ -935,6 +953,178 @@ export class CargaVxPage implements OnInit {
         if (resto === 10) return 'K';
         return resto.toString();
     }
+
+    exportarCatalogo(tabla: any) {
+        // 1. Obtenemos exactamente lo que la tabla está mostrando:
+        // Si hay una búsqueda activa, toma 'filteredValue'. Si no, toma todos los datos ('value').
+        let datosVista = tabla.filteredValue ? [...tabla.filteredValue] : [...tabla.value];
+
+        if (!datosVista || datosVista.length === 0) {
+            this.messageService.add({ severity: 'warn', summary: 'Atención', detail: 'No hay datos en la vista actual para exportar.' });
+            return;
+        }
+
+        // 2. MAGIA: Si el usuario NO ha hecho clic en ninguna columna para ordenar, 
+        // forzamos el orden por defecto: Vector ID de menor a mayor.
+        if (!tabla.sortField && (!tabla.multiSortMeta || tabla.multiSortMeta.length === 0)) {
+            datosVista.sort((a: any, b: any) => a.vectorId - b.vectorId);
+        }
+
+        // 3. Mapeamos con los datos ya ordenados y/o filtrados
+        const datosParaExportar = datosVista.map((v: any) => ({
+            'Vector ID': v.vectorId,
+            'Nombre': v.nombre,
+            'Tipo de Tecnología': v.tipoTecnologia === 'BIGDATA_INTEGRADO' ? 'BigData Integrado' : 'Batch (Legacy)',
+            'Versión de Ingreso': v.versionIngreso || 'N/A',
+            'Estado': v.estado ? 'Activo' : 'Eliminado',
+            'Versión de Retiro': v.estado ? 'N/A' : (v.versionRetiro || 'N/A')
+        }));
+
+        exportarAExcel(datosParaExportar, 'Catalogo_Vectores');
+
+        this.messageService.add({
+            severity: 'success',
+            summary: 'Exportación Exitosa',
+            detail: `Se exportaron ${datosVista.length} registros.`
+        });
+    }
+
+
+
+    // 1. Lectura del Excel y Motor de Cruce
+    onExcelCatalogoSeleccionado(event: any) {
+        const file = event.files[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = (e: any) => {
+            try {
+                // Importamos XLSX dinámicamente si no lo tienes global, o asumiendo que ya lo tienes
+                import('xlsx').then(XLSX => {
+                    const workbook = XLSX.read(e.target.result, { type: 'array' });
+                    const worksheet = workbook.Sheets[workbook.SheetNames[0]];
+                    let filas = XLSX.utils.sheet_to_json(worksheet, { raw: false, blankrows: false }) as any[];
+
+                    // Limpieza Anti-Fantasmas
+                    filas = filas.filter(f => Object.values(f).some(v => v !== null && v !== undefined && String(v).trim() !== ''));
+
+                    this.resumenDiff = { totalLeidos: filas.length, ignorados: 0, nuevos: [], modificados: [], errores: [] };
+                    const catalogoActual = this.catalogo(); // El Signal que tiene los datos de la BD
+
+                    filas.forEach((fila, index) => {
+                        const numFila = index + 2; // +1 por ser array 0-index, +1 por cabecera
+
+                        // Búsqueda flexible de las columnas (ignora mayúsculas y espacios extra)
+                        const keyVector = Object.keys(fila).find(k => k.trim().toLowerCase() === 'vector');
+                        const keyIntegrado = Object.keys(fila).find(k => k.trim().toLowerCase() === 'integrado');
+
+                        if (!keyVector || !keyIntegrado) {
+                            if (this.resumenDiff.errores.length < 5) {
+                                this.resumenDiff.errores.push(`Fila ${numFila}: Faltan columnas clave (Vector o Integrado).`);
+                            }
+                            return;
+                        }
+
+                        const vectorId = parseInt(fila[keyVector], 10);
+                        const esIntegradoExcel = String(fila[keyIntegrado]).trim().toLowerCase() === 'si';
+                        const nuevoTipo = esIntegradoExcel ? 'BIGDATA_INTEGRADO' : 'BATCH';
+
+                        if (isNaN(vectorId)) {
+                            this.resumenDiff.errores.push(`Fila ${numFila}: El ID del Vector no es un número válido.`);
+                            return;
+                        }
+
+                        // Buscamos si el vector existe en nuestro catálogo de BD
+                        const vectorExistente = catalogoActual.find(v => v.vectorId === vectorId);
+
+                        if (!vectorExistente) {
+                            // CUBETA 1: NUEVOS
+                            // Como el Excel no trae Nombre ni Versión, ponemos valores por defecto que luego pueden editar
+                            this.resumenDiff.nuevos.push({
+                                vectorId: vectorId,
+                                nombre: `Vector ${vectorId} (Auto-creado)`,
+                                tipoTecnologia: nuevoTipo,
+                                versionIngreso: '1.0',
+                                estado: true
+                            });
+                        } else {
+                            // CUBETA 2 y 3: EXISTENTES (Comparamos si hubo cambios)
+                            if (vectorExistente.tipoTecnologia !== nuevoTipo) {
+                                this.resumenDiff.modificados.push({
+                                    ...vectorExistente, // Mantenemos su nombre y versión original
+                                    tipoAntiguo: vectorExistente.tipoTecnologia, // Solo visual
+                                    tipoTecnologia: nuevoTipo // El dato que vamos a actualizar
+                                });
+                            } else {
+                                // CUBETA 3: Sin cambios
+                                this.resumenDiff.ignorados++;
+                            }
+                        }
+                    });
+
+                    // Abrimos la Sala de Revisión
+                    this.dialogoRevisionCatalogo = true;
+                });
+            } catch (error) {
+                this.messageService.add({ severity: 'error', summary: 'Error', detail: 'No se pudo procesar el Excel.' });
+            }
+        };
+        reader.readAsArrayBuffer(file);
+    }
+
+    // 2. Procesamiento de los Cambios Confirmados
+    async aplicarCambiosCatalogo() {
+        this.procesandoDiff = true;
+
+        // 1. Preparamos el payload estrictamente con las propiedades del contrato
+        const paqueteCompleto = [
+            ...this.resumenDiff.modificados.map(m => ({
+                vectorId: m.vectorId,
+                nombre: m.nombre,
+                tipoTecnologia: m.tipoTecnologia,
+                versionIngreso: m.versionIngreso,
+                estado: m.estado
+            })),
+            ...this.resumenDiff.nuevos.map(n => ({
+                vectorId: n.vectorId,
+                nombre: n.nombre,
+                tipoTecnologia: n.tipoTecnologia,
+                versionIngreso: n.versionIngreso,
+                estado: n.estado
+            }))
+        ];
+
+        if (paqueteCompleto.length === 0) return;
+
+        // 2. Obtenemos el periodo activo desde tu signal periodoSeleccionado()
+        const periodoActual = this.periodoSeleccionado();
+
+        // 3. Llamada única al servicio con el nuevo contrato
+        this.cargaVxService.sincronizarCatalogoMasivo(paqueteCompleto, periodoActual).subscribe({
+            next: () => {
+                this.messageService.add({
+                    severity: 'success',
+                    summary: 'Catálogo Sincronizado',
+                    detail: `Se procesaron ${paqueteCompleto.length} registros exitosamente.`
+                });
+                this.dialogoRevisionCatalogo = false;
+                this.procesandoDiff = false;
+                this.cargarCatalogo(); // Recarga la tabla con los nuevos datos
+            },
+            error: (err) => {
+                console.error("Error en sincronización masiva:", err);
+                this.messageService.add({
+                    severity: 'error',
+                    summary: 'Fallo la Operación',
+                    detail: 'No se realizaron cambios. El servidor rechazó el lote.',
+                    sticky: true
+                });
+                this.procesandoDiff = false;
+            }
+        });
+    }
+
+
 
 
 }

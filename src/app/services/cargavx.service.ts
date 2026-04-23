@@ -134,4 +134,14 @@ export class CargaVxService {
         // Enviamos la lista ya "firmada" al backend
         return this.http.post(`${this.apiUrl}/importar-masivo`, payload);
     }
+
+    /**
+     * Sincronización masiva (Upsert) del catálogo de vectores.
+     * Envía el periodo como Query Param y el listado en el Body.
+     */
+    sincronizarCatalogoMasivo(vectores: any[], periodo: number): Observable<any> {
+        const params = new HttpParams().set('periodo', periodo.toString());
+
+        return this.http.post(`${this.apiUrl}/catalogo/sincronizar`, vectores, { params });
+    }
 }

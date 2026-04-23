@@ -6,7 +6,7 @@ y este proyecto adhiere al [Versionado Semántico](https://semver.org/lang/es/).
 ## [2.4.1] - 2026-04-23
 
 ### Added
--   Se agrega carga masiva de catalogo de vectores y añadir busqueda al historial
+-   Se agrega carga masiva de catalogo de vectores y anadir busqueda al historial
 
 ## [2.4.0] - 2026-04-06
 

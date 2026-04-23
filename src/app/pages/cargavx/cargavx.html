@@ -564,8 +564,20 @@
 <p-dialog [(visible)]="logDialog" header="Historial de Cambios" [modal]="true" [style]="{width: '900px'}"
     [maximizable]="true">
     <div class="card">
-        <p-table [value]="logs()" [rows]="10" [paginator]="true" [loading]="loadingLogs"
-            styleClass="p-datatable-sm p-datatable-striped" responsiveLayout="scroll">
+        <p-table #dtLogs [value]="logs()" [rows]="10" [paginator]="true" [loading]="loadingLogs"
+            [globalFilterFields]="['rut', 'vector', 'logUsuario']" styleClass="p-datatable-sm p-datatable-striped"
+            responsiveLayout="scroll">
+
+            <ng-template pTemplate="caption">
+                <div class="flex justify-content-end mb-2">
+                    <span class="p-input-icon-left">
+                        <i class="pi pi-search"></i>
+                        <input pInputText type="text"
+                            (input)="dtLogs.filterGlobal($any($event.target).value, 'contains')"
+                            placeholder="Buscar por RUT, Vector o Usuario..." />
+                    </span>
+                </div>
+            </ng-template>
 
             <ng-template pTemplate="header">
                 <tr>

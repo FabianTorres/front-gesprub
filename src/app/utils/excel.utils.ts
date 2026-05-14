@@ -211,3 +211,22 @@ export function exportarDatosAExcel(data: any[], fileName: string): void {
   const excelBuffer: any = XLSX.write(workbook, { bookType: 'xlsx', type: 'array' });
   guardarArchivo(excelBuffer, fileName);
 }
+
+
+/**
+ * Genera y descarga una plantilla de Excel para la importación del CATÁLOGO MAESTRO.
+ */
+export function descargarPlantillaMaestro(): void {
+  const encabezados = ['ID Vector', 'Nombre del Vector', 'Tipo (BATCH / BIGDATA)', 'Versión Ingreso'];
+  const filaEjemplo = ['800', 'Nombre del nuevo vector', 'BIGDATA', '1.0'];
+
+  const worksheet: XLSX.WorkSheet = XLSX.utils.aoa_to_sheet([encabezados, filaEjemplo]);
+  worksheet['!cols'] = [{ wch: 15 }, { wch: 40 }, { wch: 25 }, { wch: 15 }];
+
+  const workbook: XLSX.WorkBook = { Sheets: { 'Catalogo': worksheet }, SheetNames: ['Catalogo'] };
+  const excelBuffer: any = XLSX.write(workbook, { bookType: 'xlsx', type: 'array' });
+
+  // Usamos tu función interna guardarArchivo
+  const data: Blob = new Blob([excelBuffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;charset=UTF-8' });
+  saveAs(data, "Plantilla_Maestro_Vectores.xlsx");
+}

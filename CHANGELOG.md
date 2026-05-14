@@ -3,10 +3,10 @@ Todos los cambios significativos en este proyecto se documentarán en este archi
 El formato se basa en [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 y este proyecto adhiere al [Versionado Semántico](https://semver.org/lang/es/).
 
-## [2.4.1] - 2026-04-23
+## [2.4.2] - 2026-05-14
 
 ### Added
--   Se agrega carga masiva de catalogo de vectores y anadir busqueda al historial
+-   Se agrega carga y actualizacion masiva de catalogo de vectores y anadir busqueda al historial
 
 ## [2.4.0] - 2026-04-06
 

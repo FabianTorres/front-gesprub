@@ -28,7 +28,7 @@ import { InputSwitchModule } from 'primeng/inputswitch';
 import * as XLSX from 'xlsx';
 import { FileUploadModule } from 'primeng/fileupload';
 import { DividerModule } from 'primeng/divider';
-import { leerYValidarExcel, exportarAExcel } from '../../utils/excel.utils';
+import { leerYValidarExcel, exportarAExcel, descargarPlantillaMaestro } from '../../utils/excel.utils';
 
 @Component({
     standalone: true,
@@ -1012,51 +1012,52 @@ export class CargaVxPage implements OnInit {
                     const catalogoActual = this.catalogo(); // El Signal que tiene los datos de la BD
 
                     filas.forEach((fila, index) => {
-                        const numFila = index + 2; // +1 por ser array 0-index, +1 por cabecera
+                        const numFila = index + 2;
 
-                        // Búsqueda flexible de las columnas (ignora mayúsculas y espacios extra)
-                        const keyVector = Object.keys(fila).find(k => k.trim().toLowerCase() === 'vector');
-                        const keyIntegrado = Object.keys(fila).find(k => k.trim().toLowerCase() === 'integrado');
+                        // Buscamos las columnas de forma flexible
+                        const keyVector = Object.keys(fila).find(k => k.trim().toLowerCase().includes('vector') && k.trim().toLowerCase().includes('id'))
+                            || Object.keys(fila).find(k => k.trim().toLowerCase() === 'vector');
+                        const keyIntegrado = Object.keys(fila).find(k => k.trim().toLowerCase() === 'integrado')
+                            || Object.keys(fila).find(k => k.trim().toLowerCase().includes('tipo'));
+                        const keyNombre = Object.keys(fila).find(k => k.trim().toLowerCase().includes('nombre'));
+                        const keyVersion = Object.keys(fila).find(k => k.trim().toLowerCase().includes('versión'))
+                            || Object.keys(fila).find(k => k.trim().toLowerCase().includes('version'));
 
-                        if (!keyVector || !keyIntegrado) {
-                            if (this.resumenDiff.errores.length < 5) {
-                                this.resumenDiff.errores.push(`Fila ${numFila}: Faltan columnas clave (Vector o Integrado).`);
-                            }
-                            return;
-                        }
+                        if (!keyVector || !keyIntegrado) return; // Saltear filas sin datos mínimos
 
                         const vectorId = parseInt(fila[keyVector], 10);
-                        const esIntegradoExcel = String(fila[keyIntegrado]).trim().toLowerCase() === 'si';
-                        const nuevoTipo = esIntegradoExcel ? 'BIGDATA_INTEGRADO' : 'BATCH';
+                        const valorIntegrado = String(fila[keyIntegrado]).trim().toLowerCase();
+                        // Soporta "Si" o "BIGDATA"
+                        const nuevoTipo = (valorIntegrado === 'si' || valorIntegrado.includes('bigdata')) ? 'BIGDATA_INTEGRADO' : 'BATCH';
 
-                        if (isNaN(vectorId)) {
-                            this.resumenDiff.errores.push(`Fila ${numFila}: El ID del Vector no es un número válido.`);
-                            return;
-                        }
+                        // Capturamos el nombre y versión si vienen en el Excel
+                        const nombreExcel = keyNombre ? String(fila[keyNombre]).trim() : `Vector ${vectorId}`;
+                        const versionExcel = keyVersion ? String(fila[keyVersion]).trim() : '1.0';
 
-                        // Buscamos si el vector existe en nuestro catálogo de BD
+                        if (isNaN(vectorId)) return;
+
                         const vectorExistente = catalogoActual.find(v => v.vectorId === vectorId);
 
                         if (!vectorExistente) {
-                            // CUBETA 1: NUEVOS
-                            // Como el Excel no trae Nombre ni Versión, ponemos valores por defecto que luego pueden editar
+                            // CUBETA 1: NUEVOS (Ahora con datos reales del Excel)
                             this.resumenDiff.nuevos.push({
                                 vectorId: vectorId,
-                                nombre: `Vector ${vectorId} (Auto-creado)`,
+                                nombre: nombreExcel,
                                 tipoTecnologia: nuevoTipo,
-                                versionIngreso: '1.0',
+                                versionIngreso: versionExcel,
                                 estado: true
                             });
                         } else {
-                            // CUBETA 2 y 3: EXISTENTES (Comparamos si hubo cambios)
-                            if (vectorExistente.tipoTecnologia !== nuevoTipo) {
+                            // CUBETA 2: MODIFICADOS
+                            // Verificamos si cambió el tipo O si el nombre es distinto al que tenemos
+                            if (vectorExistente.tipoTecnologia !== nuevoTipo || (keyNombre && vectorExistente.nombre !== nombreExcel)) {
                                 this.resumenDiff.modificados.push({
-                                    ...vectorExistente, // Mantenemos su nombre y versión original
-                                    tipoAntiguo: vectorExistente.tipoTecnologia, // Solo visual
-                                    tipoTecnologia: nuevoTipo // El dato que vamos a actualizar
+                                    ...vectorExistente,
+                                    tipoAntiguo: vectorExistente.tipoTecnologia,
+                                    nombre: nombreExcel, // Actualizamos el nombre también si viene
+                                    tipoTecnologia: nuevoTipo
                                 });
                             } else {
-                                // CUBETA 3: Sin cambios
                                 this.resumenDiff.ignorados++;
                             }
                         }
@@ -1122,6 +1123,11 @@ export class CargaVxPage implements OnInit {
                 this.procesandoDiff = false;
             }
         });
+    }
+
+
+    descargarPlantillaMaestro() {
+        descargarPlantillaMaestro();
     }
 
 

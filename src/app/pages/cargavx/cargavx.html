@@ -324,16 +324,21 @@
                         <ng-template pTemplate="caption">
                             <div class="flex flex-wrap justify-content-between align-items-center gap-3">
                                 <span class="text-xl font-bold">Listado Maestro</span>
+
+                                <button pButton pRipple icon="pi pi-download" label="Plantilla de ejemplo"
+                                    class="p-button-info p-button-sm p-button-outlined"
+                                    pTooltip="Descargar formato para carga masiva de nuevos vectores"
+                                    (click)="descargarPlantillaMaestro()">
+                                </button>
+
                                 <button pButton pRipple icon="pi pi-file-excel" label="Exportar"
                                     class="p-button-success p-button-sm p-button-outlined"
-                                    pTooltip="Exportar catálogo completo a Excel" tooltipPosition="right"
                                     (click)="exportarCatalogo(dtCatalogo)">
                                 </button>
 
-                                <p-fileUpload mode="basic" chooseLabel="Actualizar Catálogo" chooseIcon="pi pi-sync"
+                                <p-fileUpload mode="basic" chooseLabel="Actualizar/Cargar Excel" chooseIcon="pi pi-sync"
                                     accept=".xlsx, .xls" [auto]="true" styleClass="p-button-sm p-button-secondary"
-                                    (onSelect)="onExcelCatalogoSeleccionado($event)"
-                                    pTooltip="Subir Excel para actualizar tipos de vectores automáticamente">
+                                    (onSelect)="onExcelCatalogoSeleccionado($event)">
                                 </p-fileUpload>
                                 <span class="p-input-icon-left">
                                     <i class="pi pi-search"></i>

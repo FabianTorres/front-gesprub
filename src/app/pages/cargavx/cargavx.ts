@@ -810,8 +810,10 @@ export class CargaVxPage implements OnInit {
         };
         reader.readAsArrayBuffer(file);
 
-        // Limpiamos el uploader visualmente
-        event.originalEvent.target.value = '';
+        // Limpiamos el uploader visualmente de forma segura
+        if (event.originalEvent && event.originalEvent.target) {
+            event.originalEvent.target.value = '';
+        }
     }
 
     // 3. Validar y transformar datos

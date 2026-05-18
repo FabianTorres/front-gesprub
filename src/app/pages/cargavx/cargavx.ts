@@ -85,11 +85,15 @@ export class CargaVxPage implements OnInit {
     esEdicion: boolean = false;
     loading: boolean = false;
 
-    // Variables para Importación Masiva
+    // Variables para Importacion Masiva y Dry-Run
     importDialog: boolean = false;
     vectoresParaImportar: VectorData[] = [];
     resumenImportacion: { total: number, validos: number, errores: string[] } = { total: 0, validos: 0, errores: [] };
     loadingImport: boolean = false;
+
+    // Estados de la simulacion
+    estadoSimulacion: 'ESPERANDO' | 'SIMULANDO' | 'COMPLETADO' | 'ERROR' = 'ESPERANDO';
+    datosSimulacion: any = null; // Guardará el reporte del backend
 
     // Señales para los logs
     logs = signal<VectorLog[]>([]);
@@ -782,6 +786,8 @@ export class CargaVxPage implements OnInit {
     // 1. Abrir el diálogo
     abrirImportar() {
         this.importDialog = true;
+        this.estadoSimulacion = 'ESPERANDO'; // Reiniciamos el estado
+        this.datosSimulacion = null;
         this.vectoresParaImportar = [];
         this.resumenImportacion = { total: 0, validos: 0, errores: [] };
     }
@@ -829,8 +835,8 @@ export class CargaVxPage implements OnInit {
             let dv = '';
 
             // Si el RUT viene con DV pegado (ej: 12345678K) o separado
-            if (row['DV']) {
-                // Caso A: Columnas separadas (RUT: 123, DV: K)
+            if (row['DV'] !== undefined && row['DV'] !== null && String(row['DV']).trim() !== '') {
+                // Caso A: Columnas separadas (RUT: 123, DV: K o 0)
                 rut = parseInt(rutRaw, 10);
                 dv = String(row['DV']).trim().toUpperCase();
             } else {
@@ -894,9 +900,33 @@ export class CargaVxPage implements OnInit {
             errores: errores
         };
 
+        if (this.vectoresParaImportar.length > 0) {
+            this.ejecutarSimulacion();
+        } else {
+            this.messageService.add({ severity: 'error', summary: 'Error', detail: 'No hay datos válidos para procesar.' });
+        }
+
         if (errores.length > 0) {
             this.messageService.add({ severity: 'warn', summary: 'Advertencia', detail: `Se detectaron ${errores.length} filas con errores.` });
         }
+    }
+
+
+    // NUEVO MÉTODO: Llama al backend para cruzar los datos
+    ejecutarSimulacion() {
+        this.estadoSimulacion = 'SIMULANDO';
+
+        this.servicio.simularImportacion(this.vectoresParaImportar).subscribe({
+            next: (resumenBackend) => {
+                this.datosSimulacion = resumenBackend;
+                this.estadoSimulacion = 'COMPLETADO';
+            },
+            error: (err) => {
+                console.error("Error en simulación", err);
+                this.estadoSimulacion = 'ERROR';
+                this.messageService.add({ severity: 'error', summary: 'Error de Análisis', detail: 'El servidor no pudo analizar el archivo.' });
+            }
+        });
     }
 
     // 4. Enviar al Backend

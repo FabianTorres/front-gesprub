@@ -144,4 +144,9 @@ export class CargaVxService {
 
         return this.http.post(`${this.apiUrl}/catalogo/sincronizar`, vectores, { params });
     }
+
+    // Simulación (Dry-Run)
+    simularImportacion(vectores: VectorData[]): Observable<any> {
+        return this.http.post(`${this.apiUrl}/simular-importacion`, vectores);
+    }
 }
